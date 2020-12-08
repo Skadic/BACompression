@@ -1,0 +1,16 @@
+*.gz
+*.7z
+*.pdf
+res/
+.idea
+build
+*.aux
+*.toc
+*.log
+*.thm
+*.lof
+*.loa
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl
