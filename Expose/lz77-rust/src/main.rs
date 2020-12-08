@@ -1,8 +1,5 @@
-use augmented::AugmentedString;
-use bio::data_structures::suffix_array::{suffix_array, lcp};
 use std::fs::File;
 use std::io::Read;
-use std::time::Instant;
 
 mod augmented;
 mod lzfactor;
@@ -23,9 +20,6 @@ fn main() {
     let mut file = String::new();
     File::open(file_name).expect("Unable to open file").read_to_string(&mut file);
 
-    println!("{}", file.chars().map(|c| c as usize).min().unwrap());
-
-
-    lz::factorize(file);
+    println!("{}", lz::factorized_string(file));
 
 }

@@ -2,6 +2,8 @@
 use std::fmt::Display;
 
 use crate::lzfactor::LZFactor::{Char, Factor};
+use std::convert::{TryInto, TryFrom};
+use std::string::FromUtf8Error;
 
 
 /// An enum representing a LZ Factor
@@ -61,11 +63,23 @@ impl LZFactor {
 
 }
 
+impl TryFrom<LZFactor> for String {
+    type Error = FromUtf8Error;
+
+    fn try_from(value: LZFactor) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Char(c, _) => format!("{}", String::from_utf8(vec![c])?),
+            Factor(pattern_start, len, _) => format!("({},{})", pattern_start, len),
+        })
+    }
+}
+
+
 impl Display for LZFactor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Char(c, _) => write!(f, "{}", String::from_utf8(vec![*c]).unwrap()),
-            Factor(pattern_start, len, _) => write!(f, "({}, {})", *pattern_start, *len),
+            Char(c, _) => write!(f, "{}", String::from_utf8(vec![*c]).unwrap_or(format!("#{:X} ", *c))),
+            Factor(pattern_start, len, _) => write!(f, "({},{})", *pattern_start, *len),
         }
     }
 }
