@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+targetCompatibility = '15'
+sourceCompatibility = '15'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'com.carrotsearch:jsuffixarrays:0.1.0'
+    // https://mvnrepository.com/artifact/org.javatuples/javatuples
+    compile group: 'org.javatuples', name: 'javatuples', version: '1.2'
+}
+
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+    it.options.compilerArgs.add('-Xlint:preview')
+}
+
+tasks.withType(JavaExec) {
+    jvmArgs += '--enable-preview'
+}
+
