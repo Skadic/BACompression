@@ -14,3 +14,4 @@ build
 *.fdb_latexmk
 *.blg
 *.bbl
+reference/
