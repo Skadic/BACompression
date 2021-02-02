@@ -1,8 +1,6 @@
 use std::{fmt::Debug, vec, write};
 
-use bio::data_structures::{smallints::SmallInts, suffix_array::{lcp, suffix_array}};
-
-
+use bio::data_structures::{suffix_array::{lcp, suffix_array}};
 
 pub struct AugmentedString {
     underlying: String,

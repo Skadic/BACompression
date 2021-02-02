@@ -1,5 +1,24 @@
 use crate::{augmented::AugmentedString, lzfactor::LZFactor};
-use std::time::Instant;
+use std::iter::IntoIterator;
+use std::string::FromUtf8Error;
+use std::convert::{TryInto, TryFrom};
+
+pub fn reconstruct<T: IntoIterator<Item=LZFactor>>(factors: T) -> String {
+    let mut buffer = vec![];
+
+    for factor in factors.into_iter() {
+        match factor {
+            LZFactor::Char(byte, _) => buffer.push(byte),
+            LZFactor::Factor(pattern_start, len, _) => {
+                for i in pattern_start..pattern_start + len {
+                    buffer.push(buffer[i]);
+                }
+            }
+        }
+    }
+
+    String::from_utf8_lossy(&buffer[..]).to_string()
+}
 
 pub fn lcp_len(s: &AugmentedString, index1: usize, index2: usize) -> usize {
 
@@ -21,11 +40,7 @@ pub fn lcp_len(s: &AugmentedString, index1: usize, index2: usize) -> usize {
         .map(|i| s.lcp(i as usize))
         .fold(isize::MAX, isize::min);
 
-    if min < 0 {
-        0
-    } else {
-        min as usize
-    }
+    isize::max(0, min) as usize
 }
 
 pub fn lz_factor(s: &AugmentedString, k: usize, prev_suffix_value: usize, next_suffix_value: usize) -> LZFactor {
@@ -51,7 +66,6 @@ pub fn lz_factor(s: &AugmentedString, k: usize, prev_suffix_value: usize, next_s
 
 pub fn factorize(s: String) -> Vec<LZFactor> {
     let augmented = AugmentedString::new(s, '\0');
-    let now = Instant::now();
     let n = augmented.string_len();
     let mut vec = vec![];
 
@@ -68,13 +82,10 @@ pub fn factorize(s: String) -> Vec<LZFactor> {
     // The last would be the sentinel character, and we don't want that to end up in the factorization
     vec.pop();
 
-    let duration = Instant::now() - now;
-    println!("{}ms", duration.as_millis());
-
     vec
 }
 
-pub fn lz_factorized_string(s: String) -> String {
+pub fn factorized_string(s: String) -> String {
     factorize(s)
         .into_iter()
         .map(|factor| factor.to_string())
@@ -96,7 +107,6 @@ mod test {
         assert_eq!(lcp_len(&s, 0, 2), 0);
         assert_eq!(lcp_len(&s, 0, 6), 0);
         assert_eq!(lcp_len(&s, 3, 3), 3);
-
     }
 
     #[test]
