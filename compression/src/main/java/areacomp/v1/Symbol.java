@@ -1,6 +1,4 @@
-package areacomp.sequiturnaive;
-
-import org.javatuples.Pair;
+package areacomp.v1;
 
 import java.util.Iterator;
 import java.util.stream.Stream;
@@ -95,7 +93,7 @@ public abstract class Symbol {
         // Each symbol is checked. If a Non-Terminal is detected, its corresponding rule's use count is decremented
         streamBetween(this, end).forEach(symbol -> {
             if (symbol.isNonTerminal()) {
-                ((NonTerminal) symbol).getRule().decrementCount();
+                ((NonTerminal) symbol).getRule().decrementUseCount();
             }
         });
 

@@ -1,9 +1,8 @@
-import areacomp.sequiturnaive.AreaCompSequiturNaive;
-import areacomp.sequiturnaive.Ruleset;
+import areacomp.AreaFunction;
+import areacomp.v1.Ruleset;
 import sequitur.Sequitur;
 
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 public class Main {
 
@@ -51,14 +50,29 @@ public class Main {
                 """;
         //var s = "aaaaaaaaaaaaaa";
 
-        Ruleset set = AreaCompSequiturNaive.run(s, (sa, isa, lcp, low, hi) -> {
+
+        AreaFunction area = (sa, isa, lcp, low, hi) -> {
             // Get the longest common prefix length from the given range in the lcp array
             var lcpLen = Arrays.stream(lcp, low, hi).min().orElse(0);
             // If the length of the longest common prefix is less than or equal to 1, there is no use in replacing it.
             if(lcpLen <= 1) return 0;
 
             return lcpLen * (hi - low);
-        });
+        };
+
+        System.out.println("s.length() = " + s.length());
+        
+        Ruleset set = new Ruleset(s);
+
+        var now = System.nanoTime();
+
+        set.compress(area);
+
+        var duration = System.nanoTime() - now;
+
+        System.out.println("Compression: " + (duration / 1000000) + "ms");
+
+        set.print();
 
         System.out.println();
 
@@ -66,6 +80,6 @@ public class Main {
 
         System.out.println();
 
-        System.out.println(set.reconstruct());
+        set.reconstruct();
     }
 }

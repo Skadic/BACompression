@@ -1,4 +1,4 @@
-package areacomp.sequiturnaive;
+package areacomp.v1;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,15 +11,15 @@ public class Rule implements CharSequence, Iterable<Symbol>{
     /**
      * This rule's Guard symbol
      */
-    private Guard guard;
+    private final Guard guard;
 
     /**
-     * Number used for identification of non-terminals
+     * This rule's id, used for identification of non-terminals representing this rule and this rule
      */
-    private final int number;
+    private final int id;
 
     /**
-     * The amount of times this rule has been used
+     * The amount of times this rule is being used
      */
     private int useCount;
 
@@ -29,14 +29,14 @@ public class Rule implements CharSequence, Iterable<Symbol>{
     private int expandedLength;
 
     /**
-     * The length of the rule's right side
+     * The amount of Symbols in this rule's right side
      */
     private int length;
 
     /**
      * The ruleset which this rule belongs to
      */
-    private Ruleset ruleset;
+    private final Ruleset ruleset;
 
     /**
      * Creates a new Top Level rule for a string and inserts it into the ruleset's map
@@ -48,7 +48,7 @@ public class Rule implements CharSequence, Iterable<Symbol>{
         for (char c : s.toCharArray()) {
             last().insertAfter(new Terminal(c));
         }
-        ruleset.getRuleMap().put(number, this);
+        ruleset.getRuleMap().put(id, this);
         expandedLength = s.length();
         length = s.length();
     }
@@ -59,13 +59,13 @@ public class Rule implements CharSequence, Iterable<Symbol>{
      */
     private Rule(Ruleset r) {
         this.ruleset = r;
-        this.number = ruleset.nextRuleNumber();
+        this.id = ruleset.nextRuleID();
         guard = new Guard(this);
         this.useCount = 0;
     }
 
     /**
-     * Factorizes a repeated sequence.
+     * Factorizes a repeated sequence. All occurence of the pattern in the grammar will be replaced with a new rule
      * This method makes the following assumptions
      * All occurences are non overlapping.
      * The positions are sorted in ascending order
@@ -129,13 +129,13 @@ public class Rule implements CharSequence, Iterable<Symbol>{
         ruleset.substituteAllOccurences(rule);
 
         // Put this rule into the map
-        ruleset.getRuleMap().put(rule.number, rule);
+        ruleset.getRuleMap().put(rule.id, rule);
     }
 
     /**
-     * Returns
+     * Returns A list of symbols at which non-overlapping occurrences of the other rule's right side start in this rule
      * @param other A rule to be searched for
-     * @return A list of indices at which the right side of the rule can be found
+     * @return A list of start symbols at which the right side of the rule can be found
      */
     public List<Symbol> getRuleIndices(Rule other) {
         var list = new ArrayList<Symbol>();
@@ -176,38 +176,29 @@ public class Rule implements CharSequence, Iterable<Symbol>{
         return guard.prev;
     }
 
-    public void incrementCount() {
+    public void incrementUseCount() {
         useCount++;
     }
 
-    public void decrementCount() {
+    public void decrementUseCount() {
         useCount--;
     }
 
-    public int getNumber() {
-        return number;
-    }
-
-    public void setGuard(Guard guard) {
-        this.guard = guard;
-    }
-
-    public Guard getGuard() {
-        return guard;
-    }
-
-    public int count() {
-        return useCount;
-    }
-
-
-    @Override
-    public int length() {
-        return length;
+    public int getId() {
+        return id;
     }
 
     public void decreaseLength(int amount) {
         length -= amount;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+    }
+
+    @Override
+    public int length() {
+        return length;
     }
 
     @Override
@@ -217,7 +208,6 @@ public class Rule implements CharSequence, Iterable<Symbol>{
 
     @Override
     public CharSequence subSequence(int start, int end) {
-
         var current = first().step(start);
         var sb = new StringBuilder();
         for (int i = start; i < end - 1; i++) {
@@ -241,7 +231,7 @@ public class Rule implements CharSequence, Iterable<Symbol>{
             }
         }
 
-        return String.format(" %d R%-3s -> %s", useCount, number, sb.toString().replace("\n", "\\n"));
+        return String.format(" %d R%-3s -> %s", useCount, id, sb.toString().replace("\n", "\\n"));
     }
 
     public String getAllRules() {
@@ -255,7 +245,7 @@ public class Rule implements CharSequence, Iterable<Symbol>{
             var sb = new StringBuilder();
 
             // The rule has already been handled
-            if (ruleMap.containsKey(currentRule.number)) continue;
+            if (ruleMap.containsKey(currentRule.id)) continue;
 
             while (current != currentRule.guard) {
                 if (current.isTerminal()) {
@@ -264,13 +254,15 @@ public class Rule implements CharSequence, Iterable<Symbol>{
                     } else {
                         sb.append((char) current.value);
                     }
+
+                    sb.append(' ');
                 } else if (current instanceof NonTerminal nonTerminal) {
-                    sb.append("R").append(nonTerminal.getRule().number).append(" ");
+                    sb.append("R").append(nonTerminal.getRule().id).append(" ");
                     queue.add(nonTerminal.getRule());
                 }
                 current = current.next;
             }
-            ruleMap.put(currentRule.number, String.format("  %-2d  R%-3s -> %s", currentRule.useCount, currentRule.number, sb.toString().replace("\n", "\\n")));
+            ruleMap.put(currentRule.id, String.format("  %-2d  R%-3s -> %s", currentRule.useCount, currentRule.id, sb.toString().replace("\n", "\\n")));
             sb.append("\n");
         }
 

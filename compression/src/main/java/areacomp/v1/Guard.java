@@ -1,4 +1,4 @@
-package areacomp.sequiturnaive;
+package areacomp.v1;
 
 public class Guard extends Symbol {
     private Rule rule;
@@ -23,10 +23,6 @@ public class Guard extends Symbol {
     @Override
     public int expandedLength() {
         return 0;
-    }
-
-    protected void deleteDigram() {
-        // Do nothing
     }
 
     public boolean check() {

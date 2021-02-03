@@ -1,6 +1,4 @@
-package areacomp.sequiturnaive;
-
-import java.util.StringJoiner;
+package areacomp.v1;
 
 public record SymbolInterval(Symbol start, Symbol end) {
 

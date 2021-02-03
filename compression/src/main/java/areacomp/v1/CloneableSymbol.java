@@ -1,4 +1,4 @@
-package areacomp.sequiturnaive;
+package areacomp.v1;
 
 public abstract class CloneableSymbol extends Symbol implements Cloneable {
     @Override

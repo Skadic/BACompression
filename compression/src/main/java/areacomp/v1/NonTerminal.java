@@ -1,4 +1,4 @@
-package areacomp.sequiturnaive;
+package areacomp.v1;
 
 public class NonTerminal extends CloneableSymbol implements Cloneable {
 
@@ -10,8 +10,8 @@ public class NonTerminal extends CloneableSymbol implements Cloneable {
      */
     public NonTerminal(Rule rule) {
         this.rule = rule;
-        value = NUM_TERMINALS + rule.getNumber();
-        rule.incrementCount();
+        value = NUM_TERMINALS + rule.getId();
+        rule.incrementUseCount();
     }
 
     /**
@@ -47,7 +47,7 @@ public class NonTerminal extends CloneableSymbol implements Cloneable {
     @Override
     public void cleanUp() {
         join(prev, next);
-        rule.decrementCount();
+        rule.decrementUseCount();
     }
 
     @Override
@@ -67,6 +67,6 @@ public class NonTerminal extends CloneableSymbol implements Cloneable {
 
     @Override
     public String toString() {
-        return "R" + (rule.getNumber());
+        return "R" + (rule.getId());
     }
 }

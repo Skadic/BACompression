@@ -1,4 +1,4 @@
-package areacomp.sequiturnaive;
+package areacomp.v1;
 
 public class Terminal extends CloneableSymbol implements Cloneable {
 
