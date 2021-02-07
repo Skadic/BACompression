@@ -85,3 +85,5 @@ Das liegt daran, dass diese Version des Algorithmus jede Regel einzeln als Zeich
 
 Auch ein großes Problem ist die Laufzeit dieser Implementierung.
 
+In jeder Iteration wird für jede Regel $X$ mit Länge $k := |X|$ ihre $k^2$ Teilintervalle berechnet und für jedes Dieser Intervalle $A$ berechnet. Da $A$ eine lineare Laufzeit in der Länge des Intervalls hat und die Intervalle $\mathcal{O}(k)$ Speicher benötigen, so hat das allein eine $\mathcal{O}(k^3)$ Laufzeit. Diese Laufzeit geschieht für jede Regel in jeder Iteration. Jede Regel hat im worst-case $\mathcal{O}(n)$ Speicherverbrauch.
+

@@ -1,15 +1,16 @@
 import areacomp.AreaFunction;
-import areacomp.v1.Ruleset;
 import sequitur.Sequitur;
+import utils.AugmentedString;
 
 import java.util.Arrays;
 
 public class Main {
 
+    final static boolean PRINT = true;
 
     public static void main(String[] args) {
 
-        var s = """
+        var text = """
                 Knox in box.
                 Fox in socks.
                 
@@ -48,8 +49,14 @@ public class Main {
                 Ben's bent broom breaks.
                 Bim's bent broom breaks.
                 """;
-        //var s = "aaaaaaaaaaaaaa";
 
+        //var s = "aaaaaaaaaaaaaa";
+        var test = "abracadcadabra";
+
+        var test2 = "abcbeeaabcbeeadbcbzzddbcbzzd";
+
+
+        var actualTestText = text;
 
         AreaFunction area = (sa, isa, lcp, low, hi) -> {
             // Get the longest common prefix length from the given range in the lcp array
@@ -60,26 +67,52 @@ public class Main {
             return lcpLen * (hi - low);
         };
 
-        System.out.println("s.length() = " + s.length());
-        
-        Ruleset set = new Ruleset(s);
+        var a = new AugmentedString(test2);
+        System.out.println(Arrays.toString(a.getLcp()));
+        area.area(a.getSuffixArray(), a.getInverseSuffixArray(), a.getLcp(), 0, 2);
+
+        System.out.println("s.length() = " + text.length());
+        System.out.println();
+        testAreaCompV1(actualTestText, area);
+        testAreaCompV2(actualTestText, area);
+        testSequitur(actualTestText);
+
+    }
+
+    static void testAreaCompV1(String s, AreaFunction area) {
+        System.out.println("Testing AreaComp V1 Algorithm:");
+        areacomp.v1.Ruleset set = new areacomp.v1.Ruleset(s);
+        var now = System.nanoTime();
+        set.compress(area);
+        var duration = System.nanoTime() - now;
+        System.out.println("Compression V1: " + (duration / 1000000) + "ms");
+        System.out.println("Grammar size: " + set.ruleSetSize());
+        if(PRINT) set.print();
+        System.out.println();
+    }
+
+    static void testAreaCompV2(String s, AreaFunction area) {
+        System.out.println("Testing AreaComp V2 Algorithm:");
+        areacomp.v2.Ruleset set = new areacomp.v2.Ruleset(s);
 
         var now = System.nanoTime();
-
         set.compress(area);
-
         var duration = System.nanoTime() - now;
-
-        System.out.println("Compression: " + (duration / 1000000) + "ms");
-
-        set.print();
-
+        System.out.println("Compression V2: " + (duration / 1000000) + "ms");
+        System.out.println("Grammar size: " + set.ruleSetSize());
+        if(PRINT) set.print();
         System.out.println();
-
-        Sequitur.run(s);
-
-        System.out.println();
-
-        set.reconstruct();
     }
+
+    static void testSequitur(String s) {
+        System.out.println("Testing Sequitur Algorithm:");
+        var now = System.nanoTime();
+        var rule = Sequitur.run(s);
+        var duration = System.nanoTime() - now;
+        System.out.println("Compression Sq: " + (duration / 1000000) + "ms");
+        System.out.println("Grammar size: " + rule.ruleSetSize());
+        if(PRINT) System.out.println(rule.getRules());
+        System.out.println();
+    }
+
 }

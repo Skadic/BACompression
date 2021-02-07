@@ -2,7 +2,7 @@ package sequitur;
 
 public class Sequitur {
 
-    public static void run(String s) {
+    public static Rule run(String s) {
         Rule firstRule = new Rule();
 
         Rule.resetNumRules();
@@ -10,7 +10,7 @@ public class Sequitur {
             firstRule.last().insertAfter(new Terminal(c));
             firstRule.last().prev.check();
         }
-        System.out.println(firstRule.getRules());
+        return firstRule;
     }
 
 }
