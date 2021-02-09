@@ -21,7 +21,7 @@ dependencies {
 
 tasks.withType(JavaCompile).each {
     it.options.compilerArgs.add('--enable-preview')
-    it.options.compilerArgs.add('-Xlint:preview')
+    //it.options.compilerArgs.add('-Xlint:preview')
 }
 
 tasks.withType(JavaExec) {

@@ -1,12 +1,11 @@
 import areacomp.AreaFunction;
+import areacomp.areas.NaiveArea;
+import repair.RePair;
 import sequitur.Sequitur;
-import utils.AugmentedString;
-
-import java.util.Arrays;
 
 public class Main {
 
-    final static boolean PRINT = true;
+    final static boolean PRINT = false;
 
     public static void main(String[] args) {
 
@@ -51,40 +50,29 @@ public class Main {
                 """;
 
         //var s = "aaaaaaaaaaaaaa";
-        var test = "abracadcadabra";
-
+        var test = "abababracadabraraaaa";
         var test2 = "abcbeeaabcbeeadbcbzzddbcbzzd";
-
-
         var actualTestText = text;
 
-        AreaFunction area = (sa, isa, lcp, low, hi) -> {
-            // Get the longest common prefix length from the given range in the lcp array
-            var lcpLen = Arrays.stream(lcp, low, hi).min().orElse(0);
-            // If the length of the longest common prefix is less than or equal to 1, there is no use in replacing it.
-            if(lcpLen <= 1) return 0;
+        AreaFunction area = new NaiveArea();
 
-            return lcpLen * (hi - low);
-        };
-
-        var a = new AugmentedString(test2);
-        System.out.println(Arrays.toString(a.getLcp()));
-        area.area(a.getSuffixArray(), a.getInverseSuffixArray(), a.getLcp(), 0, 2);
-
-        System.out.println("s.length() = " + text.length());
+        System.out.println("Input length: = " + actualTestText.length());
         System.out.println();
         testAreaCompV1(actualTestText, area);
         testAreaCompV2(actualTestText, area);
         testSequitur(actualTestText);
+        testRePair(actualTestText);
 
     }
 
     static void testAreaCompV1(String s, AreaFunction area) {
         System.out.println("Testing AreaComp V1 Algorithm:");
-        areacomp.v1.Ruleset set = new areacomp.v1.Ruleset(s);
+
         var now = System.nanoTime();
+        areacomp.v1.Ruleset set = new areacomp.v1.Ruleset(s);
         set.compress(area);
         var duration = System.nanoTime() - now;
+
         System.out.println("Compression V1: " + (duration / 1000000) + "ms");
         System.out.println("Grammar size: " + set.ruleSetSize());
         if(PRINT) set.print();
@@ -93,11 +81,12 @@ public class Main {
 
     static void testAreaCompV2(String s, AreaFunction area) {
         System.out.println("Testing AreaComp V2 Algorithm:");
-        areacomp.v2.Ruleset set = new areacomp.v2.Ruleset(s);
 
         var now = System.nanoTime();
+        areacomp.v2.Ruleset set = new areacomp.v2.Ruleset(s);
         set.compress(area);
         var duration = System.nanoTime() - now;
+
         System.out.println("Compression V2: " + (duration / 1000000) + "ms");
         System.out.println("Grammar size: " + set.ruleSetSize());
         if(PRINT) set.print();
@@ -106,12 +95,28 @@ public class Main {
 
     static void testSequitur(String s) {
         System.out.println("Testing Sequitur Algorithm:");
+
         var now = System.nanoTime();
         var rule = Sequitur.run(s);
         var duration = System.nanoTime() - now;
+
         System.out.println("Compression Sq: " + (duration / 1000000) + "ms");
         System.out.println("Grammar size: " + rule.ruleSetSize());
         if(PRINT) System.out.println(rule.getRules());
+        System.out.println();
+    }
+
+    static void testRePair(String s) {
+        System.out.println("Testing RePair Algorithm:");
+
+        var now = System.nanoTime();
+        RePair rePair = new RePair(s);
+        rePair.compress();
+        var duration = System.nanoTime() - now;
+
+        System.out.println("Compression RePair: " + (duration / 1000000) + "ms");
+
+        System.out.println(rePair.getAllRules(!PRINT));
         System.out.println();
     }
 
