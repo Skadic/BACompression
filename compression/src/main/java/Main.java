@@ -1,11 +1,12 @@
 import areacomp.AreaFunction;
 import areacomp.areas.NaiveArea;
-import repair.RePair;
+import areacomp.v1.AreaCompV1;
+import repair.RePairDataStructure;
 import sequitur.Sequitur;
 
 public class Main {
 
-    final static boolean PRINT = false;
+    final static boolean PRINT = true;
 
     public static void main(String[] args) {
 
@@ -52,16 +53,19 @@ public class Main {
         //var s = "aaaaaaaaaaaaaa";
         var test = "abababracadabraraaaa";
         var test2 = "abcbeeaabcbeeadbcbzzddbcbzzd";
+        var test3 = "ababababababababa";
         var actualTestText = text;
 
         AreaFunction area = new NaiveArea();
 
-        System.out.println("Input length: = " + actualTestText.length());
+        /*System.out.println("Input length: = " + actualTestText.length());
         System.out.println();
         testAreaCompV1(actualTestText, area);
-        testAreaCompV2(actualTestText, area);
-        testSequitur(actualTestText);
-        testRePair(actualTestText);
+        testAreaCompV2(actualTestText, area);*/
+        //new Sequitur().benchmark(actualTestText);
+        //new RePair().benchmark(actualTestText);
+        //testRePair(actualTestText);
+        new AreaCompV1(area).benchmark(text);
 
     }
 
@@ -97,12 +101,12 @@ public class Main {
         System.out.println("Testing Sequitur Algorithm:");
 
         var now = System.nanoTime();
-        var rule = Sequitur.run(s);
+        var rule = new Sequitur().compress(s);
         var duration = System.nanoTime() - now;
 
         System.out.println("Compression Sq: " + (duration / 1000000) + "ms");
-        System.out.println("Grammar size: " + rule.ruleSetSize());
-        if(PRINT) System.out.println(rule.getRules());
+        System.out.println("Grammar size: " + rule.toUnified().rulesetSize());
+        if(PRINT) System.out.println(rule.toUnified().getAsString());
         System.out.println();
     }
 
@@ -110,7 +114,7 @@ public class Main {
         System.out.println("Testing RePair Algorithm:");
 
         var now = System.nanoTime();
-        RePair rePair = new RePair(s);
+        RePairDataStructure rePair = new RePairDataStructure(s);
         rePair.compress();
         var duration = System.nanoTime() - now;
 

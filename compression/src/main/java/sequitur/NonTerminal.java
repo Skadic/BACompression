@@ -1,10 +1,8 @@
 package sequitur;
 
-import java.util.StringJoiner;
-
 public class NonTerminal extends Symbol implements Cloneable {
 
-    private Rule rule;
+    private final Rule rule;
 
     public NonTerminal(Rule rule) {
         this.rule = rule;

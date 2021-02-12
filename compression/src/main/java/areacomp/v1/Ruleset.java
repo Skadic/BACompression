@@ -2,13 +2,19 @@ package areacomp.v1;
 
 import areacomp.AreaFunction;
 import org.javatuples.Pair;
+import unified.UnifiedNonTerminal;
+import unified.UnifiedRuleset;
+import unified.UnifiedTerminal;
+import unified.interfaces.ToUnifiedRuleset;
+import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Ruleset {
+public class Ruleset implements ToUnifiedRuleset {
 
     /**
      * This rule set's start rule
@@ -205,5 +211,47 @@ public class Ruleset {
      */
     public void print() {
         System.out.println(topLevelRule.getAllRules());
+    }
+
+    @Override
+    public UnifiedRuleset toUnified() {
+        UnifiedRuleset ruleset = new UnifiedRuleset();
+        ruleset.setTopLevelRuleId(0);
+
+        Queue<Rule> ruleQueue = new ArrayDeque<>();
+        HashSet<Integer> processed = new HashSet<>();
+        processed.add(0);
+
+        Function<Symbol, UnifiedSymbol> unify = symbol -> {
+            if(symbol instanceof NonTerminal nonTerminal) {
+                return new UnifiedNonTerminal(nonTerminal.getRule().getId());
+            } else {
+                return new UnifiedTerminal((char) symbol.value);
+            }
+        };
+
+        ruleset.putRule(0, topLevelRule.stream()
+                .map(unify)
+                .collect(Collectors.toList())
+        );
+
+        ruleQueue.add(topLevelRule);
+
+        while(!ruleQueue.isEmpty()) {
+            var currentRule = ruleQueue.poll();
+
+            ruleset.putRule(currentRule.getId(), currentRule.stream()
+                    .peek(symbol -> {
+                        if (symbol instanceof NonTerminal nonTerminal && !processed.contains(nonTerminal.getRule().getId())) {
+                            ruleQueue.add(nonTerminal.getRule());
+                            processed.add(nonTerminal.getRule().getId());
+                        }
+                    })
+                    .map(unify)
+                    .collect(Collectors.toList())
+            );
+        }
+
+        return ruleset;
     }
 }

@@ -2,13 +2,19 @@ package areacomp.v2;
 
 import areacomp.AreaFunction;
 import org.javatuples.Pair;
+import unified.UnifiedNonTerminal;
+import unified.UnifiedRuleset;
+import unified.UnifiedTerminal;
+import unified.interfaces.ToUnifiedRuleset;
+import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Ruleset {
+public class Ruleset implements ToUnifiedRuleset {
 
     /**
      * The string for which this ruleset is built
@@ -293,5 +299,27 @@ public class Ruleset {
 
     public List<List<Integer>> getRuleRanges() {
         return ruleRanges;
+    }
+
+    @Override
+    public UnifiedRuleset toUnified() {
+
+        Function<Symbol, UnifiedSymbol> unify = symbol -> {
+            if(symbol instanceof NonTerminal nonTerminal) {
+                return new UnifiedNonTerminal(nonTerminal.getRule().getId());
+            } else {
+                return new UnifiedTerminal((char) symbol.value);
+            }
+        };
+
+        UnifiedRuleset ruleset = new UnifiedRuleset();
+
+        ruleset.setTopLevelRuleId(topLevelRule.getId());
+
+        for(var rule : rules()) {
+            ruleset.putRule(rule.getId(), rule.stream().map(unify).collect(Collectors.toList()));
+        }
+
+        return ruleset;
     }
 }

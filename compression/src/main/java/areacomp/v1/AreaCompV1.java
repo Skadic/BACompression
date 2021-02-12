@@ -1,36 +1,27 @@
 package areacomp.v1;
 
 import areacomp.AreaFunction;
+import unified.interfaces.ToUnifiedRuleset;
+import unified.interfaces.UnifiedCompressor;
 
-import java.util.ArrayList;
-import java.util.List;
+public class AreaCompV1 implements UnifiedCompressor {
 
-public class AreaCompV1 {
+    private AreaFunction area;
 
-    public static Ruleset run(String s, AreaFunction fun) {
+    public AreaCompV1(AreaFunction area) {
+        this.area = area;
+    }
 
+
+    @Override
+    public ToUnifiedRuleset compress(String s) {
         Ruleset ruleset = new Ruleset(s);
-
-        System.out.println("Size before: " + ruleset.ruleSetSize());
-
-        ruleset.compress(fun);
-
-        System.out.println("Size after: " + ruleset.ruleSetSize());
-
+        ruleset.compress(area);
         return ruleset;
     }
 
-
-    private static int[] nonOverlapping(int[] positions, int patternLength) {
-        List<Integer> list = new ArrayList<>();
-        int last = Short.MIN_VALUE;
-        for (Integer i : positions) {
-            if(i - last >= patternLength) {
-                list.add(i);
-                last = i;
-            }
-        }
-        return list.stream().mapToInt(i -> i).toArray();
+    @Override
+    public String name() {
+        return "AreaComp V1";
     }
-
 }

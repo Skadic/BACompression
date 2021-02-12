@@ -1,9 +1,16 @@
 package sequitur;
 
+import unified.UnifiedNonTerminal;
+import unified.UnifiedRuleset;
+import unified.UnifiedTerminal;
+import unified.interfaces.ToUnifiedRuleset;
+import unified.interfaces.UnifiedSymbol;
+
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class Rule {
+public class Rule implements ToUnifiedRuleset {
 
     private static int NUM_RULES;
 
@@ -14,10 +21,6 @@ public class Rule {
      */
     private final int number;
 
-    /**
-     * Used for printing
-     */
-    private int index;
 
     /**
      * The amount of times this rule has been used
@@ -28,7 +31,6 @@ public class Rule {
         this.number = NUM_RULES;
         NUM_RULES++;
         guard = new Guard(this);
-        this.index = 0;
         this.count = 0;
     }
 
@@ -66,61 +68,6 @@ public class Rule {
 
     public int count() {
         return count;
-    }
-
-    public String getRulez() {
-        var rules = new ArrayList<Rule>(NUM_RULES);
-
-        Rule currentRule;
-        Rule referedTo;
-        Symbol sym;
-
-        int index;
-        int processedRules = 0;
-        var text = new StringBuilder();
-        int charCounter = 0;
-
-        text.append("Usage\tRule\n");
-        rules.add(this);
-
-        while (processedRules < rules.size()) {
-            currentRule = rules.get(processedRules);
-            text.append(" ");
-            text.append(currentRule.count);
-            text.append("\tR");
-            text.append(processedRules);
-            text.append(" -> ");
-
-            for(sym = currentRule.first(); !sym.isGuard(); sym = sym.next) {
-                if(sym.isNonTerminal()) {
-                    referedTo = ((NonTerminal) sym).getRule();
-                    if((rules.size() > referedTo.index) && (rules.get(referedTo.index) == referedTo)) {
-                        index = referedTo.index;
-                    } else {
-                        index = rules.size();
-                        referedTo.index = index;
-                        rules.add(referedTo);
-                    }
-                    text.append('R');
-                    text.append(index);
-                } else {
-                    if (sym.value == ' ') {
-                        text.append('_');
-                    } else {
-                        if (sym.value == '\n') {
-                            text.append("\\n");
-                        } else {
-                            text.append((char) sym.value);
-                        }
-                    }
-                }
-                text.append(' ');
-            }
-            text.append('\n');
-            processedRules++;
-        }
-        text.append("Rule set size: ").append(ruleSetSize());
-        return text.toString();
     }
 
     public String getRules() {
@@ -207,5 +154,45 @@ public class Rule {
         }
 
         return String.format(" %d R%-3s -> %s", count, number, sb.toString().replace("\n", "\\n"));
+    }
+
+    @Override
+    public UnifiedRuleset toUnified() {
+
+        UnifiedRuleset ruleset = new UnifiedRuleset();
+        ruleset.setTopLevelRuleId(number);
+
+        final Function<Symbol, UnifiedSymbol> unify = symbol -> symbol instanceof NonTerminal nonTerminal ?
+                new UnifiedNonTerminal(nonTerminal.getRule().number) :
+                new UnifiedTerminal((char) symbol.value);
+
+        // Contains all the rules that have been added to the queue already
+        Set<Integer> processed = new HashSet<>();
+        Queue<Rule> ruleQueue = new LinkedList<>();
+
+        ruleQueue.add(this);
+        processed.add(number);
+
+        final var symbols = new ArrayList<UnifiedSymbol>();
+        while(!ruleQueue.isEmpty()) {
+            var currentRule = ruleQueue.poll();
+            var currentSymbol = currentRule.first();
+
+            while (currentSymbol != currentRule.guard) {
+                if (currentSymbol instanceof NonTerminal nonTerminal && !processed.contains(nonTerminal.getRule().getNumber())) {
+                    ruleQueue.add(nonTerminal.getRule());
+                    processed.add(nonTerminal.getRule().number);
+                }
+
+                symbols.add(unify.apply(currentSymbol));
+                currentSymbol = currentSymbol.next;
+            }
+
+            ruleset.putRule(currentRule.number, symbols);
+            symbols.clear();
+        }
+
+
+        return ruleset;
     }
 }
