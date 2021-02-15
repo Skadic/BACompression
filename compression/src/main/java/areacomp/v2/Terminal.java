@@ -8,11 +8,6 @@ class Terminal extends CloneableSymbol implements Cloneable {
 
 
     @Override
-    public void cleanUp() {
-
-    }
-
-    @Override
     public boolean isTerminal() {
         return true;
     }

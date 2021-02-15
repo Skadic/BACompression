@@ -1,6 +1,6 @@
 package areacomp.v1;
 
-public class Guard extends Symbol {
+class Guard extends Symbol {
     private Rule rule;
 
     public Guard(Rule rule) {

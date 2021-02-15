@@ -5,13 +5,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 
-public class SymbolPair extends Symbol implements Cloneable {
+class SymbolPair extends Symbol implements Cloneable {
 
     private int id;
     private boolean marked = false;
 
-    private Symbol left;
-    private Symbol right;
+    private final Symbol left;
+    private final Symbol right;
 
     /**
      * The amount of times this pair appears in the sequence
@@ -28,18 +28,12 @@ public class SymbolPair extends Symbol implements Cloneable {
      */
     private int lastOcc;
 
-    /**
-     * Next Pair with same frequency
-     */
-    private SymbolPair freqNext;
-
-    /**
-     * Previous Pair with same frequency.
-     */
-    private SymbolPair freqPrev;
-
     public SymbolPair(Symbol left, Symbol right) {
         super();
+
+        if(left == null) throw new IllegalArgumentException("Left symbol null");
+        if(right == null) throw new IllegalArgumentException("Right symbol null");
+
         this.left = left;
         this.right = right;
         frequency = 1;
@@ -86,6 +80,10 @@ public class SymbolPair extends Symbol implements Cloneable {
         return frequency;
     }
 
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
+    }
+
     public void modifyFrequency(int amount) {
         frequency += amount;
     }
@@ -127,15 +125,16 @@ public class SymbolPair extends Symbol implements Cloneable {
     @Override
     protected String toStringInternal(boolean shortRep) {
         if(!marked) {
-            var leftStr = left.toStringInternal(true);
-            var rightStr = right.toStringInternal(true);
+            var leftStr = left != null ? left.toStringInternal(true) : "null";
+            var rightStr = right != null ? right.toStringInternal(true) : "null";
             return new StringJoiner(", ", "[", "]").add(leftStr).add(rightStr).toString();
         } else {
             if (shortRep) {
                 return "R" + id;
             } else {
-                var leftStr = left.toStringInternal(true);
-                var rightStr = right.toStringInternal(true);
+                var leftStr = left != null ? left.toStringInternal(true) : "null";
+                var rightStr = right != null ? right.toStringInternal(true) : "null";
+
                 return "R" + id + ": " + new StringJoiner(", ", "[", "]").add(leftStr).add(rightStr).toString();
             }
         }

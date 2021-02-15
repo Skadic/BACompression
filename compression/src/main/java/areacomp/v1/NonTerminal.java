@@ -1,6 +1,6 @@
 package areacomp.v1;
 
-public class NonTerminal extends CloneableSymbol implements Cloneable {
+class NonTerminal extends CloneableSymbol implements Cloneable {
 
     private Rule rule;
 

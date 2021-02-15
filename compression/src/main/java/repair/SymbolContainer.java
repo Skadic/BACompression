@@ -2,7 +2,7 @@ package repair;
 
 import java.util.Objects;
 
-public class SymbolContainer {
+class SymbolContainer {
 
     private Symbol symbol;
     private int index;

@@ -8,13 +8,16 @@ import unified.UnifiedTerminal;
 import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
+import utils.Benchmark;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Ruleset implements ToUnifiedRuleset {
+class Ruleset implements ToUnifiedRuleset {
+
+    public static final String ALGORITHM_NAME = AreaCompV2.class.getSimpleName();
 
     /**
      * The string for which this ruleset is built
@@ -52,6 +55,7 @@ public class Ruleset implements ToUnifiedRuleset {
      * @param s The string for which the ruleset should be created
      */
     public Ruleset(String s) {
+        var now = System.nanoTime();
         this.topLevelRule = new Rule(s, this);
         ruleRanges = new ArrayList<>(s.length());
         ruleAreaStarts = new ArrayList<>(s.length());
@@ -63,6 +67,7 @@ public class Ruleset implements ToUnifiedRuleset {
         }
         ruleAreaStarts.get(0).add(0);
         underlying = s;
+        Benchmark.updateTime(ALGORITHM_NAME, "construction", System.nanoTime() - now);
     }
 
     /**
@@ -72,8 +77,12 @@ public class Ruleset implements ToUnifiedRuleset {
      * @param fun The area function used to prioritise intervals in the lcp array
      */
     public void compress(AreaFunction fun) {
+        var nowTotal = System.nanoTime();
+        var now = nowTotal;
         final var augS = new AugmentedString(underlying);
+        Benchmark.updateTime(ALGORITHM_NAME, "suffix array", System.nanoTime() - now);
 
+        now = System.nanoTime();
         // Create a Priority Queue which holds possible intervals in the LCP array
         // The priority value is calculated through the given area function.
         // This function should return a high value for promising intervals in the LCP array.
@@ -89,9 +98,11 @@ public class Ruleset implements ToUnifiedRuleset {
                 queue.add(new Pair<>(i, j));
             }
         }
+        Benchmark.updateTime(ALGORITHM_NAME, "queue", System.nanoTime() - now);
 
         while (true) {
 
+            now = System.nanoTime();
             // Poll the best interval
             var interval = queue.poll();
 
@@ -119,25 +130,23 @@ public class Ruleset implements ToUnifiedRuleset {
             if(positions.length <= 1 || differingOccurences <= 1) {
                 continue;
             }
+            Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
 
+            now = System.nanoTime();
             topLevelRule.factorize(len, positions);
-
-            /*System.out.println(topLevelRule.getCumulativeLength());
-            System.out.println(ruleIndex);
-            print();
-            System.out.println();*/
+            Benchmark.updateTime(ALGORITHM_NAME, "factorize", System.nanoTime() - now);
         }
+        Benchmark.updateTime(ALGORITHM_NAME, "total time", System.nanoTime() - nowTotal);
     }
 
-    private int countDifferingOccurences(int[] positions) {
-        var set = Arrays.stream(positions)
+    private long countDifferingOccurences(int[] positions) {
+        return Arrays.stream(positions)
                 .mapToObj(pos -> {
                     final var id = getMaxRuleIdAt(pos);
                     final var indexInRule = pos - ruleAreaStartIndex(pos);
                     return new RuleIndex(id, indexInRule);
-                })
-                .collect(Collectors.toSet());
-        return set.size();
+                }).distinct()
+                .count();
     }
 
     private int[] inBoundary(int[] positions, int len) {
@@ -268,20 +277,6 @@ public class Ruleset implements ToUnifiedRuleset {
      * @return The original String, which this ruleset produces
      */
     public String reconstruct() {
-        boolean done = false;
-        while (!done) {
-            done = true;
-
-            // Repeatedly iterate through the top level rule
-            // Every Non-terminal that is found is expanded until no more non-terminals are found
-            for (Symbol sym : topLevelRule.stream().collect(Collectors.toList())) {
-                if (sym.isNonTerminal()) {
-                    ((NonTerminal) sym).expand();
-                    done = false;
-                }
-            }
-        }
-
         // Reset this ruleset to its original state
         ruleMap.clear();
         ruleMap.put(0, topLevelRule);

@@ -1,11 +1,8 @@
 package repair;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 
-public class RePairQueue {
+class RePairQueue {
 
     private int size;
     private HashMap<SymbolPair, PairElement> pairs;
@@ -14,7 +11,7 @@ public class RePairQueue {
     /**
      * Creates a new empty queue with a size according to the given length of the sequence this queue is for.
      * The {@link #queues} list has the size ceil(sqrt(<code>sequenceLength</code>))
-     * @param sequenceLength
+     * @param sequenceLength The length of the String for which the queue is created
      */
     public RePairQueue(int sequenceLength) {
         final int len = (int) Math.ceil(Math.sqrt(sequenceLength));
@@ -194,6 +191,21 @@ public class RePairQueue {
         }
         size--;
         pairs.remove(current);
+
+        return current;
+    }
+
+    public SymbolPair peek() {
+        if (isEmpty()) {
+            return null;
+        }
+        SymbolPair current = null;
+
+        if(!indexEmpty(0)) current = queues.get(0).content;
+
+        for (int i = queues.size() - 1; i >= 0 && current == null; i--) {
+            current = Optional.of(queues.get(i)).map(elem -> elem.content).orElse(null);
+        }
 
         return current;
     }

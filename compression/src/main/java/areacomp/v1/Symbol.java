@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public abstract class Symbol {
+abstract class Symbol {
 
     protected static final int NUM_TERMINALS = 100000;
 
@@ -111,8 +111,7 @@ public abstract class Symbol {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Symbol) {
-            Symbol sym = (Symbol) o;
+        if (o instanceof Symbol sym) {
             return value == sym.value && next.value == sym.next.value;
         } else {
             return false;

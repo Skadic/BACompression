@@ -8,18 +8,22 @@ import unified.UnifiedTerminal;
 import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
+import utils.Benchmark;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Ruleset implements ToUnifiedRuleset {
+class Ruleset implements ToUnifiedRuleset {
+
+    public static final String ALGORITHM_NAME = AreaCompV1.class.getSimpleName();
 
     /**
      * This rule set's start rule
      */
     private final Rule topLevelRule;
+
     /**
      * A map that contains all rules. It maps from a rule ID to its corresponding rule
      */
@@ -51,31 +55,31 @@ public class Ruleset implements ToUnifiedRuleset {
             for (var rule : ruleList) {
                 if(rule.length() <= 3) continue;
 
+                var now = System.nanoTime();
                 final var augS = new AugmentedString(rule);
-                // Create a Priority Queue which holds possible intervals in the LCP array
-                // The priority value is calculated through the given area function.
-                // This function should return a high value for promising intervals in the LCP array.
-                var queue = new PriorityQueue<Pair<Integer, Integer>>(
-                        Comparator.comparingInt(
-                                r -> -fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), r.getValue0(), r.getValue1())
-                        )
-                );
+                Benchmark.updateTime(ALGORITHM_NAME, "suffix array", System.nanoTime() - now);
 
-                // Add all possible intervals
+
+                now = System.nanoTime();
+                Pair<Integer, Integer> interval = null;
+                var max = Integer.MIN_VALUE;
+                // Get the maximum valued interval
                 for (int i = 1; i <= augS.length(); i++) {
                     for (int j = i + 1; j <= augS.length(); j++) {
-                        queue.add(new Pair<>(i, j));
+                        final var area = fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), i, j);
+                        if(max < area) {
+                            interval = new Pair<>(i, j);
+                            max = area;
+                        }
                     }
                 }
+                Benchmark.updateTime(ALGORITHM_NAME, "max interval", System.nanoTime() - now);
 
-                // Poll the best interval
-                var interval = queue.poll();
-
+                now = System.nanoTime();
                 // The positions at which the pattern can be found
                 int[] positions = IntStream.range(interval.getValue0() - 1, interval.getValue1())
                         .map(augS::suffixIndex)
                         .toArray();
-
 
                 // Get the length of the longest common prefix in this range of the lcp array
                 // This will be the length of the pattern that is to be replaced.
@@ -88,12 +92,13 @@ public class Ruleset implements ToUnifiedRuleset {
                     continue;
                 }
 
-
                 Arrays.sort(positions);
-
                 positions = nonOverlapping(positions, len);
+                Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
 
+                now = System.nanoTime();
                 rule.factorize(len, positions);
+                Benchmark.updateTime(ALGORITHM_NAME, "factorize", System.nanoTime() - now);
             }
         }
     }

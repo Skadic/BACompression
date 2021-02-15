@@ -1,6 +1,5 @@
 package utils;
 
-import org.javatuples.Pair;
 import org.jsuffixarrays.SuffixArrays;
 
 import java.util.Arrays;

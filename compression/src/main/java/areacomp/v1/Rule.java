@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class Rule implements CharSequence, Iterable<Symbol>{
+class Rule implements CharSequence, Iterable<Symbol>{
 
 
     /**

@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class RePairDataStructure implements ToUnifiedRuleset {
+class RePairDataStructure implements ToUnifiedRuleset {
 
     private int currentId;
     private int len;
@@ -62,6 +62,17 @@ public class RePairDataStructure implements ToUnifiedRuleset {
                 sameChar = 0;
             }
 
+            if (prevOccured.containsKey(pair)) {
+                int prevOccurence = prevOccured.get(pair);
+                SymbolContainer prev = sequence[prevOccurence];
+                //if(Math.abs(i - prevOccurence) > 1) {
+                    prev.setNextOccurence(i);
+                    left.setPrevOccurence(prevOccurence);
+                //}
+            }
+            queue.add(pair);
+
+            /*
             switch (sameChar) {
                 case 0, 1 -> {
                     // If we have seen this pair, link the last/next occurrence index of the pair
@@ -90,7 +101,7 @@ public class RePairDataStructure implements ToUnifiedRuleset {
                     left.setPrevOccurence(prevOccurence);
                     queue.add(pair);
                 }
-            }
+            }*/
 
             prevOccured.put(pair, i);
 
@@ -98,6 +109,7 @@ public class RePairDataStructure implements ToUnifiedRuleset {
 
         // Set the last occurrence for each pair
         prevOccured.forEach(SymbolPair::setLastOccurrence);
+        var i = 1;
     }
 
     public List<SymbolContainer> getSequence() {
@@ -112,7 +124,7 @@ public class RePairDataStructure implements ToUnifiedRuleset {
         while (!done) {
             done = !replaceMostFrequent();
             //compact();
-        };
+        }
     }
 
     /**
@@ -178,53 +190,77 @@ public class RePairDataStructure implements ToUnifiedRuleset {
         // FIXME Fix handling of overlapping occurrences of pairs
 
         //System.out.println(queue);
-        final var pair = queue.poll();
+        final SymbolPair pair = queue.poll();
 
         // There are no more pairs to replace
         if (pair == null) {
             return false;
         }
 
+        SymbolContainer lastContainer = null;
         var currentIndex = pair.getFirstOccurrence();
         pair.mark(currentId++);
 
-        // Stores the last occurrence index of the pair, where the symbol following the pair is the given symbol
+        // Stores the last occurrence index of the pair that consists of the replaced symbol and the symbol following it.
+        // Since the first symbol of the pair is always the NonTerminal we are replacing the occurrences in the sequence with,
+        // we can just take the second symbol of the pair as a key for the map
         var previousOccurrenceMap = new HashMap<Symbol, Integer>();
 
         while (currentIndex != -1) {
             // Get the left and right symbol in the pair
-            var left = sequence[currentIndex];
-            var right = left.next();
+            SymbolContainer left = sequence[currentIndex];
+            SymbolContainer right = left.next();
 
-            // If they have the respective neighbor, decrease their frequency in the queue
-            if (left.hasPrev()) {
-                var before = new SymbolPair(left.prev().getSymbol(), left.getSymbol());
-                updateOccurrences(before, left.prev().getIndex());
-                queue.updateFrequency(before, -1);
-            }
-            if (right.hasNext()) {
-                var after = new SymbolPair(right.getSymbol(), right.next().getSymbol());
-                updateOccurrences(after, right.getIndex());
-                queue.updateFrequency(after, -1);
+            if(!Objects.equals(left.getSymbol(), pair.getLeft()) || !Objects.equals(right.getSymbol(), pair.getRight())) {
+                // Get the next occurrence until we have gone at least 2 steps.
+                // This prevents substrings like "aaa" to be counted as 2 occurrences of the pair "aa", by skipping 1 position
+                // after replacing the first "aa"
+                do {
+                    currentIndex = sequence[currentIndex].getNextOccurence();
+                } while (currentIndex != -1 && left.equals(sequence[currentIndex]));
+                left.setNextOccurence(-1);
+                continue;
             }
 
+            // Given a substring "xaby" and the pair to be replaced "ab", this decreases the frequency of "xa" and "by" in the queue
+            decreaseNeighborPairFrequency(left);
+
+            // Replace the occurrence of the pair with the non-terminal
             left.setSymbol(pair);
             left.connectNext(right.next());
+            right.setSymbol(null);
 
-            if(right.hasNext()) {
-                Symbol followingSymbol = right.next().getSymbol();
-                left.setPrevOccurence(previousOccurrenceMap.getOrDefault(followingSymbol, -1));
+            // Check if the non-terminal has a next symbol (since the previous right.next() could be null)
+            if(left.hasNext()) {
+                // If it does, get the value of the previous occurrence of this pair and set it accordingly to the value in the map
+                // If there is no such value, that means that the pair did not occur before. In that case the previous occurrence becomes -1
+                Symbol followingSymbol = left.next().getSymbol();
+                left.setPrevOccurence(-1);
+
+                //queue.add(new SymbolPair(left.getSymbol(), left.next().getSymbol()));
+
+                // If a previous occurrence is recorded, set the next occurrence value of the previous occurrence of this pair
+                // to this current occurrence
                 if(previousOccurrenceMap.containsKey(followingSymbol)) {
-                    int previousOccurrence = previousOccurrenceMap.get(followingSymbol);
+                    final int previousOccurrence = previousOccurrenceMap.get(followingSymbol);
+                    left.setPrevOccurence(previousOccurrence);
                     sequence[previousOccurrence].setNextOccurence(currentIndex);
                 }
+                previousOccurrenceMap.put(left.next().getSymbol(), currentIndex);
             } else {
                 left.setPrevOccurence(-1);
             }
 
-            // This space is now empty and thus has no sensible values
-            right.setNextOccurence(-1);
-            right.setPrevOccurence(-1);
+            if(right.getPrevOccurence() != -1 || right.getNextOccurence() != -1) {
+                var prev = right.getPrevOccurence();
+                var next = right.getNextOccurence();
+                if (prev != -1) sequence[prev].setNextOccurence(next);
+                if (next != -1) sequence[next].setPrevOccurence(prev);
+
+                // This space is now empty and thus has no sensible values
+                right.setNextOccurence(-1);
+                right.setPrevOccurence(-1);
+            }
 
             if (left.hasPrev()) {
                 var before = new SymbolPair(left.prev().getSymbol(), left.getSymbol());
@@ -235,37 +271,39 @@ public class RePairDataStructure implements ToUnifiedRuleset {
             if (left.hasNext()) {
                 var after = new SymbolPair(left.getSymbol(), left.next().getSymbol());
                 queue.add(after);
-                updateOccurrences(after, right.getIndex());
+                updateOccurrences(after, left.getIndex());
             }
 
-            // If the symbol before the new one is the same as the new one, then check if the series of equal symbols before this one
-            // is of odd length. If it is odd, then the newly added symbol cannot add a non-overlapping occurrence of this pair
-            // to this series
-            if(left.hasPrev() && left.prev().equals(left)) {
-                var leftPrev = left.prev();
-                boolean evenRepetition = false;
-                while(Objects.equals(left, leftPrev)) {
-                    evenRepetition = !evenRepetition;
-                    leftPrev = leftPrev.prev();
-                }
-
-                // If it repeats an odd number of times, the frequency has to be reduced by 1
-                if(!evenRepetition) {
-                    var before = new SymbolPair(left.prev().getSymbol(), left.getSymbol());
-                    queue.updateFrequency(before, -1);
-                }
-            }
-
-
-
-            right.setSymbol(null);
-
-            if(right.hasNext()) previousOccurrenceMap.put(right.next().getSymbol(), currentIndex);
-            currentIndex = left.getNextOccurence();
+            do {
+                currentIndex = sequence[currentIndex].getNextOccurence();
+            } while (currentIndex != -1 && left.equals(sequence[currentIndex]));
             left.setNextOccurence(-1);
         }
 
         return true;
+    }
+
+    /**
+     * Decreases the frequency of the pairs (left.prev, left) and (left.next, left.next.next) by one.
+     * This happens only if the previous and next symbols actually exist
+     * This is used, when the pair (left, left.next) is replaced in {@link #replaceMostFrequent()}
+     * @param left The left Symbol of the pair that should be replaced
+     */
+    private void decreaseNeighborPairFrequency(SymbolContainer left) {
+        // If they have the respective neighbor, decrease their frequency in the queue
+        if (left.hasPrev()) {
+            var before = new SymbolPair(left.prev().getSymbol(), left.getSymbol());
+            //updateOccurrences(before, left.prev().getIndex());
+            queue.updateFrequency(before, -1);
+        }
+
+
+        if (left.hasNext() && left.next().hasNext()) {
+            var right = left.next();
+            var after = new SymbolPair(right.getSymbol(), right.next().getSymbol());
+            //updateOccurrences(after, right.getIndex());
+            queue.updateFrequency(after, -1);
+        }
     }
 
     private void updateOccurrences(SymbolPair pair, int index) {

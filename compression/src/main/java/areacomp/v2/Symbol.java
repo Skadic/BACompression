@@ -8,8 +8,6 @@ abstract class Symbol {
 
     protected int value;
 
-    public abstract void cleanUp();
-
     public boolean isNonTerminal() {
         return false;
     }

@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class Terminal extends Symbol implements Cloneable {
+class Terminal extends Symbol implements Cloneable {
 
     private final int value;
 

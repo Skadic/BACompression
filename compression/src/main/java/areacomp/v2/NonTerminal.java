@@ -14,18 +14,6 @@ class NonTerminal extends CloneableSymbol implements Cloneable {
         rule.incrementUseCount();
     }
 
-    /**
-     * Expands this non-terminal according to its {@link #rule}
-     */
-    public void expand() {
-
-    }
-
-
-    @Override
-    public void cleanUp() {
-        rule.decrementUseCount();
-    }
 
     @Override
     public boolean isNonTerminal() {

@@ -1,6 +1,6 @@
 package sequitur;
 
-public class Guard extends Symbol {
+class Guard extends Symbol {
 
 
     private Rule rule;

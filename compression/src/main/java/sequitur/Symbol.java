@@ -1,9 +1,8 @@
 package sequitur;
 
 import java.util.HashMap;
-import java.util.StringJoiner;
 
-public abstract class Symbol {
+abstract class Symbol {
 
     protected static final int NUM_TERMINALS = 100000;
 

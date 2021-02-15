@@ -5,7 +5,7 @@ header-includes: |
 
 # AreaComp DevLog
 
-## Naive Sequitur-inspirierte Implementation
+## Naive Sequitur-inspirierte Implementation (V1)
 
 - Datenstruktur ähnlich wie bei Sequitur
   - Doppelt verkettete Ringstruktur mit einem speziellen Guard Symbol
@@ -87,3 +87,16 @@ Auch ein großes Problem ist die Laufzeit dieser Implementierung.
 
 In jeder Iteration wird für jede Regel $X$ mit Länge $k := |X|$ ihre $k^2$ Teilintervalle berechnet und für jedes Dieser Intervalle $A$ berechnet. Da $A$ eine lineare Laufzeit in der Länge des Intervalls hat und die Intervalle $\mathcal{O}(k)$ Speicher benötigen, so hat das allein eine $\mathcal{O}(k^3)$ Laufzeit. Diese Laufzeit geschieht für jede Regel in jeder Iteration. Jede Regel hat im worst-case $\mathcal{O}(n)$ Speicherverbrauch.
 
+Auf einem Text von nur 662 Zeichen, hatte dieser Algorithmus bereits eine Laufzeit von etwa 1.5 Sekunden.
+
+##### Verbesserungen
+
+Eine offensichtliche Verbesserung ist, die Prioritätswarteschlange durch eine normale Maximumsuche zu ersetzen, da hier nur eines der Intervalle aus der Warteschlange genutzt wird. 
+
+## Version 2
+
+In dieser Version ist das Vorgehen etwas anders:
+
+### Vorgehen
+
+Anders als bei Version 1, wird hier nicht für jede Regel in jedem Durchlauf einzeln das Suffix-Array und LCP-Array, sowie die Prioritätswarteschlange berechnet. Stattdessen wird hier zu Anfang einmal das Suffix-Array, LCP-Array und die Prioritätswarteschlange über die Intervalle im LCP Array  für den gesamten Eingabestring berechnet.

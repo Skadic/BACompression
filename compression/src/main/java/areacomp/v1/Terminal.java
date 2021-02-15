@@ -1,6 +1,6 @@
 package areacomp.v1;
 
-public class Terminal extends CloneableSymbol implements Cloneable {
+class Terminal extends CloneableSymbol implements Cloneable {
 
     public Terminal(int value) {
         this.value = value;

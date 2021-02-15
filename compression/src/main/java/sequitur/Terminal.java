@@ -1,6 +1,6 @@
 package sequitur;
 
-public class Terminal extends Symbol implements Cloneable {
+class Terminal extends Symbol implements Cloneable {
 
     public Terminal(int value) {
         this.value = value;

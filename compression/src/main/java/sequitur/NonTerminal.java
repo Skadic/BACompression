@@ -1,6 +1,6 @@
 package sequitur;
 
-public class NonTerminal extends Symbol implements Cloneable {
+class NonTerminal extends Symbol implements Cloneable {
 
     private final Rule rule;
 

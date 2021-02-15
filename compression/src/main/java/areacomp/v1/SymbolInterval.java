@@ -1,6 +1,6 @@
 package areacomp.v1;
 
-public record SymbolInterval(Symbol start, Symbol end) {
+record SymbolInterval(Symbol start, Symbol end) {
 
     @Override
     public String toString() {
