@@ -85,14 +85,16 @@ class Rule implements CharSequence, Iterable<Symbol> {
         var cumulative = new ArrayList<Integer>(end - start);
         var baseCumulativeLength = start > 0 ? cumulativeLength.get(start - 1) : 0;
 
-        for (int i = start; i < end; i++) {
+        var remainingLength = end - start;
+        for (int i = start; remainingLength > 0; i++) {
             symbolList.add(symbols.get(i));
             cumulative.add(cumulativeLength.get(i) - baseCumulativeLength);
+            remainingLength -= cumulativeLength.get(i) - (i > 0 ? cumulativeLength.get(i - 1) : 0);
         }
 
-        symbols.subList(start + 1, end).clear();
+        symbols.subList(start + 1, start + symbolList.size()).clear();
         symbols.set(start, new NonTerminal(rule));
-        cumulativeLength.subList(start, end - 1).clear();
+        cumulativeLength.subList(start, start + symbolList.size() - 1).clear();
 
         return new SubstitutionData(symbolList, cumulative);
     }

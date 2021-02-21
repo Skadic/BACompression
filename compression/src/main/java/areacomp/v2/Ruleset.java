@@ -22,7 +22,7 @@ class Ruleset implements ToUnifiedRuleset {
     /**
      * The string for which this ruleset is built
      */
-    private String underlying;
+    private final String underlying;
 
     /**
      * This rule set's start rule
@@ -31,6 +31,14 @@ class Ruleset implements ToUnifiedRuleset {
 
     /**
      * Index structure for deciding which rule a certain character in the original string is part of
+     * The invariant for this list is, that for each internal list, the list contains the ids of rules
+     * in the order of how deeply they are nested.
+     * For example, take the grammar:
+     * R0 -> R2 c R2
+     * R1 -> aa
+     * R2 -> R1 b R1
+     * Then the full String is aabaacaabaa. The ruleRanges list for index 1 (the second 'a') would be:
+     * [0, 2, 1], as from the root (R0) one would need to travel through an R2 and an R1, to arrive at this character
      */
     private final List<List<Integer>> ruleRanges;
 
@@ -56,15 +64,20 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public Ruleset(String s) {
         var now = System.nanoTime();
+
         this.topLevelRule = new Rule(s, this);
         ruleRanges = new ArrayList<>(s.length());
         ruleAreaStarts = new ArrayList<>(s.length());
+        // Populate the data structures
         for (int i = 0; i < s.length(); i++) {
+            // At the start, each position is occupied only by rule 0 (the top level rule)
             var list = new ArrayList<Integer>();
             list.add(0);
             ruleRanges.add(list);
+            // There is no index, at which a rule starts yet, except...
             ruleAreaStarts.add(new HashSet<>());
         }
+        // ... for index 0, at which rule 0 starts
         ruleAreaStarts.get(0).add(0);
         underlying = s;
         Benchmark.updateTime(ALGORITHM_NAME, "construction", System.nanoTime() - now);
@@ -88,7 +101,7 @@ class Ruleset implements ToUnifiedRuleset {
         // This function should return a high value for promising intervals in the LCP array.
         var queue = new PriorityQueue<Pair<Integer, Integer>>(
                 Comparator.comparingInt(
-                        r -> -fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), r.getValue0(), r.getValue1())
+                        r -> -fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), r.getValue0(), r.getValue1()).area
                 )
         );
 
@@ -113,7 +126,10 @@ class Ruleset implements ToUnifiedRuleset {
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
-            int len = IntStream.range(interval.getValue0(), interval.getValue1()).map(augS::lcp).min().orElse(0);
+            int len = IntStream.range(interval.getValue0(), interval.getValue1())
+                    .map(augS::lcp)
+                    .min()
+                    .orElse(0);
 
             // This means there is no repeated subsequence of 2 or more characters. In this case, abort
             if (len <= 1) {
@@ -127,10 +143,12 @@ class Ruleset implements ToUnifiedRuleset {
 
             final var differingOccurences = countDifferingOccurences(positions);
 
+            Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
+
             if(positions.length <= 1 || differingOccurences <= 1) {
                 continue;
             }
-            Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
+
 
             now = System.nanoTime();
             topLevelRule.factorize(len, positions);
@@ -139,14 +157,33 @@ class Ruleset implements ToUnifiedRuleset {
         Benchmark.updateTime(ALGORITHM_NAME, "total time", System.nanoTime() - nowTotal);
     }
 
-    private long countDifferingOccurences(int[] positions) {
-        return Arrays.stream(positions)
-                .mapToObj(pos -> {
-                    final var id = getMaxRuleIdAt(pos);
-                    final var indexInRule = pos - ruleAreaStartIndex(pos);
-                    return new RuleIndex(id, indexInRule);
-                }).distinct()
-                .count();
+    private int countDifferingOccurences(int[] positions) {
+        if(positions.length == 0) return 0;
+        // Map from rule id -> index in the right side of the rule -> amount of occurrences
+        var map = new HashMap<Integer, HashMap<Integer, Integer>>();
+
+        // Map from rule area start -> rule id -> occurrence count
+        var newMap = new HashMap<Integer, Integer>();
+
+        // Count how often this pattern appears at specific indices inside the right side of a rule
+        // E.g. if the String is "abacdabac" and only the Rule "R1 -> abac" exists so far (which implies the structure "R1 d R1")
+        // then the pattern "c" appears twice in the string in rule 1 at index 3
+        // The corresponding map entry would then be (1, (3, 2))
+
+        for (var pos : positions) {
+            final var id = getDeepestRuleIdAt(pos);
+            final var indexInRule = pos - ruleAreaStartIndex(pos);
+            final var ruleArea = ruleAreaStartIndex(pos);
+
+
+            if(!map.containsKey(id)) map.put(id, new HashMap<>());
+            map.get(id).merge(indexInRule, 1, Integer::sum);
+
+            newMap.merge(ruleArea, 1, Integer::sum);
+        }
+
+
+        return newMap.values().stream().reduce(Integer.MIN_VALUE, Integer::max);
     }
 
     private int[] inBoundary(int[] positions, int len) {
@@ -162,7 +199,7 @@ class Ruleset implements ToUnifiedRuleset {
 
     public int ruleAreaStartIndex(int index) {
         int current = index;
-        int maxId = getMaxRuleIdAt(index);
+        int maxId = getDeepestRuleIdAt(index);
         while (!ruleAreaStarts.get(current).contains(maxId)) {
             current--;
             if (current == -1) return 0;
@@ -179,18 +216,29 @@ class Ruleset implements ToUnifiedRuleset {
      * @param to   The end index of the range (exclusive)
      */
     public void markRange(int id, int from, int to) {
+        // Get the id of the rule that occupied this area before
+        final int originalId = getDeepestRuleIdAt(from);
+        // Add the start of the new rule's area to the list
         ruleAreaStarts.get(from).add(id);
+
+        // Add the id of the new rule into the range list after the id of the original rule
+        // This serves to always have the deepest nested Rule at a certain index to be the last index of the list in ruleRanges
         for (int i = from; i < to; i++) {
-            ruleRanges.get(i).add(id);
+            var index = ruleRanges.get(i).indexOf(originalId);
+            ruleRanges.get(i).add(index + 1, id);
         }
     }
 
     public boolean crossesBoundary(int from, int to) {
-        int temp = getMaxRuleIdAt(from);
+        return getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleAreaStartIndex(from) != ruleAreaStartIndex(to - 1);
+        /*
+        int tempRuleId = getMaxRuleIdAt(from);
+        if(ruleAreaStartIndex(from) != ruleAreaStartIndex(to - 1)) return true;
+
         for (int i = from + 1; i < to; i++) {
-            if (getMaxRuleIdAt(i) != temp) return true;
+            if (getMaxRuleIdAt(i) != tempRuleId ) return true;
         }
-        return false;
+        return false;*/
     }
 
     /**
@@ -201,7 +249,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @return The occurences of the pattern with overlapping occurences removed
      */
     private static int[] nonOverlapping(int[] positions, int patternLength) {
-        List<Integer> list = new ArrayList<>();
+        final List<Integer> list = new ArrayList<>();
         int last = Short.MIN_VALUE;
         for (Integer i : positions) {
             if (i - last >= patternLength) {
@@ -216,13 +264,13 @@ class Ruleset implements ToUnifiedRuleset {
         return ruleRanges.get(index).contains(id);
     }
 
-    public int getMaxRuleIdAt(int index) {
+    public int getDeepestRuleIdAt(int index) {
         List<Integer> ruleIdList = ruleRanges.get(index);
         return ruleIdList.get(ruleIdList.size() - 1);
     }
 
     public Rule getRuleAt(int index) {
-        return ruleMap.get(getMaxRuleIdAt(index));
+        return ruleMap.get(getDeepestRuleIdAt(index));
     }
 
     /**

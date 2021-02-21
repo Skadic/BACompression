@@ -26,8 +26,8 @@ public class Main {
         final var compressors = List.of(
                 new Sequitur(),
                 new RePair(),
-                new AreaCompV1(area),
-                new AreaCompV2(area)
+                new AreaCompV2(area),
+                new AreaCompV1(area)
         );
 
         final var inputPath = Paths.get("input", args[0]).toAbsolutePath();

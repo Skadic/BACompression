@@ -1,7 +1,8 @@
 package areacomp.v1;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -233,49 +234,6 @@ class Rule implements CharSequence, Iterable<Symbol>{
 
         return String.format(" %d R%-3s -> %s", useCount, id, sb.toString().replace("\n", "\\n"));
     }
-
-    public String getAllRules() {
-        var ruleMap = new HashMap<Integer, String>();
-        var queue = new ArrayDeque<Rule>();
-        queue.add(this);
-
-        while(!queue.isEmpty()) {
-            var currentRule = queue.poll();
-            var current = currentRule.first();
-            var sb = new StringBuilder();
-
-            // The rule has already been handled
-            if (ruleMap.containsKey(currentRule.id)) continue;
-
-            while (current != currentRule.guard) {
-                if (current.isTerminal()) {
-                    if ((char) current.value == ' ') {
-                        sb.append('_');
-                    } else {
-                        sb.append((char) current.value);
-                    }
-
-                    sb.append(' ');
-                } else if (current instanceof NonTerminal nonTerminal) {
-                    sb.append("R").append(nonTerminal.getRule().id).append(" ");
-                    queue.add(nonTerminal.getRule());
-                }
-                current = current.next;
-            }
-            ruleMap.put(currentRule.id, String.format("  %-2d  R%-3s -> %s", currentRule.useCount, currentRule.id, sb.toString().replace("\n", "\\n")));
-            sb.append("\n");
-        }
-
-        var list = ruleMap.entrySet().stream()
-                .sorted(Comparator.comparingInt(Map.Entry::getKey))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-        list.add(0, "Usage         Rule");
-        list.add("Rule set size: " + ruleset.ruleSetSize());
-
-        return String.join("\n", list);
-    }
-
 
     public int expandedLength() {
         return expandedLength;

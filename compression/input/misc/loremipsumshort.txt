@@ -1,2 +1,2 @@
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam quam.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam quaam.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam quam.

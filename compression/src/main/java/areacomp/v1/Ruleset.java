@@ -1,7 +1,6 @@
 package areacomp.v1;
 
 import areacomp.AreaFunction;
-import org.javatuples.Pair;
 import unified.UnifiedNonTerminal;
 import unified.UnifiedRuleset;
 import unified.UnifiedTerminal;
@@ -61,15 +60,13 @@ class Ruleset implements ToUnifiedRuleset {
 
 
                 now = System.nanoTime();
-                Pair<Integer, Integer> interval = null;
-                var max = Integer.MIN_VALUE;
+                AreaFunction.AreaData interval = null;
                 // Get the maximum valued interval
                 for (int i = 1; i <= augS.length(); i++) {
                     for (int j = i + 1; j <= augS.length(); j++) {
-                        final var area = fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), i, j);
-                        if(max < area) {
-                            interval = new Pair<>(i, j);
-                            max = area;
+                        final var areaData = fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), i, j);
+                        if(interval == null || interval.area < areaData.area) {
+                            interval = areaData;
                         }
                     }
                 }
@@ -77,13 +74,13 @@ class Ruleset implements ToUnifiedRuleset {
 
                 now = System.nanoTime();
                 // The positions at which the pattern can be found
-                int[] positions = IntStream.range(interval.getValue0() - 1, interval.getValue1())
+                int[] positions = IntStream.range(interval.low - 1, interval.high)
                         .map(augS::suffixIndex)
                         .toArray();
 
                 // Get the length of the longest common prefix in this range of the lcp array
                 // This will be the length of the pattern that is to be replaced.
-                int len = IntStream.range(interval.getValue0(), interval.getValue1()).map(augS::lcp).min().orElse(0);
+                int len = IntStream.range(interval.low, interval.high).map(augS::lcp).min().orElse(0);
 
                 // This means there is no repeated subsequence of 2 or more characters. In this case, abort
                 if(len > 1) {
@@ -209,13 +206,6 @@ class Ruleset implements ToUnifiedRuleset {
         numRules = 1;
 
         return topLevelRule.subSequence(0, topLevelRule.expandedLength()).toString();
-    }
-
-    /**
-     * Nicely prints this ruleset
-     */
-    public void print() {
-        System.out.println(topLevelRule.getAllRules());
     }
 
     @Override

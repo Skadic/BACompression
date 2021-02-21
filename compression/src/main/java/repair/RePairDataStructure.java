@@ -197,7 +197,6 @@ class RePairDataStructure implements ToUnifiedRuleset {
             return false;
         }
 
-        SymbolContainer lastContainer = null;
         var currentIndex = pair.getFirstOccurrence();
         pair.mark(currentId++);
 
