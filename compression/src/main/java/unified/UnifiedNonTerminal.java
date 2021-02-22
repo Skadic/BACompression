@@ -2,17 +2,10 @@ package unified;
 
 import unified.interfaces.UnifiedSymbol;
 
-public class UnifiedNonTerminal implements UnifiedSymbol {
-
-    private final int id;
-
-    public UnifiedNonTerminal(int id) {
-        this.id = id;
-    }
-
-    public int getId() {
-        return id;
-    }
+/**
+ * A class representing a non-terminal representing the rule with the given {@link #id}
+ */
+public record UnifiedNonTerminal(int id) implements UnifiedSymbol {
 
     @Override
     public String toString() {

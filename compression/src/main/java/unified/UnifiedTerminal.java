@@ -2,19 +2,10 @@ package unified;
 
 import unified.interfaces.UnifiedSymbol;
 
-public class UnifiedTerminal implements UnifiedSymbol {
-
-    private final char value;
-
-
-    public UnifiedTerminal(char value) {
-        this.value = value;
-    }
-
-
-    public char getValue() {
-        return value;
-    }
+/**
+ * A class representing a terminal character
+ */
+public record UnifiedTerminal(char value) implements UnifiedSymbol {
 
     @Override
     public String toString() {
