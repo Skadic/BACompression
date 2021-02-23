@@ -16,3 +16,4 @@ build
 *.bbl
 reference/
 */.gradle/
+*/output/*

@@ -14,7 +14,7 @@ public class NaiveArea implements AreaFunction {
     @Override
     public AreaData area(int[] sa, int[] isa, int[] lcp, int low, int high) {
         // Get the longest common prefix length from the given range in the lcp array
-        var lcpLen = Arrays.stream(lcp, low, high).min().orElse(0);
+        var lcpLen = Arrays.stream(lcp, low, high + 1).min().orElse(0);
         // If the length of the longest common prefix is less than or equal to 1, there is no use in replacing it.
         if(lcpLen <= 1) return new AreaData(low, high, null, 0, 0);
 
