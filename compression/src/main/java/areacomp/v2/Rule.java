@@ -1,5 +1,7 @@
 package areacomp.v2;
 
+import utils.RuleLocalIndex;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;

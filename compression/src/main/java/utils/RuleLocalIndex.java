@@ -1,4 +1,4 @@
-package areacomp.v2;
+package utils;
 
 import java.util.Objects;
 
@@ -10,7 +10,7 @@ import java.util.Objects;
  * R1 -> cd
  * Then the rule local index for 'c' would be (1, 0), since this 'c' appears in rule 1, at index 0
  */
-record RuleLocalIndex(int ruleId, int index) {
+public record RuleLocalIndex(int ruleId, int index) {
 
     @Override
     public boolean equals(Object o) {
