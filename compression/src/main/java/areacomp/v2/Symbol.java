@@ -4,16 +4,10 @@ import java.util.Objects;
 
 abstract class Symbol {
 
-    protected static final int NUM_TERMINALS = 100000;
+    private final int value;
 
-    protected int value;
-
-    public boolean isNonTerminal() {
-        return false;
-    }
-
-    public boolean isTerminal() {
-        return false;
+    protected Symbol(int value) {
+        this.value = value;
     }
 
     @Override
@@ -29,6 +23,7 @@ abstract class Symbol {
         return Objects.hash(value);
     }
 
-    public abstract int expandedLength();
-
+    public int value() {
+        return value;
+    }
 }

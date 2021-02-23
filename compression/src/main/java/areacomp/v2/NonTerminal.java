@@ -1,7 +1,10 @@
 package areacomp.v2;
 
-class NonTerminal extends CloneableSymbol implements Cloneable {
+class NonTerminal extends Symbol {
 
+    /**
+     * The rule, which this non terminal represents
+     */
     private Rule rule;
 
     /**
@@ -9,22 +12,15 @@ class NonTerminal extends CloneableSymbol implements Cloneable {
      * @param rule The rule which this Non-terminal produces
      */
     public NonTerminal(Rule rule) {
+        super(-rule.getId());
         this.rule = rule;
-        value = NUM_TERMINALS + rule.getId();
         rule.incrementUseCount();
     }
 
-
-    @Override
-    public boolean isNonTerminal() {
-        return true;
-    }
-
-    @Override
-    public int expandedLength() {
-        return rule.length();
-    }
-
+    /**
+     * Get the rule, which is represented by this {@link NonTerminal}
+     * @return The rule
+     */
     public Rule getRule() {
         return rule;
     }
@@ -33,4 +29,5 @@ class NonTerminal extends CloneableSymbol implements Cloneable {
     public String toString() {
         return "R" + (rule.getId());
     }
+
 }

@@ -6,8 +6,15 @@ import unified.interfaces.UnifiedCompressor;
 
 public class AreaCompV2 implements UnifiedCompressor {
 
+    /**
+     * The {@link AreaFunction} which this algorithm should use to prioritize intervals in the LCP array
+     */
     private AreaFunction area;
 
+    /**
+     * Creates a new instance with a given {@link AreaFunction}
+     * @param area The given {@link AreaFunction}
+     */
     public AreaCompV2(AreaFunction area) {
         this.area = area;
     }

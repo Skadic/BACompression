@@ -17,8 +17,9 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        if(args.length == 1) {
+        if(args.length != 1) {
             System.out.println("Please specify an input file");
+            return;
         }
 
         final AreaFunction area = new NaiveArea();
@@ -45,5 +46,11 @@ public class Main {
             values.forEach((counterName, time) -> System.out.printf("%s: %dµs%n", counterName, time / 1000));
             System.out.println();
         });
+
+        //AugmentedString str = new AugmentedString("acaaacatat");
+        //System.out.println(str.toString());
+
+        //System.out.println(str.getLCPIntervals(2));
+
     }
 }

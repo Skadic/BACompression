@@ -1,24 +1,14 @@
 package areacomp.v2;
 
-class Terminal extends CloneableSymbol implements Cloneable {
+class Terminal extends Symbol {
 
     public Terminal(int value) {
-        this.value = value;
-    }
-
-
-    @Override
-    public boolean isTerminal() {
-        return true;
+        super(value);
     }
 
     @Override
     public String toString() {
-        return String.valueOf((char) value);
+        return String.valueOf((char) value());
     }
 
-    @Override
-    public int expandedLength() {
-        return 1;
-    }
 }
