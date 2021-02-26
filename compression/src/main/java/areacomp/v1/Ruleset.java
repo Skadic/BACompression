@@ -8,6 +8,7 @@ import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
 import utils.Benchmark;
+import utils.Interval;
 
 import java.util.*;
 import java.util.function.Function;
@@ -47,6 +48,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @param fun The Area function that determines which intervals in the LCP array are prioritized
      */
     public void compress(AreaFunction fun) {
+        final long totalNow = System.nanoTime();
         boolean unchanged = false;
         while (!unchanged) {
             unchanged = true;
@@ -60,44 +62,66 @@ class Ruleset implements ToUnifiedRuleset {
 
 
                 now = System.nanoTime();
-                AreaFunction.AreaData interval = null;
+                PriorityQueue<Interval> intervals = new PriorityQueue<>(
+                        Comparator.comparingInt(
+                                interval -> -fun.area(augS, interval.start(), interval.end()).area
+                        )
+                );
+
                 // Get the maximum valued interval
                 for (int i = 1; i <= augS.length(); i++) {
                     for (int j = i + 1; j <= augS.length(); j++) {
-                        final var areaData = fun.area(augS.getSuffixArray(), augS.getInverseSuffixArray(), augS.getLcp(), i, j);
-                        if(interval == null || interval.area < areaData.area) {
-                            interval = areaData;
-                        }
+                        intervals.add(new Interval(i, j));
                     }
                 }
-                Benchmark.updateTime(ALGORITHM_NAME, "max interval", System.nanoTime() - now);
+                Benchmark.updateTime(ALGORITHM_NAME, "queue", System.nanoTime() - now);
 
                 now = System.nanoTime();
-                // The positions at which the pattern can be found
-                int[] positions = IntStream.range(interval.low - 1, interval.high)
-                        .map(augS::suffixIndex)
-                        .toArray();
 
-                // Get the length of the longest common prefix in this range of the lcp array
-                // This will be the length of the pattern that is to be replaced.
-                int len = IntStream.range(interval.low, interval.high).map(augS::lcp).min().orElse(0);
 
-                // This means there is no repeated subsequence of 2 or more characters. In this case, abort
-                if(len > 1) {
-                    unchanged = false;
-                } else {
-                    continue;
+                Interval interval;
+                int[] positions;
+                int len;
+
+                // Poll intervals from the queue, until one with more than 1 occurrence and pattern length > 1 is found
+                do {
+                    interval = intervals.poll();
+
+                    // The positions at which the pattern can be found
+                    positions = IntStream.range(interval.start() - 1, interval.end())
+                            .map(augS::suffixIndex)
+                            .toArray();
+
+                    // Get the length of the longest common prefix in this range of the lcp array
+                    // This will be the length of the pattern that is to be replaced.
+                    len = IntStream.range(interval.start(), interval.end()).map(augS::lcp).min().orElse(0);
+
+                    // This means there is no repeated subsequence of 2 or more characters. In this case, abort
+                    if(len > 1) {
+                        unchanged = false;
+                    } else {
+                        continue;
+                    }
+
+                    Arrays.sort(positions);
+                    positions = nonOverlapping(positions, len);
+                    Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
+
+                    if (positions.length > 1) {
+                        break;
+                    }
+                } while(!intervals.isEmpty());
+
+                    if (positions.length <= 1) {
+                    break;
                 }
-
-                Arrays.sort(positions);
-                positions = nonOverlapping(positions, len);
-                Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
 
                 now = System.nanoTime();
                 rule.factorize(len, positions);
                 Benchmark.updateTime(ALGORITHM_NAME, "factorize", System.nanoTime() - now);
             }
         }
+        Benchmark.updateTime(ALGORITHM_NAME, "total time", System.nanoTime() - totalNow);
     }
 
     /**

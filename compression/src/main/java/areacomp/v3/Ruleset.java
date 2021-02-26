@@ -1,4 +1,4 @@
-package areacomp.v2;
+package areacomp.v3;
 
 import areacomp.AreaFunction;
 import unified.UnifiedNonTerminal;
@@ -8,16 +8,14 @@ import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedSymbol;
 import utils.AugmentedString;
 import utils.Benchmark;
-import utils.Interval;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class Ruleset implements ToUnifiedRuleset {
 
-    public static final String ALGORITHM_NAME = AreaCompV2.class.getSimpleName();
+    public static final String ALGORITHM_NAME = AreaCompV3.class.getSimpleName();
 
     /**
      * The string for which this ruleset is built
@@ -99,37 +97,30 @@ class Ruleset implements ToUnifiedRuleset {
         // Create a Priority Queue which holds possible intervals in the LCP array
         // The priority value is calculated through the given area function.
         // This function should return a high value for promising intervals in the LCP array.
-        var queue = new PriorityQueue<Interval>(
+        var queue = new PriorityQueue<AreaFunction.AreaData>(
                 Comparator.comparingInt(
-                        interval -> -fun.area(augS, interval.start(), interval.end()).area
+                        areaData -> -areaData.area
                 )
         );
 
-        // Add all possible intervals
-        for (int i = 1; i <= augS.length(); i++) {
-            for (int j = i + 1; j <= augS.length(); j++) {
-                queue.add(new Interval(i, j));
-            }
+        for (var interval : augS.getLCPIntervals(2)) {
+            queue.add(fun.area(augS, interval.start() + 1, interval.end()));
         }
+
         Benchmark.updateTime(ALGORITHM_NAME, "queue", System.nanoTime() - now);
 
-        while (true) {
+        while (!queue.isEmpty()) {
 
             now = System.nanoTime();
             // Poll the best interval
-            var interval = queue.poll();
+            var areaData = queue.remove();
 
             // The positions at which the pattern can be found
-            int[] positions = IntStream.range(interval.start() - 1, interval.end())
-                    .map(augS::suffixIndex)
-                    .toArray();
+            int[] positions = areaData.viablePositions;
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
-            int len = IntStream.range(interval.start(), interval.end())
-                    .map(augS::lcp)
-                    .min()
-                    .orElse(0);
+            int len = areaData.len;
 
             // This means there is no repeated subsequence of 2 or more characters. In this case, abort
             if (len <= 1) {
@@ -138,10 +129,14 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-            positions = nonOverlapping(positions, len);
+            //positions = nonOverlapping(positions, len);
+            var inBoundaryNow = System.nanoTime();
             positions = inBoundary(positions, len);
+            Benchmark.updateTime(ALGORITHM_NAME, "in boundary", System.nanoTime() - inBoundaryNow);
 
+            var multiOccNow = System.nanoTime();
             final var multipleOccurrences = multipleDifferingOccurences(positions);
+            Benchmark.updateTime(ALGORITHM_NAME, "multiple Occurrences", System.nanoTime() - multiOccNow);
 
             Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
 
@@ -199,6 +194,9 @@ class Ruleset implements ToUnifiedRuleset {
         return newMap.values().stream().reduce(Integer.MIN_VALUE, Integer::max) > 1;
     }
 
+
+    private static final List<Integer> IN_BOUNDARY_LIST = new ArrayList<>();
+
     /**
      * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
      * @param positions The positions to filter
@@ -208,14 +206,14 @@ class Ruleset implements ToUnifiedRuleset {
      * @see #crossesBoundary(int, int)
      */
     private int[] inBoundary(int[] positions, int len) {
-        List<Integer> list = new ArrayList<>();
+        IN_BOUNDARY_LIST.clear();
         for (int position : positions) {
             if (!crossesBoundary(position, position + len)) {
-                list.add(position);
+                IN_BOUNDARY_LIST.add(position);
             }
         }
 
-        return list.stream().mapToInt(i -> i).toArray();
+        return IN_BOUNDARY_LIST.stream().mapToInt(i -> i).toArray();
     }
 
     /**
@@ -268,8 +266,19 @@ class Ruleset implements ToUnifiedRuleset {
      * @return true, if the interval starts in the same rule range as it started. false otherwise
      */
     public boolean crossesBoundary(int from, int to) {
-        return getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleRangeStartIndex(from) != ruleRangeStartIndex(to - 1);
+        var now = System.nanoTime();
+        boolean b = getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleRangeStartIndex(from) != ruleRangeStartIndex(to - 1);
+        Benchmark.updateTime(ALGORITHM_NAME, "crossesBoundary", System.nanoTime() - now);
+        return b;
     }
+
+    // aaacaaa
+    // R0 -> v v v R1 c R1
+    // R1 -> aaa
+    // R2 -> aa
+    // 1 1 1 0 1 1 1
+    // 0
+    // 0
 
     /**
      * Removes all overlapping occurences of a pattern from an array of positions

@@ -1,7 +1,7 @@
 import areacomp.AreaFunction;
+import areacomp.areas.ChildArea;
 import areacomp.areas.NaiveArea;
-import areacomp.v1.AreaCompV1;
-import areacomp.v2.AreaCompV2;
+import areacomp.v3.AreaCompV3;
 import repair.RePair;
 import sequitur.Sequitur;
 import unified.interfaces.UnifiedCompressor;
@@ -27,8 +27,9 @@ public class Main {
         final var compressors = List.of(
                 new Sequitur(),
                 new RePair(),
-                new AreaCompV2(area),
-                new AreaCompV1(area)
+                new AreaCompV3(new ChildArea())
+                //,new AreaCompV2(area)
+                //,new AreaCompV1(area)
         );
 
         final var inputPath = Paths.get("input", args[0]).toAbsolutePath();
@@ -36,6 +37,7 @@ public class Main {
         final var input = Files.readString(inputPath);
 
         try (PrintStream out = new PrintStream(Files.newOutputStream(outputPath))) {
+            out.println("On a test string of " + input.length() + " characters.\n");
             for (UnifiedCompressor compressor : compressors) {
                 compressor.benchmark(input, out);
             }
@@ -43,9 +45,11 @@ public class Main {
 
         Benchmark.getAllValues().forEach((algName, values) -> {
             System.out.println("Times for " + algName + ":");
-            values.forEach((counterName, time) -> System.out.printf("%s: %dµs%n", counterName, time / 1000));
+            values.forEach((counterName, time) -> System.out.printf("%s: %dms%n", counterName, time / 1000000));
             System.out.println();
         });
+
+        System.out.println(input.length());
 
         //AugmentedString str = new AugmentedString("acaaacatat");
         //System.out.println(str.toString());

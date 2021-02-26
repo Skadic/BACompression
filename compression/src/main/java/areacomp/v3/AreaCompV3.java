@@ -1,10 +1,10 @@
-package areacomp.v2;
+package areacomp.v3;
 
 import areacomp.AreaFunction;
 import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedCompressor;
 
-public class AreaCompV2 implements UnifiedCompressor {
+public class AreaCompV3 implements UnifiedCompressor {
 
     /**
      * The {@link AreaFunction} which this algorithm should use to prioritize intervals in the LCP array
@@ -15,7 +15,7 @@ public class AreaCompV2 implements UnifiedCompressor {
      * Creates a new instance with a given {@link AreaFunction}
      * @param area The given {@link AreaFunction}
      */
-    public AreaCompV2(AreaFunction area) {
+    public AreaCompV3(AreaFunction area) {
         this.area = area;
     }
 
@@ -28,6 +28,6 @@ public class AreaCompV2 implements UnifiedCompressor {
 
     @Override
     public String name() {
-        return AreaCompV2.class.getSimpleName();
+        return AreaCompV3.class.getSimpleName();
     }
 }

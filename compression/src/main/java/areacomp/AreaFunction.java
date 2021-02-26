@@ -1,5 +1,7 @@
 package areacomp;
 
+import utils.AugmentedString;
+
 @FunctionalInterface
 public interface AreaFunction {
 
@@ -7,17 +9,15 @@ public interface AreaFunction {
      * Calculate an area function for a slice of the lcp array. The value of this function is used to prioritize
      * intervals in the lcp array.
      *
-     * @param sa The suffix array
-     * @param isa The inverse suffix array
-     * @param lcp The lcp array
+     * @param str The {@link AugmentedString} which contains the relevant data
      * @param low The lower bound for the interval in the lcp array (inclusive)
      * @param high The upper bound for the interval in the lcp array (exclusive)
      * @return An {@link AreaData} object, detailing the area value of this
      */
-    AreaData area(int[] sa, int[] isa, int[] lcp, int low, int high);
+    AreaData area(AugmentedString str, int low, int high);
 
     /**
-     * A class containing the resulting data from a computation of {@link AreaFunction#area(int[], int[], int[], int, int)}
+     * A class containing the resulting data from a computation of {@link AreaFunction#area(AugmentedString, int, int)}
      */
     class AreaData implements Comparable<AreaData> {
 

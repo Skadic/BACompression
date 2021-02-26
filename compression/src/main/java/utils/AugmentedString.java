@@ -196,7 +196,7 @@ public class AugmentedString implements CharSequence {
         if(0 >= minLValue) list.add(new Interval(lastlIndex, length()));
 
         while (currentlIndex != -1) {
-            if(lcp(down(lastlIndex)) >= minLValue) list.add(new Interval(lastlIndex, currentlIndex - 1));
+            if(lValue(lastlIndex, currentlIndex - 1) >= minLValue) list.add(new Interval(lastlIndex, currentlIndex - 1));
             addChildIntervals(lastlIndex, currentlIndex - 1, minLValue, list);
 
             lastlIndex = currentlIndex;
@@ -226,6 +226,8 @@ public class AugmentedString implements CharSequence {
      * @param intervals The collection to add the intervals into
      */
     private void addChildIntervals(int low, int high, int minLValue, Collection<Interval> intervals) {
+        if (low >= high) return;
+
         int currentLIndex;
 
         // Get the first l index of the lcp interval
