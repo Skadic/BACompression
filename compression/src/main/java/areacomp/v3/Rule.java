@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-class Rule implements CharSequence, Iterable<Symbol> {
+public class Rule implements CharSequence, Iterable<Symbol> {
 
     /**
      * The list of symbols that make up the right side of this rule
@@ -59,8 +59,6 @@ class Rule implements CharSequence, Iterable<Symbol> {
         IntStream.range(1, stringLength + 1)
                 .boxed()
                 .forEach(cumulativeLength::add);
-
-        ruleset.getRuleMap().put(id, this);
     }
 
     /**
@@ -75,6 +73,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
         this.symbols = new ArrayList<>(symbols);
         this.cumulativeLength = new ArrayList<>(symbols.size());
         this.useCount = 0;
+        ruleset.getRuleMap().put(id, this);
     }
 
     private Rule(Ruleset r) {
@@ -140,7 +139,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
         processed.add(new RuleLocalIndex(firstRelevantRule.id, positions[0] - firstRelevantRuleIndex));
 
         // Mark the area now occupied by this rule with the rule's id
-        ruleset.markRange(rule.id, positions[0], positions[0] + len);
+        ruleset.markRange(rule.id, positions[0], positions[0] + len - 1);
 
         // Populate the rule with data
         rule.symbols.addAll(substitutionData.symbolList());
@@ -169,11 +168,11 @@ class Rule implements CharSequence, Iterable<Symbol> {
                 deepestRule.substitute(rule, position, len);
                 processed.add(ruleLocalIndex);
             }
-            ruleset.markRange(rule.id, positions[i], positions[i] + len);
+            ruleset.markRange(rule.id, positions[i], positions[i] + len - 1);
         }
 
         // Put this rule into the map
-        ruleset.getRuleMap().put(rule.id, rule);
+        //ruleset.getRuleMap().put(rule.id, rule);
     }
 
     public List<Integer> getCumulativeLength() {
@@ -212,12 +211,18 @@ class Rule implements CharSequence, Iterable<Symbol> {
             final var cumulativeLengthBefore = localIndex > 0 ? cumulativeLength.get(localIndex - 1) : 0;
             return nonTerminal.getRule().charAt(index - cumulativeLengthBefore);
         } else {
-            return (char) symbols.get(index).value();
+            return (char) symbols.get(localIndex).value();
         }
     }
 
     @Override
     public String subSequence(int start, int end) {
+
+        if(end <= start) {
+            return "";
+        } else if (start + 1 == end) {
+            return String.valueOf(charAt(start));
+        }
 
         // Let A -> BBBde, B -> abc
         // [3, 6, 9, 10, 11]
@@ -226,6 +231,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
         // endSymbolIndex =  2;
         final int startSymbolIndex = searchTerminalIndex(start);
         final int endSymbolIndex = searchTerminalIndex(end - 1);
+        final int length = end - start;
 
 
         // The first and last symbol need to be handled separately,
@@ -243,8 +249,10 @@ class Rule implements CharSequence, Iterable<Symbol> {
             final int startIndexInStartSymbol = start - lengthBeforeStartSymbol;
 
             final var nonTerminalRule = nonTerminal.getRule();
-            firstSegment = nonTerminalRule.subSequence(startIndexInStartSymbol, nonTerminalRule.length());
+            firstSegment = nonTerminalRule.subSequence(startIndexInStartSymbol, Math.min(nonTerminalRule.length(), startIndexInStartSymbol + length));
         }
+
+        if (firstSegment.length() == length) return firstSegment;
 
         final String lastSegment;
         if (symbols.get(endSymbolIndex) instanceof Terminal terminal) {
@@ -255,8 +263,10 @@ class Rule implements CharSequence, Iterable<Symbol> {
             final int endIndexInEndSymbol = end - lengthBeforeEndSymbol;
 
             final var nonTerminalRule = nonTerminal.getRule();
-            lastSegment = nonTerminalRule.subSequence(endIndexInEndSymbol, nonTerminalRule.length());
+            lastSegment = nonTerminalRule.subSequence(endIndexInEndSymbol, Math.min(nonTerminalRule.length(), endIndexInEndSymbol + length));
         }
+
+        if(firstSegment.length() + lastSegment.length() == length) return  firstSegment + lastSegment;
 
         final var sb = new StringBuilder(firstSegment);
 
@@ -284,7 +294,12 @@ class Rule implements CharSequence, Iterable<Symbol> {
 
         for(var sym : this) {
             if (sym instanceof Terminal) {
-                sb.append((char) sym.value()).append(" ");
+                final String s = switch (sym.value()) {
+                    case ' ' -> "_";
+                    case '\n' -> "\\n";
+                    default -> String.valueOf((char) sym.value());
+                };
+                sb.append(s).append(" ");
             } else if (sym instanceof NonTerminal) {
                 sb.append("R").append(sym.value()).append(" ");
             }
@@ -340,4 +355,16 @@ class Rule implements CharSequence, Iterable<Symbol> {
         return symbols.subList(from, to).stream();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Rule symbols = (Rule) o;
+        return id == symbols.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

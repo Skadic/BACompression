@@ -12,7 +12,7 @@ class NonTerminal extends Symbol {
      * @param rule The rule which this Non-terminal produces
      */
     public NonTerminal(Rule rule) {
-        super(-rule.getId());
+        super(rule.getId());
         this.rule = rule;
         rule.incrementUseCount();
     }

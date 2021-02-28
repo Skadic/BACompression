@@ -45,6 +45,8 @@ class Ruleset implements ToUnifiedRuleset {
      */
     private final List<HashSet<Integer>> ruleRangeStarts;
 
+    private final RuleIntervalIndex intervalIndex;
+
     /**
      * A map that contains all rules. It maps from a rule ID to its corresponding rule
      */
@@ -66,6 +68,9 @@ class Ruleset implements ToUnifiedRuleset {
         this.topLevelRule = new Rule(s, this);
         ruleRanges = new ArrayList<>(s.length());
         ruleRangeStarts = new ArrayList<>(s.length());
+
+        intervalIndex = new RuleIntervalIndex(topLevelRule.getId(), s.length());
+
         // Populate the data structures
         for (int i = 0; i < s.length(); i++) {
             // At the start, each position is occupied only by rule 0 (the top level rule)
@@ -225,12 +230,10 @@ class Ruleset implements ToUnifiedRuleset {
      * @see #ruleRangeStarts
      */
     public int ruleRangeStartIndex(int index) {
-        int current = index;
-        int maxId = getDeepestRuleIdAt(index);
-        while (!ruleRangeStarts.get(current).contains(maxId)) {
-            current--;
-            if (current == -1) return 0;
-        }
+        long now = System.nanoTime();
+        int current = intervalIndex.range(index).totalStart();
+        Benchmark.updateTime(ALGORITHM_NAME, "ruleRangeStartIndex", System.nanoTime() - now);
+
 
         return current;
     }
@@ -246,6 +249,9 @@ class Ruleset implements ToUnifiedRuleset {
      * @see #ruleRangeStarts
      */
     public void markRange(int id, int from, int to) {
+        intervalIndex.mark(id, from, to);
+
+        /*
         // Get the id of the rule that occupied this area before
         final int originalId = getDeepestRuleIdAt(from);
         // Add the start of the new rule's area to the list
@@ -256,7 +262,7 @@ class Ruleset implements ToUnifiedRuleset {
         for (int i = from; i < to; i++) {
             var index = ruleRanges.get(i).indexOf(originalId);
             ruleRanges.get(i).add(index + 1, id);
-        }
+        }*/
     }
 
     /**
@@ -307,9 +313,8 @@ class Ruleset implements ToUnifiedRuleset {
      *
      * @see #ruleRanges
      */
-    public int getDeepestRuleIdAt(int index) {
-        List<Integer> ruleIdList = ruleRanges.get(index);
-        return ruleIdList.get(ruleIdList.size() - 1);
+    public int getDeepestRuleIdAt(int index) { ;
+        return intervalIndex.deepestRuleAt(index);
     }
 
     /**

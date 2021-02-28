@@ -49,8 +49,6 @@ public class Main {
             System.out.println();
         });
 
-        System.out.println(input.length());
-
         //AugmentedString str = new AugmentedString("acaaacatat");
         //System.out.println(str.toString());
 
