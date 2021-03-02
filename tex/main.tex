@@ -1,0 +1,48 @@
+% main.tex
+\include{header}
+\begin{document}
+\selectlanguage{german}
+\include{kapitel/titelseite}
+\blankpage
+\pagenumbering{roman}
+\tableofcontents
+\cleardoublepage
+\pagenumbering{arabic}
+
+% Kapitel
+%\include{kapitel/einleitung}
+%\include{kapitel/theorie}
+%\include{kapitel/ziel}
+
+\include{kapitel/einleitung}
+\include{kapitel/theorie}
+\include{kapitel/algorithmen}
+
+
+% Anhang
+%\appendix
+%\include{kapitel/anhang}
+
+% Abbildungsverzeichnis
+%\listoffigures
+%\addcontentsline{toc}{chapter}{Abbildungsverzeichnis}
+%\cleardoublepage
+
+% Algorithmenverzeichnis
+%\listofalgorithms
+%\addcontentsline{toc}{chapter}{Algorithmenverzeichnis}
+%\cleardoublepage
+
+% Literaturverzeichnis
+\bibliographystyle{gerplain}
+\bibliography{literatur/literatur}
+\addcontentsline{toc}{chapter}{\bibname}
+
+% Erklaerung
+%\thispagestyle{myheadings}
+%\markboth{}{ERKLÄRUNG}
+%\addcontentsline{toc}{chapter}{Erklärung}
+%\include{kapitel/erklaerung}
+%\cleardoublepage
+\end{document}
+

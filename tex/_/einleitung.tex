@@ -1,0 +1,50 @@
+% einleitung.tex
+\chapter{Einleitung}
+
+Grammatikbasierte Kompression erzeugt eine kontextfreie Grammatik, dessen Sprache nur aus einem Wort besteht: Eine Straight-Line-Grammatik \cite{benz_effective_2013}. Die Kompression geschieht, indem zu einem String eine Straight-Line-Grammatik erzeugt wird, die effizienter zu speichern ist als der String selbst.
+
+Diese Arbeit stellt den AreaComp-Algorithmus vor, der sich des Enhanced Suffix Arrays bedient, um wiederholte Substrings zu ermitteln und diese durch Produktionsregeln der Grammatik zu ersetzen.
+Dieser Algorithmus wird mit ähnlichen Algorithmen in Bezug auf die Größe der erzeugten Grammatik evaluiert.
+
+\section{Motivation und Hintergrund}
+
+Mit der stets steigenden Menge an Daten wird die Aufgabe der effizienten Datenkompression immer wichtiger. Einerseits sollte ein Kompressionsalgorithmus bezüglich der Laufzeit performant sein, andererseits auch eine möglichst gute Kompressionsrate erreichen. 
+Zu diesem Zweck wurden schon diverse Techniken entwickelt, dieses Problem zu lösen. 
+
+Etwa existieren Entropie-Kodierer wie zum Beispiel die Huffman-Kodierung \cite{huffman_method_1952}, die für jedes Symbol im Eingabealphabet anhand der Häufigkeit im Eingabetext ein präfixfreies Codewort variabler und optimaler Länge erzeugt und anschließend jedes Vorkommen des entsprechenden Symbols durch dieses Codewort ersetzt. 
+Dabei erhalten die häufigsten Symbole die kürzesten und die seltensten Symbole die längsten Codeworte.
+
+Ebenfalls gibt es Kodierer, die mithilfe von Wörterbuchkompression arbeiten. Hier wird im Eingabetext nach sich wiederholenden Substrings gesucht. Diese werden durch spezielle Symbole ersetzt, die einen Pointer in einen Wörterbucheintrag darstellen. 
+Mithilfe des Wörterbuches und dieser Pointer-Symbole lässt sich dann der Eingabetext rekonstruieren.
+Eines der bekannteren Beispiele ist die LZ77-Kodierung von Lempel und Ziv \cite{ziv_universal_1977}.
+
+Diese Arbeit befasst sich besonders mit grammatikbasierten Kodierern. Diese erzeugen eine Straight Line Grammatik, die einen Eingabetext in kompakter Weise beschreibt \cite{kieffer_grammar-based_2000}. 
+Eine Straight Line Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Re-Pair \cite{larsson_offline_1999} und Sequitur \cite{nevill-manning_identifying_1997}.
+
+Es wird der AreaComp-Algorithmus vorgestellt, der mithilfe von Suffix-Arrays, inversen Suffix-Arrays und LCP-Arrays \cite{manber_suffix_1993} eine Straight Line Grammatik berechnet, indem mithilfe einer Kostenfunktion Intervalle im LCP-Array bestimmt werden, die den möglichst günstigsten zu ersetzenden Substring beschreiben, und diesen Substring durch ein neues Symbol und eine entsprechende Produktionsregel ersetzt.
+
+\section{Aufbau der Arbeit}
+
+Die Arbeit beginnt mit einer Einleitung in das Thema. In Kapitel 2 werden Grundlagen vorgestellt, die für die Arbeit relevant sind. Daraufhin werden in Kapitel 3 andere Kompressionsalgorithmen vorgestellt, die ähnlich arbeiten. In Kapitel 4 wird die Implementierung des AreaComp-Algorithmus besprochen, gefolgt von einer praktischen Evaluierung und einem Vergleich mit anderen Kompressionsalgorithmen in Kapitel 5. In Kapitel 6 werden Ergebnisse zusammengefasst, und ein Ausblick auf mögliche weitere Arbeit in diese Richtung gegeben.
+
+Ein vorläufiges Inhaltsverzeichnis wäre also:
+
+\begin{enumerate}
+    \item[\textbf{1}] Einleitung
+    \item[\textbf{2}] Theoretische Grundlagen
+    \begin{itemize}
+        \item Notation
+        \item Verlustfreie Kompression
+        \item Straight-Line-Grammatiken
+        \item Grammatikbasierte Kompression
+        \item Enhanced Suffix Array
+    \end{itemize}
+    \item[\textbf{3}] Ähnliche Algorithmen
+    \begin{itemize}
+        \item Re-Pair
+        \item Sequitur
+    \end{itemize}
+    \item[\textbf{4}] AreaComp
+    \item[\textbf{5}] Vergleich mit anderen Algorithmen
+    \item[\textbf{6}] Fazit
+\end{enumerate}

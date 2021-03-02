@@ -64,9 +64,10 @@ public interface UnifiedCompressor {
         out.println("Grammar size: " + unified.rulesetSize());
 
         // Verify, whether this grammar can reproduce the original string
-        boolean reconstructable = unified.verify(s);
+        String reconstructed = unified.buildString();
+        boolean reconstructable = reconstructed.equals(s);
         out.println("Original String reconstructable? " + (reconstructable ? "Yes" : "No"));
-        if(!reconstructable && PRINT) out.println(unified.buildString());
+        if(!reconstructable && PRINT) out.println(reconstructed);
         out.println();
     }
 

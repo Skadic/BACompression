@@ -1,0 +1,526 @@
+\chapter{Andere Algorithmen}
+
+Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, stelle ich hier die Algorithmen Sequitur\cite{nevill-manning_identifying_1997} und Re-Pair\cite{larsson_offline_1999} vor.
+
+\section{Sequitur}
+
+Sequitur\cite{nevill-manning_identifying_1997} ist ein On-line Grammatikkompressions-Algorithmus. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
+
+\subsection{Eigenschaften der erzeugten Grammatik}
+
+Der Algorithmus berechnet eine Grammatik, dessen Produktionsregeln folgende zwei Eigenschaften besitzen:
+\begin{enumerate}
+	\item[$p_1$] Digram-Uniqueness\\
+	Kein Paar von aufeinanderfolgenden Zeichen kommt in der Grammatik öfter als einmal vor.
+	\item[$p_2$] Rule-Utility\\
+	Jede Produktionsregel der Grammatik wird mehr als einmal verwendet.
+\end{enumerate}
+
+\subsubsection{Digram-Uniqueness}
+
+Wird ein neues Symbol gelesen, so wird es an die rechte Seite der Startregel $S$ angehängt. Dieses Symbol formt mit seinem Vorgänger ein neues Digramm. Kommt dieses Digramm an anderer Stelle in der Grammatik vor, so ist Digram-Uniqueness verletzt. 
+Existiert bereits eine Regel in der Grammatik, die auf dieses Digramm abbildet, wird dieses Vorkommen durch das Nichtterminal dieser Regel ersetzt. 
+Falls nicht, erzeuge eine neue Regel mit einem neuen Nichtterminal, die dieses Digramm erzeugt. Ersetze dann die ursprünglichen zwei Vorkommen durch das neue Nichtterminal.
+
+\subsubsection{Rule-Utility}
+
+Es kann vorkommen, dass durch Substitutionen ein Nichtterminal nur einmal in der Grammatik vorkommt. In diesem Fall ist Rule-Utility verletzt. Ersetze nun dieses eine Vorkommen des Nichtterminals durch die rechte Seite der zugehörigen Produktionsregel, und lösche diese. So können auch längere Produktionsregeln entstehen.
+
+\subsection{Implementation}
+
+Der Algorithmus arbeitet durch das Aufrechterhalten von Digram-Uniqueness und Rule-Utility. Verletzungen dieser Eigenschaften müssen effizient erkannt werden.
+
+Die Optimale Datenstruktur für zu diesem Zweck muss folgende Operationen effizient ermöglichen:
+
+\begin{itemize}
+	\item Ein Symbol an $S$ anhängen
+	\item Eine existierende Regel verwenden
+	\item Eine neue Regel erzeugen
+	\item Eine Regel löschen
+\end{itemize}
+
+\subsubsection{Datenstruktur für Regeln und Index}
+
+Sequitur nutzt eine Art doppelt verkettete Ringstruktur zur Implementation von Produktionsregeln. 
+Jede Regel besitzt ein sogenanntes "Guard" Symbol, das den Startpunkt, beziehungsweise den Endpunkt, der Ringstruktur darstellt. Der Nachfolger, des Guard-Symbols ist also das erste Symbol der rechten Seite einer Regel und der Vorgänger ist dem entsprechend das letzte Symbol.
+Zudem besitzt jedes Vorkommen eines Nichtterminal eine Referenz auf das Guard Symbol der Produktionsregel, die das Nichtterminal repräsentiert. 
+
+Abbildung \ref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur für die Grammatik:
+\begin{align*}
+	S &\rightarrow aAcdAe\\
+	A &\rightarrow ab
+\end{align*}
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, fill=red!5, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, fill=red!5, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode] (a1) at (2, 0) {a};
+		\node[normalnode] (A1) at (3, 0) {A};
+		\node[normalnode] (c) at (4, 0) {c};
+		\node[normalnode] (d) at (5, 0) {d};
+		\node[normalnode] (A2) at (6, 0) {A};
+		\node[normalnode] (e) at (7, 0) {e};
+		
+		\node[normalnode] (A) at (3, -2) {A};
+		\node[guardnode] (G2) at (4, -2) {};
+		\node[normalnode] (a2) at (5, -2) {a};
+		\node[normalnode] (b1) at (6, -2) {b};
+		
+		\foreach \from/\to in {G1/a1, a1/A1, A1/c, c/d, d/A2, A2/e, G2/a2, a2/b1}
+			\draw [ <-> ] (\from) -- (\to);
+
+			
+		\draw [ -> ] (S) -- (G1);
+		\draw [ <-> ] (G1) to[out=90, in=90, looseness=0.5] (e);
+		
+		\draw [ -> ] (A) -- (G2);
+		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
+		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
+		\draw [ <-> ] (G2) to[out=45, in=90] (b1);
+	\end{tikzpicture}
+	\caption{Jedes Nichtterminal hat Referenzen zu einer gemeinsamen Instanz der Regel, die das Nichtterminal repräsentiert}
+	\label{seqLinkedDataStructure}
+\end{figure}
+
+Für Digram-Uniqueness wird eine Index-Struktur angewandt, um zu überprüfen, ob ein Digramm bereits in der Grammatik existiert. Diese wird als Hashtabelle Implementiert, um solche Anfragen in konstanter Laufzeit zu bewältigen. Zudem können ebenfalls in konstanter Laufzeit Einträge hinzugefügt und auch entfernt werden. Diese Hashtabelle enthält eine Referenz zu dem Vorkommen jedes Digramms in der Grammatik. 
+
+
+\subsection{Beispiel}
+
+Wir wenden den Algorithmus beispielhaft auf den String \enquote{$abacababa$} an.\\\\
+Zuerst generiere eine leere Startregel $S$.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		
+		\draw [ -> ] (S) -- (G1);
+		\draw [ <-> ] (G1) to[out=0, in=90, looseness=5] (G1);
+	\end{tikzpicture}
+\end{figure}
+Lese nacheinander die Zeichen $a$, $b$, $a$, $c$ und $a$.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode] (a1) at (2, 0) {a};
+		\node[normalnode] (b1) at (3, 0) {b};
+		\node[normalnode] (a2) at (4, 0) {a};
+		\node[normalnode] (c1) at (5, 0) {c};
+		\node[normalnode] (a3) at (6, 0) {a};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		\draw [ <-> ] (G1) -- (a1);
+		\draw [ <-> ] (a1) -- (b1);
+		\draw [ <-> ] (b1) -- (a2);
+		\draw [ <-> ] (a2) -- (c1);
+		\draw [ <-> ] (c1) -- (a3);
+		\draw [ <-> ] (a3) to[out=90, in=90, looseness=0.5] (G1);
+	\end{tikzpicture}
+	\caption*{Die Zeichen $abaca$ wurden gelesen. Währenddessen wirden weder Digram Uniqueness, noch Rule Utility verletzt, also sind keine besonderen Schritte nötig gewesen. In jedem Schritt (außer im Ersten) wird das neu entstandene Digramm in die Hashtabelle eingefügt.}
+\end{figure}
+
+Nun lese das nächste Zeichen $b$.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode, draw=red!60] (a1) at (2, 0) {a};
+		\node[normalnode, draw=red!60] (b1) at (3, 0) {b};
+		\node[normalnode] (a2) at (4, 0) {a};
+		\node[normalnode] (c1) at (5, 0) {c};
+		\node[normalnode, draw=red!60] (a3) at (6, 0) {a};
+		\node[normalnode, draw=red!60] (b2) at (7, 0) {b};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/a1, a1/b1, b1/a2, a2/c1, c1/a3, a3/b2}
+			\draw [ <-> ] (\from) -- (\to);
+			
+		\draw [ <-> ] (b2) to[out=90, in=90, looseness=0.5] (G1);
+	\end{tikzpicture}
+	\caption*{Digram-Uniqueness ist verletzt, weil nun das Digramm $ab$ doppelt in der Grammatik vorkommt. Dies kann durch einen Lookup in der Hashtabelle festgestellt werden.}
+\end{figure}
+
+Wir erzeugen nun ein neues Nichtterminal $A$ und eine zugehörige Produktionsregel $A \rightarrow ab$  und ersetzen beide Vorkommen in der Grammatik durch das Nichtterminal. Die Nichtterminale enthalten eine Referenz auf die gemeinsam genutzte  Instanz der Produktionsregel. An jeder Stelle, an der $ab$ durch $A$ ersetzt wurde, werden nun die nun nicht mehr existierenden Digramme  aus der Hashtabelle entfernt, und die, durch das einsetzen von $A$, neu entstandenen Digramme in die Hashtabelle eingefügt
+Das alte Vorkommen des Digramms kann mit der Hashtabelle gefunden werden. 
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode, draw=blue!60] (A1) at (2, 0) {A};
+		\node[normalnode] (a1) at (3, 0) {a};
+		\node[normalnode] (c1) at (4, 0) {c};
+		\node[normalnode, draw=blue!60] (A2) at (5, 0) {A};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/A1, A1/a1, a1/c1, c1/A2}
+			\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (A2) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule A
+		
+		\node[normalnode] (A) at (2, -2) {A};
+		\node[guardnode] (G2) at (3, -2) {};
+		\node[normalnode] (a2) at (4, -2) {a};
+		\node[normalnode] (b) at (5, -2) {b};
+		
+		\draw [ -> ]  (A)  -- (G2);
+		
+		\foreach \from/\to in {G2/a2, a2/b}
+			\draw [ <-> ] (\from) -- (\to);
+			
+		\draw [ <-> ] (b) to[out=90, in=45, looseness=1] (G2);
+		
+		% Connect S and A
+		
+		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
+		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
+	\end{tikzpicture}
+	\caption*{Hier wurde jedes Vorkommen von $ab$ durch $A$ ersetzt und die Produktionsregel $A \rightarrow ab$ angelegt. Nun ist keine Eigenschaft mehr verletzt.}
+\end{figure}
+
+Wir lesen nun das Zeichen $a$.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode, draw=red!60] (A11) at (2, 0) {A};
+		\node[normalnode, draw=red!60] (a11) at (3, 0) {a};
+		\node[normalnode] (c1) at (4, 0) {c};
+		\node[normalnode, draw=red!60] (A12) at (5, 0) {A};
+		\node[normalnode, draw=red!60] (a12) at (6, 0) {a};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/A11, A11/a11, a11/c1, c1/A12, A12/a12}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (a12) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule A
+		
+		\node[normalnode] (A) at (2, -2) {A};
+		\node[guardnode] (G2) at (3, -2) {};
+		\node[normalnode] (a2) at (4, -2) {a};
+		\node[normalnode] (b) at (5, -2) {b};
+		
+		\draw [ -> ]  (A)  -- (G2);
+		
+		\foreach \from/\to in {G2/a2, a2/b}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (b) to[out=90, in=45, looseness=1] (G2);
+		
+		% Connect S and A
+		
+		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
+		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
+	\end{tikzpicture}
+	\caption*{Digram-Uniqueness ist verletzt, da $Aa$ mehrmals vorkommt.}
+\end{figure}
+
+Wir verfahren wieder wie vorher um die Verletzung dieser Eigenschaft zu beheben und fügen die Regel $B \rightarrow Aa$ ein.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode, draw=blue!60] (B11) at (2, 0) {B};
+		\node[normalnode] (c1) at (3, 0) {c};
+		\node[normalnode, draw=blue!60] (B12) at (4, 0) {B};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/B11, B11/c1, c1/B12}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (B12) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule B
+		
+		\node[normalnode] (B) at (2, -2) {B};
+		\node[guardnode] (G3) at (3, -2) {};
+		\node[normalnode, draw=red!60] (A3) at (4, -2) {A};
+		\node[normalnode] (a3) at (5, -2) {a};
+		
+		
+		\draw [ -> ]  (B)  -- (G3);
+		
+		\foreach \from/\to in {G3/A3, A3/a3}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (a3) to[out=90, in=45, looseness=1] (G3);
+		
+		% Connect S and B
+		
+		\draw [ -> ] (B11) to[out=-90, in=90] (G3);
+		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
+		
+		% Rule A
+		
+		\node[normalnode, draw=red!60] (A) at (4, -4) {A};
+		\node[guardnode] (G2) at (5, -4) {};
+		\node[normalnode] (a2) at (6, -4) {a};
+		\node[normalnode] (b) at (7, -4) {b};
+		
+		\draw [ -> ]  (A)  -- (G2);
+		
+		\foreach \from/\to in {G2/a2, a2/b}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (b) to[out=90, in=45, looseness=1] (G2);
+		
+		% Connect A and B
+		
+		\draw [ ->, draw=red!60] (A3) to[out=-90, in=90] (G2);
+	\end{tikzpicture}
+	\caption*{Die Verletzung von Digram-Uniqueness ist behoben, aber nun ist Rule-Utility verletzt, da die Produktionsregel von $A$ nur einmal verwendet wird.}
+\end{figure}
+
+Um dies zu beheben, wird das eine Vorkommen von $A$ gelöscht, und die zugehörige Produktionsregel entfernt.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode] (B11) at (2, 0) {B};
+		\node[normalnode] (c1) at (3, 0) {c};
+		\node[normalnode] (B12) at (4, 0) {B};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/B11, B11/c1, c1/B12}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (B12) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule B
+		
+		\node[normalnode] (B) at (2, -2) {B};
+		\node[guardnode] (G3) at (3, -2) {};
+		\node[normalnode, draw=blue!60] (a31) at (4, -2) {a};
+		\node[normalnode, draw=blue!60] (b31) at (5, -2) {b};
+		\node[normalnode] (a32) at (6, -2) {a};
+		
+		
+		\draw [ -> ]  (B)  -- (G3);
+		
+		\foreach \from/\to in {G3/a31, a31/b31, b31/a32}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (a32) to[out=90, in=45, looseness=1] (G3);
+		
+		% Connect S and B
+		
+		\draw [ -> ] (B11) to[out=-90, in=90] (G3);
+		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
+		
+	\end{tikzpicture}
+	\caption*{Damit sind alle Verletzungen behoben.}
+\end{figure}
+
+Wir lesen nun nacheinander die Zeichen $a$ und $b$.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode] (B11) at (2, 0) {B};
+		\node[normalnode] (c1) at (3, 0) {c};
+		\node[normalnode] (B12) at (4, 0) {B};
+		\node[normalnode, draw=red!60] (a11) at (5, 0) {a};
+		\node[normalnode, draw=red!60] (b11) at (6, 0) {b};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/B11, B11/c1, c1/B12, B12/a11, a11/b11}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (b11) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule B
+		
+		\node[normalnode] (B) at (2, -2) {B};
+		\node[guardnode] (G3) at (3, -2) {};
+		\node[normalnode] (a31) at (4, -2) {a};
+		\node[normalnode, draw=red!60] (b31) at (5, -2) {b};
+		\node[normalnode, draw=red!60] (a32) at (6, -2) {a};
+		
+		
+		\draw [ -> ]  (B)  -- (G3);
+		
+		\foreach \from/\to in {G3/a31, a31/b31, b31/a32}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (a32) to[out=90, in=45, looseness=1] (G3);
+		
+		% Connect S and B
+		
+		\draw [ -> ] (B11) to[out=-90, in=90] (G3);
+		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
+		
+	\end{tikzpicture}
+	\caption*{Durch das Lesen von $b$ ist wieder Digram-Uniqueness verletzt.}
+\end{figure}
+
+Wir beheben diese Verletzung durch Einfügen der Regel $C \rightarrow ab$
+
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		scale=.9, transform shape,
+		normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
+		guardnode/.style={diamond, draw=black!60, thick, minimum size=3mm},
+		]
+		\tikzstyle{every node} = [circle, minimum size=7mm]
+		
+		% Rule S
+		
+		\node[normalnode] (S) at (0, 0) {S};
+		\node[guardnode] (G1) at (1, 0) {};
+		\node[normalnode] (B11) at (2, 0) {B};
+		\node[normalnode] (c1) at (3, 0) {c};
+		\node[normalnode] (B12) at (4, 0) {B};
+		\node[normalnode, draw=blue!60] (C11) at (5, 0) {C};
+		
+		\draw [ -> ]  (S)  -- (G1);
+		
+		\foreach \from/\to in {G1/B11, B11/c1, c1/B12, B12/C11}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (C11) to[out=90, in=90, looseness=0.5] (G1);
+		
+		% Rule B
+		
+		\node[normalnode] (B) at (1, -2) {B};
+		\node[guardnode] (G3) at (2, -2) {};
+		\node[normalnode, draw=blue!60] (C31) at (3, -2) {C};
+		\node[normalnode] (a31) at (4, -2) {a};
+		
+		
+		\draw [ -> ]  (B)  -- (G3);
+		
+		\foreach \from/\to in {G3/C31, C31/a31}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (a31) to[out=90, in=45, looseness=1] (G3);
+		
+		% Connect S and B
+		
+		\draw [ -> ] (B11) to[out=-90, in=90] (G3);
+		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
+		
+		
+		% Rule C
+		
+		\node[normalnode] (C) at (3, -4) {C};
+		\node[guardnode] (G2) at (4, -4) {};
+		\node[normalnode] (a2) at (5, -4) {a};
+		\node[normalnode] (b) at (6, -4) {b};
+		
+		\draw [ -> ]  (C)  -- (G2);
+		
+		\foreach \from/\to in {G2/a2, a2/b}
+		\draw [ <-> ] (\from) -- (\to);
+		
+		\draw [ <-> ] (b) to[out=90, in=45, looseness=1] (G2);
+		
+		% Connect others to C
+		
+		\draw [ -> ] (C31) to[out=-90, in=90] (G2);
+		\draw [ -> ] (C11) to[out=-90, in=90] (G2);
+		
+	\end{tikzpicture}
+	\caption*{Damit sind alle Verletzungen behoben.}
+\end{figure}
+
+Alle Zeichen aus dem Eingabestring sind eingefügt und der Algorithmus terminiert. Die resultierende Grammatik ist also:
+
+\begin{align*}
+	S &\rightarrow BcBC\\
+	B &\rightarrow Ca\\
+	C &\rightarrow ab
+\end{align*}
+
+
+\section{Re-Pair}
+
+Im Gegensatz zu Sequitur ist Re-Pair\cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor. Ähnlich wie Sequitur, ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln um den Text zu komprimieren. 
