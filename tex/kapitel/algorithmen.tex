@@ -523,4 +523,198 @@ Alle Zeichen aus dem Eingabestring sind eingefügt und der Algorithmus terminier
 
 \section{Re-Pair}
 
-Im Gegensatz zu Sequitur ist Re-Pair\cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor. Ähnlich wie Sequitur, ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln um den Text zu komprimieren. 
+Im Gegensatz zu Sequitur ist Re-Pair\cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
+
+Ähnlich wie Sequitur, ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt es durch eine neue Regel.
+
+\subsection{Implementation}
+
+Re-Pair nutzt 3 Datenstrukturen:
+
+\subsubsection{Symbolarray}
+
+Dies ist ein Array, dass alle Symbole speichert. Zu Anfang sind das genau die Zeichen des Eingabestrings. Jeder Eintrag im Array hat drei Teile. Einer ist das Symbol selbst, die anderen zwei sind Pointer auf die jeweils vorherige und folgende nicht-leere Position im Array. Diese dienen dazu die einzelnen Symbole doppelt zu verketten, wenn Lücken im Array entstehen.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth]{
+			a & b & c & a & b & c & d\\
+		};
+		
+		\begin{scope}[yshift=-2cm]
+			\matrix (B) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth]{
+				a & A &  & a & A & & d\\
+			};
+			
+			\draw [<->] (B-1-2) to[out=90, in=90] (B-1-4);
+			\draw [<->] (B-1-5) to[out=90, in=90] (B-1-7);
+		\end{scope}
+	\end{tikzpicture}
+	\caption{Das Array, bevor und nachdem $bc$ durch $A$ ersetzt wurde. Die leeren Einträge werden durch Pointer überbrückt. Es existieren auch Pointer zwischen Einträgen, falls keine leeren Einträge dazwischen liegen. Diese sind hier aber nicht abgebildet.}
+\end{figure}
+
+\subsubsection{Prioritätswarteschlange}
+
+Re-Pair benutzt eine spezialisierte Prioritätswarteschlange, um die Wahl des günstigsten zu ersetzenden Paars zu ermöglichen. Diese besteht aus einem Array von etwa $\sqrt{n}$ verketteten Listen, wobei $n$ die Länge der Eingabe ist. In der Liste an Index $i$, befinden sich alle Paare, die $i$ mal im String vorkommen. Zusätlich enthalten die Einträge auch  einen Pointer auf das erste Vorkommen des Paares im String.
+
+Eine Besonderheit ist dabei die Liste bei Index $0$. Diese enthält alle Paare, die öfter als $\sqrt{n}$ vorkommen. Außerdem werden keine Elemente in der Liste mit Index $1$ gespeichert, da diese nie zum Ersetzen in Betracht bezogen werden können.
+ 
+\subsubsection{Symbolpaar-Hashtabelle}
+
+Dies ist eine Hashtabelle, die einen Eintrag für jedes aktive Symbolpaar besitzt. Ein Symbolpaar heißt aktiv, wenn dieses Paar noch potenziell ersetzt werden kann, es also öfter als nur einmal vorkommt. Jeder Eintrag enthält einen Pointer auf den entsprechenden Eintrag in der Prioritätswarteschlange für dieses Symbolpaar.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
+		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of Symbols]{
+			a & b & c & a & b & c & d\\
+		};
+		
+		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+			& |[draw]| bc & \\
+			& |[draw]| ab & \\
+			$>3$ & $2$ & $3$ \\
+		};
+		
+		\draw [->] (lists-1-2) to[out=180, in=-90] (A-1-2);
+		\draw [->] (lists-2-2) to[out=180, in=-90] (A-1-1);
+		\draw [<->] (lists-1-2) -- (lists-2-2);
+		
+		
+		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+			bc\\
+			ab\\
+		};
+	
+		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
+		
+		\draw [->] (hash-1-1) to[out=180, in=0] (lists-1-2);
+		\draw [->] (hash-2-1) to[out=180, in=0] (lists-2-2);
+		
+	\end{tikzpicture}
+	\caption{Die Datenstrukturen von RePair}
+\end{figure}
+
+\subsection{Beispiel}
+
+Als Beispiel wenden wir nun den Re-Pair Algorithmus auf $abcabcd$ an.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
+		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of Symbols]{
+			a & b & c & a & b & c & d\\
+		};
+		
+		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+			& |[draw]| bc & \\
+			& |[draw]| ab & \\
+			$>3$ & $2$ & $3$ \\
+		};
+		
+		\draw [->] (lists-1-2) to[out=180, in=-90] (A-1-2);
+		\draw [->] (lists-2-2) to[out=180, in=-90] (A-1-1);
+		\draw [<->] (lists-1-2) -- (lists-2-2);
+		
+		
+		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+			bc\\
+			ab\\
+		};
+		
+		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
+		
+		\draw [->] (hash-1-1) to[out=180, in=0] (lists-1-2);
+		\draw [->] (hash-2-1) to[out=180, in=0] (lists-2-2);
+		
+	\end{tikzpicture}
+	\caption*{Die Datenstrukturen von RePair zu Anfang}
+\end{figure}
+
+Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigsten vorkommt und ersetzen es im Text. In unserem Fall zum Beispiel $ab$.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
+		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth, right=1cm of Symbols]{
+			A & & c & A & & c & d\\
+		};
+	
+		\draw[<->] (A-1-1) to[in=90, out=90] (A-1-3);
+		\draw[<->] (A-1-4) to[in=90, out=90] (A-1-6);
+	
+		
+		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+			& |[draw]| Ac & \\
+			$>3$ & $2$ & $3$ \\
+		};
+		
+		\draw [->] (lists-1-2) to[out=180, in=-90] (A-1-1);
+		
+		
+		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+			Ac\\
+		};
+		
+		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
+		
+		\draw [->] (hash-1-1) to[out=180, in=0] (lists-1-2);
+		
+	\end{tikzpicture}
+	\caption*{Die Datenstrukturen nach Ersetzung von $ab$ durch $A$}
+\end{figure}
+
+Nun ist das einzige übrige Symbolpaar, das neu entstandene $Ac$. Dies entnehmen wir aus der Prioritätswarteschlange und ersetzen es ebenfalls.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
+		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth, right=1cm of Symbols]{
+			B & & & B & & & d\\
+		};
+		
+		\draw[<->] (A-1-1) to[in=110, out=90] (A-1-4);
+		\draw[<->] (A-1-4) to[in=90, out=70] (A-1-7);
+		
+		
+		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+			& & \\
+			$>3$ & $2$ & $3$ \\
+		};
+		
+		
+		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+			\\
+		};
+		
+		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
+		
+	\end{tikzpicture}
+	\caption*{Die Datenstrukturen nach Ersetzung von $Ac$ durch $B$}
+\end{figure}
+
+Die Prioritätswarteschlange ist nun leer und damit terminiert der Algorithmus. Die resultierende Grammatik ist:
+
+\begin{align*}
+	S &\rightarrow BBa\\
+	A &\rightarrow ab\\
+	B &\rightarrow Ac
+\end{align*}
