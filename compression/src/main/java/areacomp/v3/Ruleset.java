@@ -120,9 +120,9 @@ class Ruleset implements ToUnifiedRuleset {
             }
 
 
-            now = System.nanoTime();
+            Benchmark.startTimer(ALGORITHM_NAME, "factorize");
             topLevelRule.factorize(len, positions);
-            Benchmark.updateTime(ALGORITHM_NAME, "factorize", System.nanoTime() - now);
+            Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
         }
         Benchmark.updateTime(ALGORITHM_NAME, "total time", System.nanoTime() - nowTotal);
     }
@@ -199,7 +199,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public int ruleRangeStartIndex(int index) {
         long now = System.nanoTime();
-        int current = intervalIndex.range(index).totalStart();
+        int current = intervalIndex.startInterval(index).totalStart();
         Benchmark.updateTime(ALGORITHM_NAME, "ruleRangeStartIndex", System.nanoTime() - now);
 
         return current;
@@ -215,19 +215,6 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public void markRange(int id, int from, int to) {
         intervalIndex.mark(id, from, to);
-
-        /*
-        // Get the id of the rule that occupied this area before
-        final int originalId = getDeepestRuleIdAt(from);
-        // Add the start of the new rule's area to the list
-        ruleRangeStarts.get(from).add(id);
-
-        // Add the id of the new rule into the range list after the id of the original rule
-        // This serves to always have the deepest nested Rule at a certain index to be the last index of the list in ruleRanges
-        for (int i = from; i < to; i++) {
-            var index = ruleRanges.get(i).indexOf(originalId);
-            ruleRanges.get(i).add(index + 1, id);
-        }*/
     }
 
     /**
@@ -237,37 +224,12 @@ class Ruleset implements ToUnifiedRuleset {
      * @return true, if the interval starts in the same rule range as it started. false otherwise
      */
     public boolean crossesBoundary(int from, int to) {
-        var now = System.nanoTime();
-        boolean b = getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleRangeStartIndex(from) != ruleRangeStartIndex(to - 1);
-        Benchmark.updateTime(ALGORITHM_NAME, "crossesBoundary", System.nanoTime() - now);
+        Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
+        var fromInterval = intervalIndex.intervalAt(from);
+        var toInterval = intervalIndex.intervalAt(to - 1);
+        boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.totalStart() != toInterval.totalStart();
+        Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
         return b;
-    }
-
-    // aaacaaa
-    // R0 -> v v v R1 c R1
-    // R1 -> aaa
-    // R2 -> aa
-    // 1 1 1 0 1 1 1
-    // 0
-    // 0
-
-    /**
-     * Removes all overlapping occurences of a pattern from an array of positions
-     *
-     * @param positions     All occurences of the pattern
-     * @param patternLength The length of the pattern
-     * @return The occurences of the pattern with overlapping occurences removed
-     */
-    private static int[] nonOverlapping(int[] positions, int patternLength) {
-        final List<Integer> list = new ArrayList<>();
-        int last = Short.MIN_VALUE;
-        for (Integer i : positions) {
-            if (i - last >= patternLength) {
-                list.add(i);
-                last = i;
-            }
-        }
-        return list.stream().mapToInt(i -> i).toArray();
     }
 
     /**

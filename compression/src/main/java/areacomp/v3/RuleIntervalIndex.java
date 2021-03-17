@@ -17,7 +17,7 @@ public class RuleIntervalIndex {
     }
 
     /**
-     *
+     * Marks the area with the given rule id
      * @param ruleId
      * @param start inclusive
      * @param end inclusive
@@ -131,10 +131,14 @@ public class RuleIntervalIndex {
         return intervalMap.floorEntry(index).getValue().ruleId();
     }
 
-    public RuleInterval range(int index) {
+    public RuleInterval startInterval(int index) {
         if(index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index '" + index + "' out of range for length " + length());
 
         return intervalMap.get(intervalMap.floorEntry(index).getValue().totalStart);
+    }
+
+    public RuleInterval intervalAt(int index) {
+        return intervalMap.floorEntry(index).getValue();
     }
 
     public Optional<RuleInterval> rangeByStartIndex(int index) {

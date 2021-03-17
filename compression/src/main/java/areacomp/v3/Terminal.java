@@ -7,6 +7,11 @@ class Terminal extends Symbol {
     }
 
     @Override
+    public int terminalLength() {
+        return 1;
+    }
+
+    @Override
     public String toString() {
         return String.valueOf((char) value());
     }

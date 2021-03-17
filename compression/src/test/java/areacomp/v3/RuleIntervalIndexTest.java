@@ -133,18 +133,18 @@ public class RuleIntervalIndexTest {
 
     @Test
     public void testRange() {
-        Assertions.assertEquals(0, index.range(0).start(), "Failed, when searched index is same as interval start");
-        Assertions.assertEquals(0, index.range(5).start(), "Failed, when searched index is in the interval");
-        Assertions.assertEquals(0, index.range(15).start(), "Failed, when searched index is same as interval end");
+        Assertions.assertEquals(0, index.startInterval(0).start(), "Failed, when searched index is same as interval start");
+        Assertions.assertEquals(0, index.startInterval(5).start(), "Failed, when searched index is in the interval");
+        Assertions.assertEquals(0, index.startInterval(15).start(), "Failed, when searched index is same as interval end");
     }
 
     @Test
     public void testRangeSkipInterval() {
         index.mark(1, 4, 8);
 
-        Assertions.assertEquals(0, index.range(2).start(), "Failed, when before inserted interval");
-        Assertions.assertEquals(4, index.range(5).start(), "Failed, when in searched index is in the inserted interval");
-        Assertions.assertEquals(0, index.range(15).start(), "Failed, when searched index is after the inserted interval");
+        Assertions.assertEquals(0, index.startInterval(2).start(), "Failed, when before inserted interval");
+        Assertions.assertEquals(4, index.startInterval(5).start(), "Failed, when in searched index is in the inserted interval");
+        Assertions.assertEquals(0, index.startInterval(15).start(), "Failed, when searched index is after the inserted interval");
 
         System.out.println(index.toString());
     }

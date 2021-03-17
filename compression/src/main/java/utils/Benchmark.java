@@ -8,7 +8,22 @@ import java.util.TreeMap;
 public final class Benchmark {
 
     private static final Map<String, Map<String, Long>> EXECUTION_TIMES = new TreeMap<>();
+    private static final Map<String, Map<String, Long>> TIMERS = new HashMap<>();
 
+    public static void startTimer(String algorithmName, String counterName) {
+        if(!TIMERS.containsKey(algorithmName)) {
+            TIMERS.put(algorithmName, new HashMap<>());
+        }
+        final var previous = TIMERS.get(algorithmName).put(counterName, System.nanoTime());
+        if(previous != null) throw new TimerAlreadyStartedException(algorithmName, counterName);
+    }
+
+    public static void stopTimer(String algorithmName, String counterName) {
+        if(!TIMERS.containsKey(algorithmName) || !TIMERS.get(algorithmName).containsKey(counterName)) {
+            throw new NoTimerStartedException(algorithmName, counterName);
+        }
+        updateTime(algorithmName, counterName, System.nanoTime() - TIMERS.get(algorithmName).remove(counterName));
+    }
 
     public static void updateTime(String algorithmName, String counterName, long timeNs) {
         if(!EXECUTION_TIMES.containsKey(algorithmName)) {
@@ -25,4 +40,16 @@ public final class Benchmark {
         return EXECUTION_TIMES;
     }
 
+
+    public static class TimerAlreadyStartedException extends RuntimeException {
+        private TimerAlreadyStartedException(String algorithmName, String counterName) {
+            super(String.format("Timer \"%s\" already started for algorithm \"%s\"", counterName, algorithmName));
+        }
+    }
+
+    public static class NoTimerStartedException extends RuntimeException {
+        private NoTimerStartedException(String algorithmName, String counterName) {
+            super(String.format("No Timer \"%s\" started for algorithm \"%s\"", counterName, algorithmName));
+        }
+    }
 }

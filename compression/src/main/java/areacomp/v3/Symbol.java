@@ -26,4 +26,6 @@ abstract class Symbol {
     public int value() {
         return value;
     }
+
+    public abstract int terminalLength();
 }

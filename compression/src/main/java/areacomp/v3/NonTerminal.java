@@ -17,6 +17,11 @@ class NonTerminal extends Symbol {
         rule.incrementUseCount();
     }
 
+    @Override
+    public int terminalLength() {
+        return rule.length();
+    }
+
     /**
      * Get the rule, which is represented by this {@link NonTerminal}
      * @return The rule

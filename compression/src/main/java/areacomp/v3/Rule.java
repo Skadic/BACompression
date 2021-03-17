@@ -1,6 +1,5 @@
 package areacomp.v3;
 
-import org.apache.commons.collections4.list.TreeList;
 import org.jetbrains.annotations.NotNull;
 import utils.Benchmark;
 import utils.RuleLocalIndex;
@@ -14,18 +13,7 @@ import java.util.stream.StreamSupport;
 @SuppressWarnings("Duplicates")
 public class Rule implements CharSequence, Iterable<Symbol> {
 
-    /**
-     * The list of symbols that make up the right side of this rule
-     */
-    private final List<Symbol> symbols;
-
-    /**
-     * A prefix sum of the length of the expanded rule up to this index in its right side. For example:
-     *
-     * Let A -> BBde, B -> abc. And if the former was this rule. Then the list is:
-     * [3, 6, 7, 8]
-     */
-    private final List<Integer> cumulativeLength;
+    private final NavigableMap<Integer, Symbol> symbolMap;
 
     /**
      * This rule's id, used for identification of non-terminals representing this rule and this rule
@@ -55,29 +43,25 @@ public class Rule implements CharSequence, Iterable<Symbol> {
                         .collect(Collectors.toList()),
                         r
         );
-
-        int stringLength = s.length();
-
-        // The cumulative sum array in the beginning is just the list of ascending natural numbers up until the length of the string
-        // because every symbol has length 1
-        IntStream.range(1, stringLength + 1)
-                .boxed()
-                .forEach(cumulativeLength::add);
     }
 
     /**
      * Create a new rule consisting of the given symbols. This is used internally to create new rules which replace subsequences
-     * Note that this constructor does *not* construct the {@link #cumulativeLength} list.
-     * @param symbols The symbols this rule makes up
+     * @param symbolSource The symbols this rule makes up
      * @param r The ruleset which this rule belongs to
      */
-    private Rule(List<Symbol> symbols, Ruleset r) {
+    private Rule(List<Symbol> symbolSource, Ruleset r) {
         this.ruleset = r;
         this.id = ruleset.nextRuleID();
-        this.symbols = new TreeList<>(symbols);
-        this.cumulativeLength = new TreeList<>();
+        this.symbolMap = new TreeMap<>();
         this.useCount = 0;
         ruleset.getRuleMap().put(id, this);
+
+        int len = 0;
+        for (Symbol symbol : symbolSource) {
+            symbolMap.put(len, symbol);
+            len += symbol.terminalLength();
+        }
     }
 
     private Rule(Ruleset r) {
@@ -97,43 +81,21 @@ public class Rule implements CharSequence, Iterable<Symbol> {
      * @param length The length (in terminal symbols) of the pattern to replace
      * @return The list of replaced symbols and the prefix sum over the lengths of each symbol in said list
      */
-    public SubstitutionData substitute(Rule rule, int start, int length) {
+    public List<Symbol> substitute(Rule rule, int start, int length) {
         var now = System.nanoTime();
-        var symbolList = new ArrayList<Symbol>(length);
-        var cumulative = new ArrayList<Integer>(length);
-        // The "start index" of this
-        var baseCumulativeLength = start > 0 ? cumulativeLength.get(start - 1) : 0;
-
-        var remainingLength = length;
-        for (int i = start; remainingLength > 0; i++) {
-            symbolList.add(symbols.get(i));
-            cumulative.add(cumulativeLength.get(i) - baseCumulativeLength);
-            remainingLength -= cumulativeLength.get(i) - (i > 0 ? cumulativeLength.get(i - 1) : 0);
-        }
+        var symbolList = new ArrayList<>(symbolMap.subMap(start, start + length).values());
         Benchmark.updateTime("Rule", "substitute", System.nanoTime() - now);
 
-        now = System.nanoTime();
+        replace(rule, start, length);
 
-        symbols.subList(start + 1, start + symbolList.size()).clear();
-        symbols.set(start, new NonTerminal(rule));
-        cumulativeLength.subList(start, start + symbolList.size() - 1).clear();
-
-        Benchmark.updateTime("Rule", "sublist clear", System.nanoTime() - now);
-
-        return new SubstitutionData(symbolList, cumulative);
+        return symbolList;
     }
 
     public void replace(Rule rule, int start, int length) {
-        long now = System.nanoTime();
-        final int absoluteStart = start > 0 ? cumulativeLength.get(start - 1) : 0;
-        final int absoluteEnd = searchTerminalIndex(absoluteStart + length);
-        Benchmark.updateTime("Rule", "replace terminal index", System.nanoTime() - now);
-
-        now = System.nanoTime();
-        symbols.subList(start + 1, absoluteEnd).clear();
-        symbols.set(start, new NonTerminal(rule));
-        cumulativeLength.subList(start, absoluteEnd - 1).clear();
-        Benchmark.updateTime("Rule", "sublist replace", System.nanoTime() - now);
+        var now = System.nanoTime();
+        symbolMap.subMap(start, start + length).clear();
+        symbolMap.put(start, new NonTerminal(rule));
+        Benchmark.updateTime("Rule", "sublist clear", System.nanoTime() - now);
     }
 
     /**
@@ -150,24 +112,24 @@ public class Rule implements CharSequence, Iterable<Symbol> {
         if (len <= 1 || positions.length < 2) return;
 
         var processed = new HashSet<RuleLocalIndex>();
-
         // Create a new rule
         final var rule = new Rule(ruleset);
 
+        Benchmark.startTimer("Rule", "firstrule");
         // Replace the first occurrence of the rule
         final var firstRelevantRuleIndex = ruleset.ruleRangeStartIndex(positions[0]);
         final var firstRelevantRule = ruleset.getDeepestRuleAt(positions[0]);
-        final var firstPosition = firstRelevantRule.searchTerminalIndex(positions[0] - firstRelevantRuleIndex);
-        final var substitutionData = firstRelevantRule.substitute(rule, firstPosition, len);
+        final var symbolList = firstRelevantRule.substitute(rule, positions[0] - firstRelevantRuleIndex, len);
         processed.add(new RuleLocalIndex(firstRelevantRule.id, positions[0] - firstRelevantRuleIndex));
 
         // Mark the area now occupied by this rule with the rule's id
         ruleset.markRange(rule.id, positions[0], positions[0] + len - 1);
 
         // Populate the rule with data
-        rule.symbols.addAll(substitutionData.symbolList());
-        rule.cumulativeLength.addAll(substitutionData.cumulativeLengthList());
+        rule.addSymbols(symbolList);
+        Benchmark.stopTimer("Rule", "firstrule");
 
+        Benchmark.startTimer("Rule", "adjust usecount");
         // Since all the occurrences of this rule's right side will be replaced in the string
         // We increase the use count of each non terminal by one for each time it appears in the right side of the new rule
         // That way all the non-terminal will have a proper usage count
@@ -176,28 +138,23 @@ public class Rule implements CharSequence, Iterable<Symbol> {
                 ((NonTerminal) current).getRule().useCount++;
             }
         }
+        Benchmark.stopTimer("Rule", "adjust usecount");
 
         // Iterate through the positions and substitute each occurrence.
         for (int i = 1; i < positions.length; i++) {
             final Rule deepestRule = ruleset.getDeepestRuleAt(positions[i]);
             final int deepestRuleRangeIndex = ruleset.ruleRangeStartIndex(positions[i]);
             RuleLocalIndex ruleLocalIndex = new RuleLocalIndex(deepestRule.id, positions[i] - deepestRuleRangeIndex);
-
             // Each specific occurrence of a rule in a certain context (represented by ruleLocalIndex) should only be replaced once
             // If this pattern appears in a rule that has been factorized already, then it might still appear multiple times in the original string
             // but only once in the grammar.
             if(!processed.contains(ruleLocalIndex)) {
-                var now = System.nanoTime();
-                final int position = deepestRule.searchTerminalIndex(positions[i] - deepestRuleRangeIndex);
-                Benchmark.updateTime("Rule", "searchTerminal", System.nanoTime() - now);
-                now = System.nanoTime();
-                deepestRule.substitute(rule, position, len);
-                Benchmark.updateTime("Rule", "substituteOccs", System.nanoTime() - now);
-
+                deepestRule.replace(rule, ruleLocalIndex.index(), len);
                 processed.add(ruleLocalIndex);
-
             }
+            Benchmark.startTimer("Rule", "markRange");
             ruleset.markRange(rule.id, positions[i], positions[i] + len - 1);
+            Benchmark.stopTimer("Rule", "markRange");
         }
 
         // Put this rule into the map
@@ -220,23 +177,23 @@ public class Rule implements CharSequence, Iterable<Symbol> {
      * The amount of symbols in this rule's right side
      * @return The amount of symbols
      */
-    public int ruleLength() {
-        return symbols.size();
+    public int symbolCount() {
+        return symbolMap.size();
     }
 
     @Override
     public int length() {
-        return cumulativeLength.get(ruleLength() - 1);
+        return lengthAt(symbolCount() - 1);
     }
 
     @Override
     public char charAt(int index) {
         final var localIndex  = searchTerminalIndex(index);
-        if (symbols.get(localIndex) instanceof NonTerminal nonTerminal) {
-            final var cumulativeLengthBefore = localIndex > 0 ? cumulativeLength.get(localIndex - 1) : 0;
+        if (symbolAtLocalIndex(localIndex) instanceof NonTerminal nonTerminal) {
+            final var cumulativeLengthBefore = lengthUpTo(localIndex);
             return nonTerminal.getRule().charAt(index - cumulativeLengthBefore);
         } else {
-            return (char) symbols.get(localIndex).value();
+            return (char) symbolAtLocalIndex(localIndex).value();
         }
     }
 
@@ -259,13 +216,13 @@ public class Rule implements CharSequence, Iterable<Symbol> {
 
         final String firstSegment;
         // If it is a terminal then there is no further processing needed
-        if (symbols.get(startSymbolIndex) instanceof Terminal terminal) {
+        if (symbolAtLocalIndex(startSymbolIndex) instanceof Terminal terminal) {
             firstSegment = String.valueOf((char) terminal.value());
         } else {
             // If it is a non-terminal the index in the Non-Terminal's rule at which the pattern starts
             // needs to be determined
-            final var nonTerminal = (NonTerminal) symbols.get(startSymbolIndex);
-            final int lengthBeforeStartSymbol = startSymbolIndex > 0 ? cumulativeLength.get(startSymbolIndex - 1) : 0;
+            final var nonTerminal = (NonTerminal) symbolAtLocalIndex(startSymbolIndex);
+            final int lengthBeforeStartSymbol = lengthUpTo(startSymbolIndex);
             final int startIndexInStartSymbol = start - lengthBeforeStartSymbol;
 
             final var nonTerminalRule = nonTerminal.getRule();
@@ -275,11 +232,11 @@ public class Rule implements CharSequence, Iterable<Symbol> {
         if (firstSegment.length() == length) return firstSegment;
 
         final String lastSegment;
-        if (symbols.get(endSymbolIndex) instanceof Terminal terminal) {
+        if (symbolAtLocalIndex(endSymbolIndex) instanceof Terminal terminal) {
             lastSegment = String.valueOf((char) terminal.value());
         } else {
-            final var nonTerminal = (NonTerminal) symbols.get(endSymbolIndex);
-            final int lengthBeforeEndSymbol = endSymbolIndex > 0 ? cumulativeLength.get(endSymbolIndex - 1) : 0;
+            final var nonTerminal = (NonTerminal) symbolAtLocalIndex(endSymbolIndex);
+            final int lengthBeforeEndSymbol = lengthUpTo(endSymbolIndex);
             final int endIndexInEndSymbol = end - lengthBeforeEndSymbol;
 
             final var nonTerminalRule = nonTerminal.getRule();
@@ -290,8 +247,9 @@ public class Rule implements CharSequence, Iterable<Symbol> {
 
         final var sb = new StringBuilder(firstSegment);
 
-        IntStream.range(startSymbolIndex + 1, endSymbolIndex)
-                .mapToObj(symbols::get)
+        //IntStream.range(startSymbolIndex + 1, endSymbolIndex)
+                //.mapToObj(symbols::get)
+        symbolMap.subMap(startSymbolIndex + 1, endSymbolIndex).values().stream()
                 .map(symbol -> {
                     if(symbol instanceof Terminal) {
                         return symbol.toString();
@@ -332,7 +290,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
     @NotNull
     @Override
     public Iterator<Symbol> iterator() {
-        return symbols.iterator();
+        return symbolMap.values().iterator();
     }
 
     public Stream<Symbol> stream() {
@@ -340,36 +298,67 @@ public class Rule implements CharSequence, Iterable<Symbol> {
     }
 
     /**
-     * A binary search for the symbol in {@link #symbols} that contains the terminal at the given index
+     * A search for the symbol in {@link #symbolMap} that contains the terminal at the given index
      * in the fully expanded form of this rule's right side. For example:
      * Given the grammar A -> aBef, B -> bcd and if this {@link Rule} was the former rule.
      * The result of the search for index 3, would return 'd', since the fully expanded form of this rule's right side would be:
      * 'abcdef'.
      * @param index The index to search for
-     * @return The index of the symbol in {@link #symbols} that contains the terminal
+     * @return The index of the symbol in {@link #symbolMap} that contains the terminal
      */
     public int searchTerminalIndex(int index) {
-        if(index < 0 || index > length()) return -1;
-        else if (index == length()) return symbols.size();
-
-        // The borders of the search space
-        int lowBorder = 0;
-        int highBorder = ruleLength() - 1;
-        while (true) {
-            int middle = (highBorder + lowBorder) / 2;
-            int low = middle - 1 >= 0 ? cumulativeLength.get(middle - 1) : 0;
-            int high = cumulativeLength.get(middle);
-
-            if (low <= index && index < high) {
-                return middle;
-            } else if (index < low) {
-                highBorder = middle - 1;
-            } else {
-                lowBorder = middle + 1;
-            }
-        }
+        return symbolMap.floorKey(index);
     }
 
+    /**
+     * Calculates the length of the rule in terminals up to that index (exclusively)
+     * @param index The index to check
+     * @return The length
+     */
+    private int lengthUpTo(int index) {
+        if(index == symbolMap.size()) {
+            final var last = symbolMap.lastEntry();
+            return last.getKey() + last.getValue().terminalLength();
+        }
+        // FIXME Linear time is not cool
+        for (Integer len : symbolMap.keySet()) {
+            if(index-- == 0) return len;
+        }
+        return -1;
+    }
+
+
+    /**
+     * Calculates the length of the rule in terminals at that index (inclusively)
+     * @param index The index to check
+     * @return The length
+     */
+    private int lengthAt(int index) {
+        if(index == 0) return symbolMap.get(0).terminalLength();
+        // FIXME Linear time is not cool
+        for (var entry : symbolMap.entrySet()) {
+            if(index-- == 0) return entry.getKey() + entry.getValue().terminalLength();
+        }
+        return -1;
+    }
+
+    private Symbol symbolAtLocalIndex(int index) {
+        return symbolMap.get(index);
+    }
+
+    private Symbol symbolContainingTerminalAt(int index) {
+        return symbolMap.floorEntry(index).getValue();
+    }
+
+    private void addSymbols(Collection<Symbol> newSymbols) {
+        final var lastEntry = symbolMap.lastEntry();
+        var len = lastEntry == null ? 0 : lastEntry.getKey() + lastEntry.getValue().terminalLength();
+
+        for (Symbol symbol : newSymbols) {
+            symbolMap.put(len, symbol);
+            len += symbol.terminalLength();
+        }
+    }
 
     @Override
     public boolean equals(Object o) {
