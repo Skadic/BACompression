@@ -1,5 +1,5 @@
 import areacomp.AreaFunction;
-import areacomp.areas.ChildArea;
+import areacomp.areas.LengthFirstArea;
 import areacomp.areas.NaiveArea;
 import areacomp.v3.AreaCompV3;
 import repair.RePair;
@@ -10,6 +10,7 @@ import utils.Benchmark;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -27,14 +28,25 @@ public class Main {
         final var compressors = List.of(
                 new Sequitur(),
                 new RePair(),
-                new AreaCompV3(new ChildArea())
+                //new AreaCompV3(new ChildArea()),
+                new AreaCompV3(new LengthFirstArea())//,
+                //new AreaCompV3(new DepthWithAddArea())
                 //,new AreaCompV2(area)
                 //,new AreaCompV1(area)
         );
 
-        final var inputPath = Paths.get("input", args[0]).toAbsolutePath();
-        final var outputPath = Paths.get("output", args[0]).toAbsolutePath();
-        final var input = Files.readString(inputPath);
+        final String fileName = args[0];
+        final var inputPath = Paths.get("input", fileName).toAbsolutePath();
+        final var outputPath = Paths.get("output", fileName).toAbsolutePath();
+
+        final String input;
+        try {
+             input = Files.readString(inputPath);
+        } catch (NoSuchFileException e) {
+            System.err.printf("File '%s' does not exist%n", fileName);
+            return;
+        }
+
 
         try (PrintStream out = new PrintStream(Files.newOutputStream(outputPath))) {
             out.println("On a test string of " + input.length() + " characters.\n");
@@ -45,14 +57,9 @@ public class Main {
 
         Benchmark.getAllValues().forEach((algName, values) -> {
             System.out.println("Times for " + algName + ":");
-            values.forEach((counterName, time) -> System.out.printf("%s: %dms%n", counterName, time / 1000000));
+            values.forEach((counterName, time) -> System.out.printf("%-20s: %dms%n", counterName, time / 1000000));
             System.out.println();
         });
-
-        //AugmentedString str = new AugmentedString("acaaacatat");
-        //System.out.println(str.toString());
-
-        //System.out.println(str.getLCPIntervals(2));
 
     }
 }

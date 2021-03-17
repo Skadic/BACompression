@@ -1,5 +1,8 @@
 package areacomp.v3;
 
+import org.apache.commons.collections4.list.TreeList;
+import org.jetbrains.annotations.NotNull;
+import utils.Benchmark;
 import utils.RuleLocalIndex;
 
 import java.util.*;
@@ -8,6 +11,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+@SuppressWarnings("Duplicates")
 public class Rule implements CharSequence, Iterable<Symbol> {
 
     /**
@@ -70,8 +74,8 @@ public class Rule implements CharSequence, Iterable<Symbol> {
     private Rule(List<Symbol> symbols, Ruleset r) {
         this.ruleset = r;
         this.id = ruleset.nextRuleID();
-        this.symbols = new ArrayList<>(symbols);
-        this.cumulativeLength = new ArrayList<>(symbols.size());
+        this.symbols = new TreeList<>(symbols);
+        this.cumulativeLength = new TreeList<>();
         this.useCount = 0;
         ruleset.getRuleMap().put(id, this);
     }
@@ -94,6 +98,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
      * @return The list of replaced symbols and the prefix sum over the lengths of each symbol in said list
      */
     public SubstitutionData substitute(Rule rule, int start, int length) {
+        var now = System.nanoTime();
         var symbolList = new ArrayList<Symbol>(length);
         var cumulative = new ArrayList<Integer>(length);
         // The "start index" of this
@@ -105,12 +110,30 @@ public class Rule implements CharSequence, Iterable<Symbol> {
             cumulative.add(cumulativeLength.get(i) - baseCumulativeLength);
             remainingLength -= cumulativeLength.get(i) - (i > 0 ? cumulativeLength.get(i - 1) : 0);
         }
+        Benchmark.updateTime("Rule", "substitute", System.nanoTime() - now);
+
+        now = System.nanoTime();
 
         symbols.subList(start + 1, start + symbolList.size()).clear();
         symbols.set(start, new NonTerminal(rule));
         cumulativeLength.subList(start, start + symbolList.size() - 1).clear();
 
+        Benchmark.updateTime("Rule", "sublist clear", System.nanoTime() - now);
+
         return new SubstitutionData(symbolList, cumulative);
+    }
+
+    public void replace(Rule rule, int start, int length) {
+        long now = System.nanoTime();
+        final int absoluteStart = start > 0 ? cumulativeLength.get(start - 1) : 0;
+        final int absoluteEnd = searchTerminalIndex(absoluteStart + length);
+        Benchmark.updateTime("Rule", "replace terminal index", System.nanoTime() - now);
+
+        now = System.nanoTime();
+        symbols.subList(start + 1, absoluteEnd).clear();
+        symbols.set(start, new NonTerminal(rule));
+        cumulativeLength.subList(start, absoluteEnd - 1).clear();
+        Benchmark.updateTime("Rule", "sublist replace", System.nanoTime() - now);
     }
 
     /**
@@ -123,7 +146,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
      * @param positions The start positions of the occurences in the original string
      */
     public void factorize(int len, int... positions) {
-        // If the occurence is less than one
+        // If the occurence is less than one or
         if (len <= 1 || positions.length < 2) return;
 
         var processed = new HashSet<RuleLocalIndex>();
@@ -164,19 +187,21 @@ public class Rule implements CharSequence, Iterable<Symbol> {
             // If this pattern appears in a rule that has been factorized already, then it might still appear multiple times in the original string
             // but only once in the grammar.
             if(!processed.contains(ruleLocalIndex)) {
+                var now = System.nanoTime();
                 final int position = deepestRule.searchTerminalIndex(positions[i] - deepestRuleRangeIndex);
+                Benchmark.updateTime("Rule", "searchTerminal", System.nanoTime() - now);
+                now = System.nanoTime();
                 deepestRule.substitute(rule, position, len);
+                Benchmark.updateTime("Rule", "substituteOccs", System.nanoTime() - now);
+
                 processed.add(ruleLocalIndex);
+
             }
             ruleset.markRange(rule.id, positions[i], positions[i] + len - 1);
         }
 
         // Put this rule into the map
         //ruleset.getRuleMap().put(rule.id, rule);
-    }
-
-    public List<Integer> getCumulativeLength() {
-        return Collections.unmodifiableList(cumulativeLength);
     }
 
     public void incrementUseCount() {
@@ -224,11 +249,6 @@ public class Rule implements CharSequence, Iterable<Symbol> {
             return String.valueOf(charAt(start));
         }
 
-        // Let A -> BBBde, B -> abc
-        // [3, 6, 9, 10, 11]
-        // Want 4, 8
-        // startSymbolIndex = 1;
-        // endSymbolIndex =  2;
         final int startSymbolIndex = searchTerminalIndex(start);
         final int endSymbolIndex = searchTerminalIndex(end - 1);
         final int length = end - start;
@@ -288,6 +308,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
         return sb.toString();
     }
 
+    @NotNull
     @Override
     public String toString() {
         var sb = new StringBuilder();
@@ -308,6 +329,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
         return String.format(" %d R%-3s -> %s", useCount, id, sb.toString().replace("\n", "\\n"));
     }
 
+    @NotNull
     @Override
     public Iterator<Symbol> iterator() {
         return symbols.iterator();
@@ -327,7 +349,8 @@ public class Rule implements CharSequence, Iterable<Symbol> {
      * @return The index of the symbol in {@link #symbols} that contains the terminal
      */
     public int searchTerminalIndex(int index) {
-        if(index < 0 || index >= length()) return -1;
+        if(index < 0 || index > length()) return -1;
+        else if (index == length()) return symbols.size();
 
         // The borders of the search space
         int lowBorder = 0;
@@ -347,13 +370,6 @@ public class Rule implements CharSequence, Iterable<Symbol> {
         }
     }
 
-    public Iterator<Symbol> iteratorBetween(int from, int to) {
-        return symbols.subList(from, to).iterator();
-    }
-
-    public Stream<Symbol> streamBetween(int from, int to) {
-        return symbols.subList(from, to).stream();
-    }
 
     @Override
     public boolean equals(Object o) {

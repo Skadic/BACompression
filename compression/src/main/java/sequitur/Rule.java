@@ -195,4 +195,29 @@ class Rule implements ToUnifiedRuleset {
 
         return ruleset;
     }
+
+    /*@Override
+    public String buildString() {
+        Symbol current = guard;
+
+        final Map<Integer, String> cache = new HashMap<>();
+        final Deque<Symbol> stack = new ArrayDeque<>();
+        final StringBuilder sb = new StringBuilder();
+
+        while (current.next != guard) {
+            final var next = current.next;
+            if(next instanceof NonTerminal nonTerminal) {
+                final var rule = nonTerminal.getRule();
+                if(!cache.containsKey(rule.getNumber())) {
+                    stack.push();
+                }
+            } else if (next instanceof Terminal) {
+                sb.append((char) current.value);
+            }
+            current = next;
+        }
+
+
+        return null;
+    }*/
 }

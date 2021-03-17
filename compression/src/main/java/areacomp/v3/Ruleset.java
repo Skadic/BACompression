@@ -27,24 +27,6 @@ class Ruleset implements ToUnifiedRuleset {
      */
     private final Rule topLevelRule;
 
-    /**
-     * Index structure for deciding which rule a certain character in the original string is part of
-     * The invariant for this list is, that for each internal list, the list contains the ids of rules
-     * in the order of how deeply they are nested.
-     * For example, take the grammar:
-     * R0 -> R2 c R2
-     * R1 -> aa
-     * R2 -> R1 b R1
-     * Then the full String is aabaacaabaa. The ruleRanges list for index 1 (the second 'a') would be:
-     * [0, 2, 1], as from the root (R0) one would need to travel through an R2 and an R1, to arrive at this character
-     */
-    private final List<List<Integer>> ruleRanges;
-
-    /**
-     * Records at which points rules start
-     */
-    private final List<HashSet<Integer>> ruleRangeStarts;
-
     private final RuleIntervalIndex intervalIndex;
 
     /**
@@ -66,22 +48,7 @@ class Ruleset implements ToUnifiedRuleset {
         var now = System.nanoTime();
 
         this.topLevelRule = new Rule(s, this);
-        ruleRanges = new ArrayList<>(s.length());
-        ruleRangeStarts = new ArrayList<>(s.length());
-
         intervalIndex = new RuleIntervalIndex(topLevelRule.getId(), s.length());
-
-        // Populate the data structures
-        for (int i = 0; i < s.length(); i++) {
-            // At the start, each position is occupied only by rule 0 (the top level rule)
-            var list = new ArrayList<Integer>();
-            list.add(0);
-            ruleRanges.add(list);
-            // There is no index, at which a rule starts yet, except...
-            ruleRangeStarts.add(new HashSet<>());
-        }
-        // ... for index 0, at which rule 0 starts
-        ruleRangeStarts.get(0).add(0);
         underlying = s;
         Benchmark.updateTime(ALGORITHM_NAME, "construction", System.nanoTime() - now);
     }
@@ -109,7 +76,8 @@ class Ruleset implements ToUnifiedRuleset {
         );
 
         for (var interval : augS.getLCPIntervals(2)) {
-            queue.add(fun.area(augS, interval.start() + 1, interval.end()));
+            final var data = fun.area(augS, interval.start() + 1, interval.end());
+            if(data.area > 0) queue.add(data);
         }
 
         Benchmark.updateTime(ALGORITHM_NAME, "queue", System.nanoTime() - now);
@@ -133,6 +101,8 @@ class Ruleset implements ToUnifiedRuleset {
             }
 
             Arrays.sort(positions);
+
+
 
             //positions = nonOverlapping(positions, len);
             var inBoundaryNow = System.nanoTime();
@@ -226,14 +196,11 @@ class Ruleset implements ToUnifiedRuleset {
      * @param index The index to check
      * @return The first index of the rule range that index is part of
      *
-     * @see #ruleRanges
-     * @see #ruleRangeStarts
      */
     public int ruleRangeStartIndex(int index) {
         long now = System.nanoTime();
         int current = intervalIndex.range(index).totalStart();
         Benchmark.updateTime(ALGORITHM_NAME, "ruleRangeStartIndex", System.nanoTime() - now);
-
 
         return current;
     }
@@ -245,8 +212,6 @@ class Ruleset implements ToUnifiedRuleset {
      * @param from The start index of the range (inclusive)
      * @param to   The end index of the range (exclusive)
      *
-     * @see #ruleRanges
-     * @see #ruleRangeStarts
      */
     public void markRange(int id, int from, int to) {
         intervalIndex.mark(id, from, to);

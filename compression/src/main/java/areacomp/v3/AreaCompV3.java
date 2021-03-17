@@ -4,6 +4,8 @@ import areacomp.AreaFunction;
 import unified.interfaces.ToUnifiedRuleset;
 import unified.interfaces.UnifiedCompressor;
 
+import java.util.Objects;
+
 public class AreaCompV3 implements UnifiedCompressor {
 
     /**
@@ -16,6 +18,7 @@ public class AreaCompV3 implements UnifiedCompressor {
      * @param area The given {@link AreaFunction}
      */
     public AreaCompV3(AreaFunction area) {
+        Objects.requireNonNull(area);
         this.area = area;
     }
 
@@ -28,6 +31,6 @@ public class AreaCompV3 implements UnifiedCompressor {
 
     @Override
     public String name() {
-        return AreaCompV3.class.getSimpleName();
+        return AreaCompV3.class.getSimpleName() + "/" + area.getClass().getSimpleName();
     }
 }

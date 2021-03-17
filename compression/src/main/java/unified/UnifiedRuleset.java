@@ -99,40 +99,6 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
         return rules.values().stream().mapToInt(List::size).sum();
     }
 
-    /**
-     * Check, whether the string represented by the ruleset matches the given string.
-     * This is used to verify, that the grammar can be used to build the original string.
-     * @param reference The reference string to compare the result against.
-     * @return
-     */
-    public boolean verify(String reference) {
-        if (reference == null) throw new IllegalArgumentException("String to compare to is null");
-        return buildString().equals(reference);
-    }
-
-    /**
-     * Builds the string represented by the grammar
-     * @return The string represented by the grammar
-     */
-    public String buildString() {
-        List<UnifiedSymbol> symbols = new ArrayList<>(rulesetSize());
-        symbols.addAll(rules.get(topLevelRuleId));
-        int i = 0;
-        do {
-            final var symbol = symbols.get(i);
-            if(symbol instanceof UnifiedNonTerminal nonTerminal) {
-                symbols.addAll(i + 1, rules.get(nonTerminal.id()));
-                symbols.remove(i);
-            } else {
-                i++;
-            }
-        } while (i < symbols.size());
-
-        return symbols.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining());
-    }
-
     @Override
     public UnifiedRuleset toUnified() {
         return this;

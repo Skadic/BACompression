@@ -8,16 +8,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("Duplicates")
-public class ChildArea implements AreaFunction {
+public class DepthWithAddArea implements AreaFunction {
 
     private List<Integer> buffer = new ArrayList<>();
     private static final int[] EMPTY_POS = new int[0];
 
     @Override
-    public AreaData area(AugmentedString str, int low, int high) {
+    public AreaFunction.AreaData area(AugmentedString str, int low, int high) {
         var lcpLen = str.lValue(low - 1, high);
-        if (lcpLen <= 1) return new AreaData(low, high, EMPTY_POS, 0, 0);
+        if (lcpLen <= 1) return new AreaFunction.AreaData(low, high, EMPTY_POS, 0, 0);
 
         buffer.clear();
 
@@ -32,9 +31,9 @@ public class ChildArea implements AreaFunction {
             }
         }
 
-        if (buffer.size() <= 1) return new AreaData(low, high, EMPTY_POS, 0, 0);
+        if (buffer.size() <= 1) return new AreaFunction.AreaData(low, high, EMPTY_POS, 0, 0);
         final int[] validPositions = buffer.stream().mapToInt(Integer::intValue).toArray();
 
-        return new AreaData(low, high, validPositions, lcpLen * buffer.size(), lcpLen);
+        return new AreaFunction.AreaData(low, high, validPositions, lcpLen * lcpLen + buffer.size(), lcpLen);
     }
 }

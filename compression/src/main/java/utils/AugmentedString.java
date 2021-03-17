@@ -258,7 +258,7 @@ public class AugmentedString implements CharSequence {
 
     /**
      * Returns the lValue of a given lcp interval. Note that this function does not work for arbitrary intervals, but only
-     * for lcp intervals as
+     * for lcp intervals as described in Abouelhoda et al's Paper
      * @param low The lower bound of the lcp interval
      * @param high The upper bound of the lcp interval
      * @return The minimum value of the interval [low + 1, high] (inclusively) in {@link #lcp}

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
-public class ChildArea implements AreaFunction {
+public class LengthFirstArea implements AreaFunction {
 
     private List<Integer> buffer = new ArrayList<>();
     private static final int[] EMPTY_POS = new int[0];
@@ -35,6 +35,6 @@ public class ChildArea implements AreaFunction {
         if (buffer.size() <= 1) return new AreaData(low, high, EMPTY_POS, 0, 0);
         final int[] validPositions = buffer.stream().mapToInt(Integer::intValue).toArray();
 
-        return new AreaData(low, high, validPositions, lcpLen * buffer.size(), lcpLen);
+        return new AreaData(low, high, validPositions, lcpLen, lcpLen);
     }
 }
