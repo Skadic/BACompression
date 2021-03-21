@@ -1,19 +1,24 @@
 package areacomp.v3;
 
+import utils.XFastTrie;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class RuleIntervalIndex {
 
-    private NavigableMap<Integer, RuleInterval> intervalMap;
+    private XFastTrie<RuleInterval> intervalMap;
+    private TreeMap<Integer, RuleInterval> backupMap;
 
     private final int len;
 
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new TreeMap<>();
+        this.intervalMap = new XFastTrie<>();
+        this.backupMap = new TreeMap<>();
         intervalMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1));
+        backupMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1));
     }
 
     /**
@@ -23,11 +28,19 @@ public class RuleIntervalIndex {
      * @param end inclusive
      */
     public void mark(int ruleId, int start, int end) {
-        var startInterval = intervalMap.floorEntry(start).getValue();
-        var endInterval = intervalMap.floorEntry(end).getValue();
+        var startInterval = intervalMap.floorEntry(start).value();
+        var endInterval = intervalMap.floorEntry(end).value();
+        if(!startInterval.equals(backupMap.floorEntry(start).getValue())) {
+            System.out.printf("mark start: xfast: %s, tree: %s at input (%d, %d)%n", startInterval.toString(), backupMap.floorEntry(start).getValue().toString(), start, end);
+        }
+        if(!endInterval.equals(backupMap.floorEntry(end).getValue())) {
+            System.out.printf("mark end: xfast: %s, tree: %s at input (%d, %d)%n", endInterval.toString(), backupMap.floorEntry(end).getValue().toString(), start, end);
+        }
 
         intervalMap.remove(startInterval.start);
         intervalMap.remove(endInterval.start);
+        backupMap.remove(startInterval.start);
+        backupMap.remove(endInterval.start);
 
         addBorderIntervals(start, end, startInterval, endInterval);
         replaceIntervals(ruleId, start, end, startInterval, endInterval);
@@ -49,6 +62,8 @@ public class RuleIntervalIndex {
 
         intervalMap.put(first.start, first);
         intervalMap.put(last.start, last);
+        backupMap.put(first.start, first);
+        backupMap.put(last.start, last);
 
         // If the to-be-marked interval starts after the interval in which its start index lies, then insert a new Interval
         // which spans from the original start, to before the new start
@@ -56,6 +71,7 @@ public class RuleIntervalIndex {
             // Connect the previous part of the interval to the new start interval
             RuleInterval.connect(startInterval.prevSlice, before);
             intervalMap.put(before.start, before);
+            backupMap.put(before.start, before);
         } else {
             // If there is no new start interval, then connect the previous part of the interval to the part after the new interval
             RuleInterval.connect(startInterval.prevSlice, after);
@@ -65,6 +81,7 @@ public class RuleIntervalIndex {
         if(end < endInterval.end) {
             RuleInterval.connect(after, endInterval.nextSlice);
             intervalMap.put(after.start, after);
+            backupMap.put(after.start, after);
         } else {
             RuleInterval.connect(before, endInterval.nextSlice);
         }
@@ -89,8 +106,14 @@ public class RuleIntervalIndex {
         // iterator exists
         var toInsert = new LinkedList<RuleInterval>();
 
+        /*if(!intervalMap.valueRange(startInterval.start, true, end, true).equals(
+                backupMap.subMap(startInterval.start, true, end, true).values()
+        )) {
+            System.out.println("replace Intervals");
+        }*/
+
         for(
-                Iterator<RuleInterval> iterator = intervalMap.subMap(startInterval.start, true, end, true).values().iterator();
+                Iterator<RuleInterval> iterator = intervalMap.valueRange(startInterval.start, true, end, true).iterator();
                 iterator.hasNext();
         ){
             RuleInterval interval = iterator.next();
@@ -124,21 +147,26 @@ public class RuleIntervalIndex {
 
         for (RuleInterval interval : toInsert) {
             intervalMap.put(interval.start, interval);
+            backupMap.put(interval.start, interval);
         }
     }
 
     public int deepestRuleAt(int index) {
-        return intervalMap.floorEntry(index).getValue().ruleId();
+        final RuleInterval value = intervalMap.floorEntry(index).value();
+        if(!value.equals(backupMap.floorEntry(index).getValue())) {
+            System.out.printf("DeepestRuleAt: xfast: %s, tree: %s at input %d%n", value.toString(), backupMap.floorEntry(index).getValue(), index);
+        }
+        return value.ruleId();
     }
 
     public RuleInterval startInterval(int index) {
         if(index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index '" + index + "' out of range for length " + length());
 
-        return intervalMap.get(intervalMap.floorEntry(index).getValue().totalStart);
+        return intervalMap.get(intervalMap.floorEntry(index).value().totalStart);
     }
 
     public RuleInterval intervalAt(int index) {
-        return intervalMap.floorEntry(index).getValue();
+        return intervalMap.floorEntry(index).value();
     }
 
     public Optional<RuleInterval> rangeByStartIndex(int index) {
@@ -150,7 +178,7 @@ public class RuleIntervalIndex {
         return len;
     }
 
-    public NavigableMap<Integer, RuleInterval> getIntervalMap() {
+    public XFastTrie<RuleInterval> getIntervalMap() {
         return intervalMap;
     }
 
