@@ -11,8 +11,7 @@ public class IntUtils {
      * @return The prefix
      */
     public static int bitPrefix(int number, int n) {
-        if(n == 32) return number;
-        return number & ((MASK >>> n) ^ MASK);
+        return n >= 32 ? number : number & ((MASK >>> n) ^ MASK);
     }
 
     /**

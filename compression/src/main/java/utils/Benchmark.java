@@ -7,10 +7,13 @@ import java.util.TreeMap;
 
 public final class Benchmark {
 
+    private static final boolean ENABLE = false;
+
     private static final Map<String, Map<String, Long>> EXECUTION_TIMES = new TreeMap<>();
     private static final Map<String, Map<String, Long>> TIMERS = new HashMap<>();
 
     public static void startTimer(String algorithmName, String counterName) {
+        if(!ENABLE) return;
         if(!TIMERS.containsKey(algorithmName)) {
             TIMERS.put(algorithmName, new HashMap<>());
         }
@@ -19,6 +22,7 @@ public final class Benchmark {
     }
 
     public static void stopTimer(String algorithmName, String counterName) {
+        if(!ENABLE) return;
         if(!TIMERS.containsKey(algorithmName) || !TIMERS.get(algorithmName).containsKey(counterName)) {
             throw new NoTimerStartedException(algorithmName, counterName);
         }
@@ -26,6 +30,7 @@ public final class Benchmark {
     }
 
     public static void updateTime(String algorithmName, String counterName, long timeNs) {
+        if(!ENABLE) return;
         if(!EXECUTION_TIMES.containsKey(algorithmName)) {
             EXECUTION_TIMES.put(algorithmName, new LinkedHashMap<>());
         }

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class XFastTrie<T> {
+public class XFastTrie<T> implements Predecessor<Integer, T> {
 
     private Map<Integer, Node>[] lss;
     private int size;
@@ -16,29 +16,34 @@ public class XFastTrie<T> {
     public XFastTrie() {
         this.lss = new Map[33];
         for (int i = 0; i < lss.length; i++) {
-            lss[i] = new TreeMap<>();
+            lss[i] = new HashMap<>();
         }
         size = 0;
     }
 
-    public T put(int key, T value) {
-        predSuccSanityCheck();
+    @Override
+    public T put(Integer key, T value) {
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "put");
         var prevContent = lss[0].get(key);
         if(prevContent != null) {
             var temp = prevContent.content;
             prevContent.content = value;
+            Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "put");
             return temp;
         }
 
         Node newNode = new Node(key, value);
 
-        predSuccSanityCheck();
-
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "put link");
         linkNode(newNode);
-        insertNode(newNode);
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "put link");
 
-        predSuccSanityCheck();
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "put insert");
+        insertNode(newNode);
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "put insert");
+
         size++;
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "put");
         return null;
     }
 
@@ -76,60 +81,78 @@ public class XFastTrie<T> {
      */
     private void insertNode(Node newNode) {
         final var key = newNode.key;
-
         lss[0].put(key, newNode);
 
-        // Whether the new node is the greatest key in the tree below current
-        boolean isGreatest = true;
-        // Whether the new node is the smallest key in the tree below current
-        boolean isSmallest = true;
+
+        int bitPrefixLength = 32 - 1;
+        int bitPrefix = IntUtils.bitPrefix(key, bitPrefixLength);
+
+        // The current node. Initialized as the new node
+        Node current = newNode;
+        // The current node's ancestor (one level further up). Initialized as this node's direct ancestor, if it exists
+        Node currentAncestor = lss[1].get(bitPrefix);
 
         for (int i = 1; i < lss.length; i++) {
-            final int bitPrefixLength = 32 - i;
-            final int bitPrefix = IntUtils.bitPrefix(key, bitPrefixLength);
-            // The current node
-            Node current = lss[i - 1].get(IntUtils.bitPrefix(key, bitPrefixLength + 1));
-            // The current node's ancestor (one level further up)
-            Node currentAncestor = lss[i].get(bitPrefix);
             if(currentAncestor == null) {
                 currentAncestor = new Node(bitPrefix, i);
-                lss[i].put(bitPrefix, currentAncestor);
-                if(current.isChild0()) {
-                    currentAncestor.connectChild0(current, false);
-                    // Descendant pointer
-                    currentAncestor.connectChild1(newNode, true);
-                } else if (current.isChild1()) {
-                    // Descendant pointer
-                    currentAncestor.connectChild0(newNode, true);
-                    currentAncestor.connectChild1(current, false);
-                }
+                putNewAncestor(currentAncestor, current, newNode);
             } else {
                 if(current.isChild0()) {
                     currentAncestor.connectChild0(current, false);
-                    if(currentAncestor.hasChild1()) {
-                        isGreatest = false;
-                    } else if (isGreatest) {
+                    if (currentAncestor.child1.key < newNode.key) {
                         // Descendant Pointer
                         currentAncestor.connectChild1(newNode, true);
                     }
                 } else if (current.isChild1()) {
                     currentAncestor.connectChild1(current, false);
-                    if(currentAncestor.hasChild0()) {
-                        isSmallest = false;
-                    } else if(isSmallest) {
+                    if(currentAncestor.child0.key > newNode.key) {
                         // Descendant Pointer
                         currentAncestor.connectChild0(newNode, true);
                     }
                 }
             }
+
+            // So that lss[i + 1] does not fail
+            if(i + 1 >= lss.length) {
+                break;
+            }
+
+            bitPrefixLength = 32 - i - 1;
+            bitPrefix = IntUtils.bitPrefix(key, bitPrefixLength);
+            current = currentAncestor;
+            currentAncestor = lss[i + 1].get(bitPrefix);
         }
     }
 
-    public T remove(int key) {
-        predSuccSanityCheck();
+    /**
+     * Inserts the ancestor node in its respective level in {@link #lss}, links it with its descendant and sets up the
+     * descendant pointers to the corresponding leaf node. This is used when a new leaf is inserted and new ancestors must be created.
+     * @param ancestor The new ancestor to be inserted
+     * @param descendant The direct descendant of that ancestor
+     * @param newNode The newly created leaf node to which this new ancestor belongs
+     */
+    private void putNewAncestor(Node ancestor, Node descendant, Node newNode) {
+        lss[ancestor.level].put(ancestor.key, ancestor);
+        if(descendant.isChild0()) {
+            ancestor.connectChild0(descendant, false);
+            // Descendant pointer
+            ancestor.connectChild1(newNode, true);
+        } else if (descendant.isChild1()) {
+            // Descendant pointer
+            ancestor.connectChild0(newNode, true);
+            ancestor.connectChild1(descendant, false);
+        }
+    }
+
+    @Override
+    public T remove(Integer key) {
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "remove");
         final var removed = lss[0].get(key);
 
-        if(removed == null) return null;
+        if(removed == null) {
+            Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "remove");
+            return null;
+        }
 
         final var pred = removed.pred;
         final var succ = removed.succ;
@@ -175,57 +198,66 @@ public class XFastTrie<T> {
                 }
             }
         }
-        predSuccSanityCheck();
         size--;
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "remove");
         return lss[0].remove(key).content;
     }
 
-    public T get(int key) {
+    @Override
+    public T get(Integer key) {
         return getOrDefault(key, null);
     }
 
-    public T getOrDefault(int key, T def) {
+    @Override
+    public T getOrDefault(Integer key, T def) {
         var node = lss[0].get(key);
         return node != null ? node.content : def;
     }
 
-    public Entry<T> floorEntry(int key) {
+    @Override
+    public Entry<Integer, T> floorEntry(Integer key) {
         var node = floorNode(key);
         return node != null ? new Entry<>(node.key, node.content) : null;
     }
 
-    public Entry<T> ceilingEntry(int key) {
+    @Override
+    public Entry<Integer, T> ceilingEntry(Integer key) {
         var node = ceilingNode(key);
         return node != null ? new Entry<>(node.key, node.content) : null;
     }
 
-    public Entry<T> lowerEntry(int key) {
+    @Override
+    public Entry<Integer, T> lowerEntry(Integer key) {
         var node = floorNode(key - 1);
         return node != null ? new Entry<>(node.key, node.content) : null;
     }
 
-    public Entry<T> higherEntry(int key) {
+    @Override
+    public Entry<Integer, T> higherEntry(Integer key) {
         var node = ceilingNode(key + 1);
         return node != null ? new Entry<>(node.key, node.content) : null;
     }
 
     public Integer floorKey(int key) {
-        return floorEntry(key).key;
+        return floorEntry(key).key();
     }
 
     public Integer ceilingKey(int key) {
-        return ceilingEntry(key).key;
+        return ceilingEntry(key).key();
     }
 
     public Integer lowerKey(int key) {
-        return lowerEntry(key).key;
+        return lowerEntry(key).key();
     }
 
     public Integer higherKey(int key) {
-        return higherEntry(key).key;
+        return higherEntry(key).key();
     }
 
+
+
     private Node searchLowestAncestor(int key) {
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "lowest ancestor");
         int top = lss.length - 1;
         int bottom = 0;
         Node lastFind = null;
@@ -242,13 +274,15 @@ public class XFastTrie<T> {
                 bottom = mid + 1;
             }
         }
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "lowest ancestor");
         return lastFind;
     }
 
     @Nullable
     private Node floorNode(int key) {
+        Benchmark.startTimer(XFastTrie.class.getSimpleName(), "floorNode");
         final var lowestAncestor = searchLowestAncestor(key);
-
+        Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "floorNode");
         if(lowestAncestor == null) {
             return null;
         } else if (lowestAncestor.isLeaf()){
@@ -317,7 +351,7 @@ public class XFastTrie<T> {
         return list;
     }
 
-    public Collection<T> valueRange(int from, boolean fromInclusive, int to, boolean toInclusive) {
+    public Collection<T> valueRange(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
         if(root() == null) return List.of();
         List<T> list = new ArrayList<>(lss[0].size());
 
@@ -335,26 +369,36 @@ public class XFastTrie<T> {
         return list;
     }
 
+    @Override
+    public Iterator<T> valueRangeIterator(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
+        return new Iterator<>() {
+            Node current = fromInclusive ? ceilingNode(from) : ceilingNode(from + 1);
+
+            @Override
+            public boolean hasNext() {
+                if(toInclusive) {
+                    return current != null && current.key <= to;
+                } else {
+                    return current != null && current.key < to;
+                }
+            }
+
+            @Override
+            public T next() {
+                if(!hasNext()) throw new NoSuchElementException();
+                var temp = current.content;
+                current = current.succ;
+                return temp;
+            }
+        };
+    }
+
     public int size() {
         return size;
     }
 
     public Iterator<T> valueIterator() {
         return new ValueIterator();
-    }
-
-    private void predSuccSanityCheck() {
-        if(size < 2) return;
-        Node current = root().smallestLeaf();
-        Node next = current.succ;
-
-        while (next != null) {
-            if(current.key > next.key) throw new IllegalStateException(
-                    String.format("Leaf %s is predecessor of %s despite the latter's key not being greater", current.toString(), next.toString())
-            );
-            current = next;
-            next = current.succ;
-        }
     }
 
     private class ValueIterator implements Iterator<T> {
@@ -397,8 +441,6 @@ public class XFastTrie<T> {
             if(expectedSize != size()) throw new ConcurrentModificationException();
         }
     }
-
-    public record Entry<X>(int key, X value) {};
 
     private class Node {
 
