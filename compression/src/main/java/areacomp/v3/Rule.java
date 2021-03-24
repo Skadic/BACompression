@@ -65,7 +65,7 @@ public class Rule implements CharSequence, Iterable<Symbol> {
     }
 
     private Rule(Ruleset r) {
-        this(new ArrayList<>(), r);
+        this(Collections.emptyList(), r);
     }
 
     /**
@@ -92,10 +92,10 @@ public class Rule implements CharSequence, Iterable<Symbol> {
     }
 
     public void replace(Rule rule, int start, int length) {
-        var now = System.nanoTime();
+        Benchmark.startTimer("Rule", "sublist clear");
         symbolMap.subMap(start, start + length).clear();
         symbolMap.put(start, new NonTerminal(rule));
-        Benchmark.updateTime("Rule", "sublist clear", System.nanoTime() - now);
+        Benchmark.stopTimer("Rule", "sublist clear");
     }
 
     /**
@@ -344,10 +344,6 @@ public class Rule implements CharSequence, Iterable<Symbol> {
 
     private Symbol symbolAtLocalIndex(int index) {
         return symbolMap.get(index);
-    }
-
-    private Symbol symbolContainingTerminalAt(int index) {
-        return symbolMap.floorEntry(index).getValue();
     }
 
     private void addSymbols(Collection<Symbol> newSymbols) {

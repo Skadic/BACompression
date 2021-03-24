@@ -9,14 +9,18 @@ import java.util.function.BiConsumer;
 
 public class XFastTrie<T> implements Predecessor<Integer, T> {
 
-    private Map<Integer, Node>[] lss;
+    private final Map<Integer, Node>[] lss;
     private int size;
 
-    @SuppressWarnings("unchecked")
     public XFastTrie() {
+        this(50);
+    }
+
+    @SuppressWarnings("unchecked")
+    public XFastTrie(int expectedSize) {
         this.lss = new Map[33];
         for (int i = 0; i < lss.length; i++) {
-            lss[i] = new HashMap<>();
+            lss[i] = new HashMap<>(Math.min((int) Math.pow(2, i), expectedSize));
         }
         size = 0;
     }
@@ -82,7 +86,6 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
     private void insertNode(Node newNode) {
         final var key = newNode.key;
         lss[0].put(key, newNode);
-
 
         int bitPrefixLength = 32 - 1;
         int bitPrefix = IntUtils.bitPrefix(key, bitPrefixLength);
@@ -202,6 +205,8 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
         Benchmark.stopTimer(XFastTrie.class.getSimpleName(), "remove");
         return lss[0].remove(key).content;
     }
+
+
 
     @Override
     public T get(Integer key) {

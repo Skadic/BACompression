@@ -31,6 +31,7 @@ tasks.withType(JavaCompile).each {
 
 tasks.withType(JavaExec) {
     jvmArgs += '--enable-preview'
+    jvmArgs += '-Xmx8G'
 }
 
 tasks.withType(Test) {

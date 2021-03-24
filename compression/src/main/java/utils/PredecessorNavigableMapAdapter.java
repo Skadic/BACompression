@@ -30,25 +30,25 @@ public class PredecessorNavigableMapAdapter<K, V> implements Predecessor<K, V> {
     @Override
     public Entry<K, V> floorEntry(K key) {
         final Map.Entry<K, V> mapEntry = map.floorEntry(key);
-        return new Entry<>(mapEntry.getKey(), mapEntry.getValue());
+        return mapEntry != null ? new Entry<>(mapEntry.getKey(), mapEntry.getValue()) : null;
     }
 
     @Override
     public Entry<K, V> ceilingEntry(K key) {
         final Map.Entry<K, V> mapEntry = map.ceilingEntry(key);
-        return new Entry<>(mapEntry.getKey(), mapEntry.getValue());
+        return mapEntry != null ? new Entry<>(mapEntry.getKey(), mapEntry.getValue()) : null;
     }
 
     @Override
     public Entry<K, V> higherEntry(K key) {
         final Map.Entry<K, V> mapEntry = map.higherEntry(key);
-        return new Entry<>(mapEntry.getKey(), mapEntry.getValue());
+        return mapEntry != null ? new Entry<>(mapEntry.getKey(), mapEntry.getValue()) : null;
     }
 
     @Override
     public Entry<K, V> lowerEntry(K key) {
         final Map.Entry<K, V> mapEntry = map.lowerEntry(key);
-        return new Entry<>(mapEntry.getKey(), mapEntry.getValue());
+        return mapEntry != null ? new Entry<>(mapEntry.getKey(), mapEntry.getValue()) : null;
     }
 
     @Override

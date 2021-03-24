@@ -7,16 +7,14 @@ import java.util.TreeMap;
 
 public final class Benchmark {
 
-    private static final boolean ENABLE = false;
+    private static final boolean ENABLE = true;
 
     private static final Map<String, Map<String, Long>> EXECUTION_TIMES = new TreeMap<>();
     private static final Map<String, Map<String, Long>> TIMERS = new HashMap<>();
 
     public static void startTimer(String algorithmName, String counterName) {
         if(!ENABLE) return;
-        if(!TIMERS.containsKey(algorithmName)) {
-            TIMERS.put(algorithmName, new HashMap<>());
-        }
+        TIMERS.computeIfAbsent(algorithmName, k -> new HashMap<>());
         final var previous = TIMERS.get(algorithmName).put(counterName, System.nanoTime());
         if(previous != null) throw new TimerAlreadyStartedException(algorithmName, counterName);
     }
@@ -34,6 +32,7 @@ public final class Benchmark {
         if(!EXECUTION_TIMES.containsKey(algorithmName)) {
             EXECUTION_TIMES.put(algorithmName, new LinkedHashMap<>());
         }
+        EXECUTION_TIMES.computeIfAbsent(algorithmName, name -> new LinkedHashMap<>());
         EXECUTION_TIMES.get(algorithmName).merge(counterName, timeNs, Long::sum);
     }
 

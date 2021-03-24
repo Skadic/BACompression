@@ -2,7 +2,6 @@ package areacomp.v3;
 
 import utils.Benchmark;
 import utils.Predecessor;
-import utils.PredecessorNavigableMapAdapter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +15,7 @@ public class RuleIntervalIndex {
 
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
+        this.intervalMap = new BucketPred<>(len, 10);
         intervalMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1));
     }
 
@@ -28,21 +27,23 @@ public class RuleIntervalIndex {
      */
     public void mark(int ruleId, int start, int end) {
         Benchmark.startTimer("Index", "mark intervals");
-        var startInterval = intervalMap.floorEntry(start).value();
-        var endInterval = intervalMap.floorEntry(end).value();
-        Benchmark.stopTimer("Index", "mark intervals");
 
-        Benchmark.startTimer("Index", "mark remove");
-        intervalMap.remove(startInterval.start);
-        intervalMap.remove(endInterval.start);
-        Benchmark.stopTimer("Index", "mark remove");
+        RuleInterval startInterval = intervalMap.floorEntry(start).value();
+        RuleInterval endInterval;
+        if (startInterval.end() < end) { // In this case, the interval was already removed when calling removeFloor(start)
+            endInterval = intervalMap.floorEntry(end).value();
+        } else {
+            endInterval = startInterval;
+        }
+
+        Benchmark.stopTimer("Index", "mark intervals");
 
         Benchmark.startTimer("Index", "mark add borders");
         addBorderIntervals(start, end, startInterval, endInterval);
         Benchmark.stopTimer("Index", "mark add borders");
 
         Benchmark.startTimer("Index", "mark replace intervals");
-        replaceIntervals(ruleId, start, end, startInterval, endInterval);
+        replaceIntervals(ruleId, start, end, startInterval);
         Benchmark.stopTimer("Index", "mark replace intervals");
     }
 
@@ -91,7 +92,7 @@ public class RuleIntervalIndex {
         }
     }
 
-    private void replaceIntervals(int ruleId, int start, int end, RuleInterval startInterval, RuleInterval endInterval) {
+    private void replaceIntervals(int ruleId, int start, int end, RuleInterval startInterval) {
 
         // Add all intervals that are between start and end
         var startIndex = -1;

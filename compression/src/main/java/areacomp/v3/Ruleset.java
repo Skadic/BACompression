@@ -45,12 +45,12 @@ class Ruleset implements ToUnifiedRuleset {
      * @param s The string for which the ruleset should be created
      */
     public Ruleset(String s) {
-        var now = System.nanoTime();
+        Benchmark.startTimer(ALGORITHM_NAME, "construction");
 
         this.topLevelRule = new Rule(s, this);
         intervalIndex = new RuleIntervalIndex(topLevelRule.getId(), s.length());
         underlying = s;
-        Benchmark.updateTime(ALGORITHM_NAME, "construction", System.nanoTime() - now);
+        Benchmark.stopTimer(ALGORITHM_NAME, "construction");
     }
 
     /**
@@ -60,12 +60,13 @@ class Ruleset implements ToUnifiedRuleset {
      * @param fun The area function used to prioritise intervals in the lcp array
      */
     public void compress(AreaFunction fun) {
-        var nowTotal = System.nanoTime();
-        var now = nowTotal;
-        final var augS = new AugmentedString(underlying);
-        Benchmark.updateTime(ALGORITHM_NAME, "suffix array", System.nanoTime() - now);
+        Benchmark.startTimer(ALGORITHM_NAME, "total time");
 
-        now = System.nanoTime();
+        Benchmark.startTimer(ALGORITHM_NAME, "suffix array");
+        final var augS = new AugmentedString(underlying);
+        Benchmark.stopTimer(ALGORITHM_NAME, "suffix array");
+
+        Benchmark.startTimer(ALGORITHM_NAME, "queue");
         // Create a Priority Queue which holds possible intervals in the LCP array
         // The priority value is calculated through the given area function.
         // This function should return a high value for promising intervals in the LCP array.
@@ -80,11 +81,11 @@ class Ruleset implements ToUnifiedRuleset {
             if(data.area > 0) queue.add(data);
         }
 
-        Benchmark.updateTime(ALGORITHM_NAME, "queue", System.nanoTime() - now);
+        Benchmark.stopTimer(ALGORITHM_NAME, "queue");
 
         while (!queue.isEmpty()) {
 
-            now = System.nanoTime();
+            Benchmark.startTimer(ALGORITHM_NAME, "positions");
             // Poll the best interval
             var areaData = queue.remove();
 
@@ -102,29 +103,26 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-
-
             //positions = nonOverlapping(positions, len);
-            var inBoundaryNow = System.nanoTime();
+            Benchmark.startTimer(ALGORITHM_NAME, "in boundary");
             positions = inBoundary(positions, len);
-            Benchmark.updateTime(ALGORITHM_NAME, "in boundary", System.nanoTime() - inBoundaryNow);
+            Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
 
-            var multiOccNow = System.nanoTime();
+            Benchmark.startTimer(ALGORITHM_NAME, "multiple occurrences");
             final var multipleOccurrences = multipleDifferingOccurences(positions);
-            Benchmark.updateTime(ALGORITHM_NAME, "multiple Occurrences", System.nanoTime() - multiOccNow);
+            Benchmark.stopTimer(ALGORITHM_NAME, "multiple occurrences");
 
-            Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
+            Benchmark.stopTimer(ALGORITHM_NAME, "positions");
 
             if(positions.length <= 1 || !multipleOccurrences) {
                 continue;
             }
 
-
             Benchmark.startTimer(ALGORITHM_NAME, "factorize");
             topLevelRule.factorize(len, positions);
             Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
         }
-        Benchmark.updateTime(ALGORITHM_NAME, "total time", System.nanoTime() - nowTotal);
+        Benchmark.stopTimer(ALGORITHM_NAME, "total time");
     }
 
     /**
@@ -225,8 +223,10 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public boolean crossesBoundary(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
+
         var fromInterval = intervalIndex.intervalAt(from);
         var toInterval = intervalIndex.intervalAt(to - 1);
+
         boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.totalStart() != toInterval.totalStart();
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
         return b;
@@ -237,8 +237,6 @@ class Ruleset implements ToUnifiedRuleset {
      *
      * @param index The given index
      * @return The index of the rule
-     *
-     * @see #ruleRanges
      */
     public int getDeepestRuleIdAt(int index) { ;
         return intervalIndex.deepestRuleAt(index);
@@ -250,7 +248,6 @@ class Ruleset implements ToUnifiedRuleset {
      * @param index The given index
      * @return The rule
      *
-     * @see #ruleRanges
      * @see #getDeepestRuleAt(int)
      */
     public Rule getDeepestRuleAt(int index) {

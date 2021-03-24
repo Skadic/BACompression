@@ -2,8 +2,6 @@ import areacomp.AreaFunction;
 import areacomp.areas.LengthFirstArea;
 import areacomp.areas.NaiveArea;
 import areacomp.v3.AreaCompV3;
-import repair.RePair;
-import sequitur.Sequitur;
 import unified.interfaces.UnifiedCompressor;
 import utils.Benchmark;
 
@@ -26,8 +24,8 @@ public class Main {
         final AreaFunction area = new NaiveArea();
         
         final var compressors = List.of(
-                new Sequitur(),
-                new RePair(),
+                //new Sequitur(),
+                //new RePair()//,
                 //new AreaCompV3(new ChildArea()),
                 new AreaCompV3(new LengthFirstArea())//,
                 //new AreaCompV3(new DepthWithAddArea())
@@ -47,11 +45,16 @@ public class Main {
             return;
         }
 
+        if(!Files.exists(outputPath.getParent())) {
+            Files.createDirectories(outputPath.getParent());
+        };
 
         try (PrintStream out = new PrintStream(Files.newOutputStream(outputPath))) {
             out.println("On a test string of " + input.length() + " characters.\n");
             for (UnifiedCompressor compressor : compressors) {
+                System.out.println("Testing " + compressor.name());
                 compressor.benchmark(input, out);
+                System.out.println("Done testing " + compressor.name());
             }
         }
 
