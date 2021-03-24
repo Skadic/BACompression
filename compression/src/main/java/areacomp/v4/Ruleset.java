@@ -1,6 +1,7 @@
-package areacomp.v3;
+package areacomp.v4;
 
 import areacomp.AreaFunction;
+import org.apache.commons.collections4.list.TreeList;
 import unified.UnifiedNonTerminal;
 import unified.UnifiedRuleset;
 import unified.UnifiedTerminal;
@@ -11,29 +12,35 @@ import utils.Benchmark;
 import utils.RuleIntervalIndex;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+@SuppressWarnings("Duplicates")
 class Ruleset implements ToUnifiedRuleset {
 
-    public static final String ALGORITHM_NAME = AreaCompV3.class.getSimpleName();
+    public static final String ALGORITHM_NAME = AreaCompV4.class.getSimpleName();
 
     /**
      * The string for which this ruleset is built
      */
     private final String underlying;
 
-    /**
-     * This rule set's start rule
-     */
-    private final Rule topLevelRule;
-
     private final RuleIntervalIndex intervalIndex;
 
-    /**
-     * A map that contains all rules. It maps from a rule ID to its corresponding rule
-     */
-    private final Map<Integer, Rule> ruleMap = new HashMap<>();
+    private final SortedMap<Integer, List<RuleInterval>> ruleRangeStarts;
+
+    private record RuleInterval(int id, int start, int end) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            RuleInterval that = (RuleInterval) o;
+            return id == that.id && start == that.start && end == that.end;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, start, end);
+        }
+    }
 
     /**
      * Amount of rules in the set. This is used for getting new rule IDs in {@link #nextRuleID()}
@@ -47,11 +54,13 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public Ruleset(String s) {
         Benchmark.startTimer(ALGORITHM_NAME, "construction");
-
-        this.topLevelRule = new Rule(s, this);
-        intervalIndex = new RuleIntervalIndex(topLevelRule.getId(), s.length());
+        intervalIndex = new RuleIntervalIndex(0, s.length());
+        ruleRangeStarts = new TreeMap<>();
+        ruleRangeStarts.put(0, new TreeList<>());
+        ruleRangeStarts.get(0).add(new RuleInterval(0, 0, s.length() - 1));
         underlying = s;
         Benchmark.stopTimer(ALGORITHM_NAME, "construction");
+        numRules = 1;
     }
 
     /**
@@ -120,10 +129,32 @@ class Ruleset implements ToUnifiedRuleset {
             }
 
             Benchmark.startTimer(ALGORITHM_NAME, "factorize");
-            topLevelRule.factorize(len, positions);
+            factorize(len, positions);
             Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
         }
         Benchmark.stopTimer(ALGORITHM_NAME, "total time");
+    }
+
+    /**
+     * Factorizes a repeated sequence. All occurrences of the pattern in the grammar will be replaced with a new rule
+     * This method makes the following assumptions
+     * All occurences are non overlapping.
+     * The positions are sorted in ascending order.
+     * @param len The length of the subsequence to replace in terminal characters
+     * @param positions The start positions of the occurences in the original string
+     */
+    public void factorize(int len, int... positions) {
+        // If the occurence is less than one or
+        if (len <= 1 || positions.length < 2) return;
+
+        final int nextId = nextRuleID();
+
+        // Iterate through the positions and substitute each occurrence.
+        for (int position : positions) {
+            Benchmark.startTimer("RulesetV4", "markRange");
+            markRange(nextId, position, position + len - 1);
+            Benchmark.stopTimer("RulesetV4", "markRange");
+        }
     }
 
     /**
@@ -213,6 +244,7 @@ class Ruleset implements ToUnifiedRuleset {
      *
      */
     public void markRange(int id, int from, int to) {
+        ruleRangeStarts.computeIfAbsent(from, i -> new TreeList<>()).add(new RuleInterval(id, from, to));
         intervalIndex.mark(id, from, to);
     }
 
@@ -233,92 +265,69 @@ class Ruleset implements ToUnifiedRuleset {
         return b;
     }
 
+    private int nextRuleID() {
+        return numRules++;
+    }
+
     /**
      * Gets the id of the most deeply nested rule which occupies this index
      *
      * @param index The given index
      * @return The index of the rule
      */
-    public int getDeepestRuleIdAt(int index) { ;
+    public int getDeepestRuleIdAt(int index) {
         return intervalIndex.deepestRuleAt(index);
-    }
-
-    /**
-     * Gets the most deeply nested rule which occupies this index
-     *
-     * @param index The given index
-     * @return The rule
-     *
-     * @see #getDeepestRuleAt(int)
-     */
-    public Rule getDeepestRuleAt(int index) {
-        return ruleMap.get(getDeepestRuleIdAt(index));
-    }
-
-    /**
-     * Gets a collection of all rules in this set
-     *
-     * @return All rules in this set
-     */
-    public Collection<Rule> rules() {
-        return ruleMap.values();
-    }
-
-    /**
-     * Get a map that maps Rule IDs to their corresponding rule
-     *
-     * @return The map of IDs to rule
-     */
-    public Map<Integer, Rule> getRuleMap() {
-        return ruleMap;
-    }
-
-    /**
-     * Gets the next number to be used for a created rule id
-     *
-     * @return A new unused rule id
-     */
-    public int nextRuleID() {
-        return numRules++;
-    }
-
-    /**
-     * Gets the rule in the set which represents the start rule
-     *
-     * @return The rule set's start rule
-     */
-    public Rule getTopLevelRule() {
-        return topLevelRule;
-    }
-
-    /**
-     * Gets the size of this rule set.
-     * The size is calculated as the sum of characters in all rule's right sides.
-     *
-     * @return The rule set's size
-     */
-    public long ruleSetSize() {
-        return rules().stream().flatMap(Rule::stream).count();
     }
 
     @Override
     public UnifiedRuleset toUnified() {
 
-        Function<Symbol, UnifiedSymbol> unify = symbol -> {
-            if(symbol instanceof NonTerminal nonTerminal) {
-                return new UnifiedNonTerminal(nonTerminal.getRule().getId());
-            } else {
-                return new UnifiedTerminal((char) symbol.value());
-            }
-        };
+        // The Stack which contains all nested rule intervals at the current index.
+        // The most deeply nested interval is at the top of the stack. The second deepest interval is the second element etc.
+        Deque<RuleInterval> nestingStack = new ArrayDeque<>();
 
+        // The Stack which contains the tentative symbol list of the rule which corresponds to the interval at the same
+        // position in nestingStack.
+        Deque<List<UnifiedSymbol>> symbolStack = new ArrayDeque<>();
         UnifiedRuleset ruleset = new UnifiedRuleset();
 
-        ruleset.setTopLevelRuleId(topLevelRule.getId());
+        final var chars = underlying.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            // If the index moved past the current rule interval, remove all intervals which ended and add the resulting rules
+            // to the ruleset
+            while (!nestingStack.isEmpty() && i > nestingStack.peek().end){
+                final int id = nestingStack.pop().id;
+                final List<UnifiedSymbol> symbols = symbolStack.pop();
+                ruleset.putRule(id, symbols);
 
-        for(var rule : rules()) {
-            ruleset.putRule(rule.getId(), rule.stream().map(unify).collect(Collectors.toList()));
+                if(!symbolStack.isEmpty()) {
+                    symbolStack.peek().add(new UnifiedNonTerminal(id));
+                }
+            }
+
+            // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
+            if(ruleRangeStarts.containsKey(i)) {
+                for (RuleInterval interval : ruleRangeStarts.get(i)) {
+                    nestingStack.push(interval);
+                    symbolStack.push(new ArrayList<>());
+                }
+            }
+
+            // Add the current char to the most deeply nested rule's stack
+            char c = chars[i];
+            symbolStack.peek().add(new UnifiedTerminal(c));
         }
+
+        while (!nestingStack.isEmpty()){
+            final int id = nestingStack.pop().id;
+            final List<UnifiedSymbol> symbols = symbolStack.pop();
+            ruleset.putRule(id, symbols);
+
+            if(!symbolStack.isEmpty()) {
+                symbolStack.peek().add(new UnifiedNonTerminal(id));
+            }
+        }
+
 
         return ruleset;
     }

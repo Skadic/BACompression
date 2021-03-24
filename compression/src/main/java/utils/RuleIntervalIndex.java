@@ -1,7 +1,4 @@
-package areacomp.v3;
-
-import utils.Benchmark;
-import utils.Predecessor;
+package utils;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,7 +1,6 @@
-package areacomp.v3;
+package utils;
 
 import org.apache.commons.collections4.list.TreeList;
-import utils.Predecessor;
 
 import java.util.*;
 

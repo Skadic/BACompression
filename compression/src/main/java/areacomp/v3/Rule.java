@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("Duplicates")
-public class Rule implements CharSequence, Iterable<Symbol> {
+class Rule implements CharSequence, Iterable<Symbol> {
 
     private final NavigableMap<Integer, Symbol> symbolMap;
 

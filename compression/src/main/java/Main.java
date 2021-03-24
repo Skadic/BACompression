@@ -2,6 +2,7 @@ import areacomp.AreaFunction;
 import areacomp.areas.LengthFirstArea;
 import areacomp.areas.NaiveArea;
 import areacomp.v3.AreaCompV3;
+import areacomp.v4.AreaCompV4;
 import unified.interfaces.UnifiedCompressor;
 import utils.Benchmark;
 
@@ -27,7 +28,8 @@ public class Main {
                 //new Sequitur(),
                 //new RePair()//,
                 //new AreaCompV3(new ChildArea()),
-                new AreaCompV3(new LengthFirstArea())//,
+                new AreaCompV3(new LengthFirstArea()),
+                new AreaCompV4(new LengthFirstArea())
                 //new AreaCompV3(new DepthWithAddArea())
                 //,new AreaCompV2(area)
                 //,new AreaCompV1(area)

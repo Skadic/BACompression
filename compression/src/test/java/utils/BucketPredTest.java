@@ -1,6 +1,5 @@
 package utils;
 
-import areacomp.v3.BucketPred;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

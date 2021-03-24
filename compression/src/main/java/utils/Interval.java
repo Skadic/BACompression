@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * A class representing an interval in an array etc.
+ * A class representing an interval in an array etc. with start and end inclusive
  */
 public record Interval(int start, int end) {
 
