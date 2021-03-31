@@ -112,7 +112,7 @@ class Ruleset implements ToUnifiedRuleset {
                     }
                 } while(!intervals.isEmpty());
 
-                    if (positions.length <= 1) {
+                if (positions.length <= 1) {
                     break;
                 }
 

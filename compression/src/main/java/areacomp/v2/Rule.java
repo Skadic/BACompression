@@ -133,14 +133,14 @@ class Rule implements CharSequence, Iterable<Symbol> {
         final var rule = new Rule(ruleset);
 
         // Replace the first occurrence of the rule
-        final var firstRelevantRuleIndex = ruleset.ruleRangeStartIndex(positions[0]);
+        final var firstRelevantRuleIndex = ruleset.ruleIntervalStartIndex(positions[0]);
         final var firstRelevantRule = ruleset.getDeepestRuleAt(positions[0]);
         final var firstPosition = firstRelevantRule.searchTerminalIndex(positions[0] - firstRelevantRuleIndex);
         final var substitutionData = firstRelevantRule.substitute(rule, firstPosition, len);
         processed.add(new RuleLocalIndex(firstRelevantRule.id, positions[0] - firstRelevantRuleIndex));
 
         // Mark the area now occupied by this rule with the rule's id
-        ruleset.markRange(rule.id, positions[0], positions[0] + len);
+        ruleset.markInterval(rule.id, positions[0], positions[0] + len);
 
         // Populate the rule with data
         rule.symbols.addAll(substitutionData.symbolList());
@@ -158,7 +158,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
         // Iterate through the positions and substitute each occurrence.
         for (int i = 1; i < positions.length; i++) {
             final Rule deepestRule = ruleset.getDeepestRuleAt(positions[i]);
-            final int deepestRuleRangeIndex = ruleset.ruleRangeStartIndex(positions[i]);
+            final int deepestRuleRangeIndex = ruleset.ruleIntervalStartIndex(positions[i]);
             RuleLocalIndex ruleLocalIndex = new RuleLocalIndex(deepestRule.id, positions[i] - deepestRuleRangeIndex);
 
             // Each specific occurrence of a rule in a certain context (represented by ruleLocalIndex) should only be replaced once
@@ -169,7 +169,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
                 deepestRule.substitute(rule, position, len);
                 processed.add(ruleLocalIndex);
             }
-            ruleset.markRange(rule.id, positions[i], positions[i] + len);
+            ruleset.markInterval(rule.id, positions[i], positions[i] + len);
         }
 
         // Put this rule into the map

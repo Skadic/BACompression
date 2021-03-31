@@ -28,7 +28,7 @@ public class Main {
                 //new Sequitur(),
                 //new RePair()//,
                 //new AreaCompV3(new ChildArea()),
-                new AreaCompV3(new LengthFirstArea()),
+                //new AreaCompV3(new LengthFirstArea()),
                 new AreaCompV4(new LengthFirstArea())
                 //new AreaCompV3(new DepthWithAddArea())
                 //,new AreaCompV2(area)

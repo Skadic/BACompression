@@ -37,15 +37,15 @@ class Ruleset implements ToUnifiedRuleset {
      * R0 -> R2 c R2
      * R1 -> aa
      * R2 -> R1 b R1
-     * Then the full String is aabaacaabaa. The ruleRanges list for index 1 (the second 'a') would be:
+     * Then the full String is aabaacaabaa. The ruleIntervals list for index 1 (the second 'a') would be:
      * [0, 2, 1], as from the root (R0) one would need to travel through an R2 and an R1, to arrive at this character
      */
-    private final List<List<Integer>> ruleRanges;
+    private final List<List<Integer>> ruleIntervals;
 
     /**
      * Records at which points rules start
      */
-    private final List<HashSet<Integer>> ruleRangeStarts;
+    private final Map<Integer, Set<Integer>> ruleIntervalStarts;
 
     /**
      * A map that contains all rules. It maps from a rule ID to its corresponding rule
@@ -66,19 +66,19 @@ class Ruleset implements ToUnifiedRuleset {
         var now = System.nanoTime();
 
         this.topLevelRule = new Rule(s, this);
-        ruleRanges = new ArrayList<>(s.length());
-        ruleRangeStarts = new ArrayList<>(s.length());
+        ruleIntervals = new ArrayList<>(s.length());
+        ruleIntervalStarts = new HashMap<>();
         // Populate the data structures
         for (int i = 0; i < s.length(); i++) {
             // At the start, each position is occupied only by rule 0 (the top level rule)
             var list = new ArrayList<Integer>();
             list.add(0);
-            ruleRanges.add(list);
-            // There is no index, at which a rule starts yet, except...
-            ruleRangeStarts.add(new HashSet<>());
+            ruleIntervals.add(list);
         }
-        // ... for index 0, at which rule 0 starts
-        ruleRangeStarts.get(0).add(0);
+
+        // There is no index, at which a rule starts yet, except for index 0, at which rule 0 starts
+        ruleIntervalStarts.put(0, new HashSet<>());
+        ruleIntervalStarts.get(0).add(0);
         underlying = s;
         Benchmark.updateTime(ALGORITHM_NAME, "construction", System.nanoTime() - now);
     }
@@ -124,7 +124,7 @@ class Ruleset implements ToUnifiedRuleset {
                     .map(augS::suffixIndex)
                     .toArray();
 
-            // Get the length of the longest common prefix in this range of the lcp array
+            // Get the length of the longest common prefix in this interval of the lcp array
             // This will be the length of the pattern that is to be replaced.
             int len = IntStream.range(interval.start(), interval.end())
                     .map(augS::lcp)
@@ -164,7 +164,7 @@ class Ruleset implements ToUnifiedRuleset {
      * R1 -> aaa
      * The algorithm might try to replace the pattern "aa" at positions 0, 2 and 4, since it only computed the Suffix- and LCP-Array in the beginning.
      * Since in the algorithm, pattern occurrences, that cross the boundaries of pre-existing rules are removed before this algorithm is called,
-     * the occurrence at position 2 is removed. This is the case, because it would cross the boundary from the first R1 range into the second R1 range,
+     * the occurrence at position 2 is removed. This is the case, because it would cross the boundary from the first R1 interval into the second R1 interval,
      * if you look at the right side of R0.
      * But even so, factoring out "aa" at index 0 and 4 is not possible, since the pattern would appear once as the first "aa" in R1
      * and once as the second "aa" in R1. This method detects, if the given positions cannot be factored out.
@@ -186,8 +186,8 @@ class Ruleset implements ToUnifiedRuleset {
         // The corresponding map entry would then be (1, (3, 2))
         for (var pos : positions) {
             final var id = getDeepestRuleIdAt(pos);
-            final var indexInRule = pos - ruleRangeStartIndex(pos);
-            final var ruleArea = ruleRangeStartIndex(pos);
+            final var indexInRule = pos - ruleIntervalStartIndex(pos);
+            final var ruleArea = ruleIntervalStartIndex(pos);
 
             if(!map.containsKey(id)) map.put(id, new HashMap<>());
             map.get(id).merge(indexInRule, 1, Integer::sum);
@@ -200,10 +200,10 @@ class Ruleset implements ToUnifiedRuleset {
     }
 
     /**
-     * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
+     * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule interval and end in another.
      * @param positions The positions to filter
      * @param len The length of the pattern
-     * @return All positions in the given array, that start and end in the same rule range
+     * @return All positions in the given array, that start and end in the same rule interval
      *
      * @see #crossesBoundary(int, int)
      */
@@ -219,17 +219,17 @@ class Ruleset implements ToUnifiedRuleset {
     }
 
     /**
-     * Calculates the index at which the range of the deepest nested rule, occupying the given index, starts.
+     * Calculates the index at which the interval of the deepest nested rule, occupying the given index, starts.
      * @param index The index to check
-     * @return The first index of the rule range that index is part of
+     * @return The first index of the rule interval that index is part of
      *
-     * @see #ruleRanges
-     * @see #ruleRangeStarts
+     * @see #ruleIntervals
+     * @see #ruleIntervalStarts
      */
-    public int ruleRangeStartIndex(int index) {
+    public int ruleIntervalStartIndex(int index) {
         int current = index;
         int maxId = getDeepestRuleIdAt(index);
-        while (!ruleRangeStarts.get(current).contains(maxId)) {
+        while (!ruleIntervalStarts.containsKey(current) || !ruleIntervalStarts.get(current).contains(maxId)) {
             current--;
             if (current == -1) return 0;
         }
@@ -241,34 +241,34 @@ class Ruleset implements ToUnifiedRuleset {
      * Marks an area as being part of the rule with the given id
      *
      * @param id   The rule id
-     * @param from The start index of the range (inclusive)
-     * @param to   The end index of the range (exclusive)
+     * @param from The start index of the interval (inclusive)
+     * @param to   The end index of the interval (exclusive)
      *
-     * @see #ruleRanges
-     * @see #ruleRangeStarts
+     * @see #ruleIntervals
+     * @see #ruleIntervalStarts
      */
-    public void markRange(int id, int from, int to) {
+    public void markInterval(int id, int from, int to) {
         // Get the id of the rule that occupied this area before
         final int originalId = getDeepestRuleIdAt(from);
         // Add the start of the new rule's area to the list
-        ruleRangeStarts.get(from).add(id);
+        ruleIntervalStarts.computeIfAbsent(from, f -> new HashSet<>()).add(id);
 
-        // Add the id of the new rule into the range list after the id of the original rule
-        // This serves to always have the deepest nested Rule at a certain index to be the last index of the list in ruleRanges
+        // Add the id of the new rule into the interval list after the id of the original rule
+        // This serves to always have the deepest nested Rule at a certain index to be the last index of the list in ruleIntervals
         for (int i = from; i < to; i++) {
-            var index = ruleRanges.get(i).indexOf(originalId);
-            ruleRanges.get(i).add(index + 1, id);
+            var index = ruleIntervals.get(i).indexOf(originalId);
+            ruleIntervals.get(i).add(index + 1, id);
         }
     }
 
     /**
-     * Checks, whether an interval starts in one rule range, and ends in another
-     * @param from The lower bound of the range
-     * @param to The upper bound of the range (inclusive)
-     * @return true, if the interval starts in the same rule range as it started. false otherwise
+     * Checks, whether an interval starts in one rule interval, and ends in another
+     * @param from The lower bound of the interval
+     * @param to The upper bound of the interval (inclusive)
+     * @return true, if the interval starts in the same rule interval as it started. false otherwise
      */
     public boolean crossesBoundary(int from, int to) {
-        return getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleRangeStartIndex(from) != ruleRangeStartIndex(to - 1);
+        return getDeepestRuleIdAt(from) != getDeepestRuleIdAt(to - 1) || ruleIntervalStartIndex(from) != ruleIntervalStartIndex(to - 1);
     }
 
     /**
@@ -296,10 +296,10 @@ class Ruleset implements ToUnifiedRuleset {
      * @param index The given index
      * @return The index of the rule
      *
-     * @see #ruleRanges
+     * @see #ruleIntervals
      */
     public int getDeepestRuleIdAt(int index) {
-        List<Integer> ruleIdList = ruleRanges.get(index);
+        List<Integer> ruleIdList = ruleIntervals.get(index);
         return ruleIdList.get(ruleIdList.size() - 1);
     }
 
@@ -309,7 +309,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @param index The given index
      * @return The rule
      *
-     * @see #ruleRanges
+     * @see #ruleIntervals
      * @see #getDeepestRuleAt(int)
      */
     public Rule getDeepestRuleAt(int index) {

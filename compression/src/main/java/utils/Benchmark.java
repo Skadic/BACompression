@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 public final class Benchmark {
 
-    private static final boolean ENABLE = true;
+    private static final boolean ENABLE = false;
 
     private static final Map<String, Map<String, Long>> EXECUTION_TIMES = new TreeMap<>();
     private static final Map<String, Map<String, Long>> TIMERS = new HashMap<>();

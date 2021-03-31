@@ -51,7 +51,7 @@ public interface UnifiedCompressor {
         ToUnifiedRuleset ruleset = compress(s);
         var duration = System.nanoTime() - now;
 
-        // Output the compression time in milliseconts
+        // Output the compression time in milliseconds
         out.println("Compression " + name() + ": " + (duration / 1000000) + "ms");
 
         // Turn this Ruleset into a unified representation
@@ -64,10 +64,10 @@ public interface UnifiedCompressor {
         out.println("Grammar size: " + unified.rulesetSize());
 
         // Verify, whether this grammar can reproduce the original string
-        String reconstructed = unified.buildString();
-        boolean reconstructable = reconstructed.equals(s);
-        out.println("Original String reconstructable? " + (reconstructable ? "Yes" : "No"));
-        if(!reconstructable && PRINT) out.println(reconstructed);
+        //String reconstructed = unified.buildString();
+        //boolean reconstructable = reconstructed.equals(s);
+        //out.println("Original String reconstructable? " + (reconstructable ? "Yes" : "No"));
+        //if(!reconstructable && PRINT) out.println(reconstructed);
         out.println();
     }
 
