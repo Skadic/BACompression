@@ -37,3 +37,7 @@ tasks.withType(Test) {
     jvmArgs += '--enable-preview'
 }
 
+test {
+    useJUnitPlatform()
+}
+

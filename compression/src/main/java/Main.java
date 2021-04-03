@@ -1,9 +1,9 @@
-import areacomp.AreaFunction;
-import areacomp.areas.LengthFirstArea;
-import areacomp.areas.NaiveArea;
-import areacomp.v4.AreaCompV4;
-import unified.interfaces.UnifiedCompressor;
-import utils.Benchmark;
+import compression.areacomp.AreaFunction;
+import compression.areacomp.areas.LengthFirstArea;
+import compression.areacomp.areas.NaiveArea;
+import compression.areacomp.v4.AreaCompV4;
+import compression.unified.interfaces.UnifiedCompressor;
+import compression.utils.Benchmark;
 
 import java.io.IOException;
 import java.io.PrintStream;
