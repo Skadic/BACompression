@@ -141,7 +141,7 @@ class Ruleset implements ToUnifiedRuleset {
             positions = nonOverlapping(positions, len);
             positions = inBoundary(positions, len);
 
-            final var multipleOccurrences = multipleDifferingOccurences(positions);
+            final var multipleOccurrences = differingOccurences(positions);
 
             Benchmark.updateTime(ALGORITHM_NAME, "positions", System.nanoTime() - now);
 
@@ -172,31 +172,30 @@ class Ruleset implements ToUnifiedRuleset {
      * @param positions The positions to check
      * @return true, if there are positions that can be factored out, false otherwise
      */
-    private boolean multipleDifferingOccurences(int[] positions) {
+    private boolean differingOccurences(int[] positions) {
         if(positions.length == 0) return false;
-        // Map from rule id -> index in the right side of the rule -> amount of occurrences
-        var map = new HashMap<Integer, HashMap<Integer, Integer>>();
 
         // Map from rule area start -> rule id -> occurrence count
-        var newMap = new HashMap<Integer, Integer>();
+        var set = new HashSet<Integer>();
 
         // Count how often this pattern appears at specific indices inside the right side of a rule
         // E.g. if the String is "abacdabac" and only the Rule "R1 -> abac" exists so far (which implies the structure "R1 d R1")
         // then the pattern "c" appears twice in the string in rule 1 at index 3
         // The corresponding map entry would then be (1, (3, 2))
         for (var pos : positions) {
-            final var id = getDeepestRuleIdAt(pos);
-            final var indexInRule = pos - ruleIntervalStartIndex(pos);
-            final var ruleArea = ruleIntervalStartIndex(pos);
-
-            if(!map.containsKey(id)) map.put(id, new HashMap<>());
-            map.get(id).merge(indexInRule, 1, Integer::sum);
-
-            newMap.merge(ruleArea, 1, Integer::sum);
+            final int intervalStartIndex = ruleIntervalStartIndex(pos);
+            if(set.contains(intervalStartIndex)) {
+                // This interval (or at least one that starts at the same index) already has an interval.
+                // This new one must be distinct from that other one. If it's the very same interval, that is obvious.
+                // If this is a different interval from before, it can't be the same rule id, since then it would have a later start id
+                // Therefore the occurrences must be distinct also
+                return true;
+            }
+            set.add(intervalStartIndex);
         }
 
 
-        return newMap.values().stream().reduce(Integer.MIN_VALUE, Integer::max) > 1;
+        return false;
     }
 
     /**

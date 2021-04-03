@@ -136,6 +136,7 @@ class Rule implements CharSequence, Iterable<Symbol> {
         final var firstRelevantRuleIndex = ruleset.ruleIntervalStartIndex(positions[0]);
         final var firstRelevantRule = ruleset.getDeepestRuleAt(positions[0]);
         final var firstPosition = firstRelevantRule.searchTerminalIndex(positions[0] - firstRelevantRuleIndex);
+        // Save the substituted data to insert into the new rule object
         final var substitutionData = firstRelevantRule.substitute(rule, firstPosition, len);
         processed.add(new RuleLocalIndex(firstRelevantRule.id, positions[0] - firstRelevantRuleIndex));
 

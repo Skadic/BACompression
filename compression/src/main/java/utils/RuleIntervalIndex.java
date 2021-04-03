@@ -13,6 +13,8 @@ public class RuleIntervalIndex {
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
         this.intervalMap = new BucketPred<>(len, 10);
+        //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
+        //this.intervalMap = new XFastTrie<>();
         intervalMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1));
     }
 
@@ -23,6 +25,9 @@ public class RuleIntervalIndex {
      * @param end inclusive
      */
     public void mark(int ruleId, int start, int end) {
+        checkIndex(start);
+        checkIndex(end);
+
         Benchmark.startTimer("Index", "mark intervals");
 
         RuleInterval startInterval = intervalMap.floorEntry(start).value();
@@ -146,17 +151,34 @@ public class RuleIntervalIndex {
     }
 
     public RuleInterval startInterval(int index) {
-        if(index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index '" + index + "' out of range for length " + length());
+        checkIndex(index);
+        Benchmark.startTimer("Index", "startInterval");
+        final RuleInterval ruleInterval = intervalMap.get(intervalMap.floorEntry(index).value().totalStart);
+        Benchmark.stopTimer("Index", "startInterval");
 
-        return intervalMap.get(intervalMap.floorEntry(index).value().totalStart);
+        return ruleInterval;
     }
 
+    public int totalStartIndex(int index) {
+        checkIndex(index);
+        Benchmark.startTimer("Index", "startInterval");
+        final int ruleInterval = intervalMap.floorEntry(index).value().totalStart;
+        Benchmark.stopTimer("Index", "startInterval");
+
+        return ruleInterval;
+    }
+
+
+
     public RuleInterval intervalAt(int index) {
-        return intervalMap.floorEntry(index).value();
+        Benchmark.startTimer("Index", "intervalAt");
+        final RuleInterval value = intervalMap.floorEntry(index).value();
+        Benchmark.stopTimer("Index", "intervalAt");
+        return value;
     }
 
     public Optional<RuleInterval> rangeByStartIndex(int index) {
-        if(index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index '" + index + "' out of range for length " + length());
+        checkIndex(index);
         return Optional.ofNullable(intervalMap.getOrDefault(index, null));
     }
 
@@ -174,6 +196,12 @@ public class RuleIntervalIndex {
                 .flatMapToInt(ruleInterval -> IntStream.iterate(ruleInterval.ruleId(), i -> i).limit(ruleInterval.length()))
                 .mapToObj(String::valueOf)
                 .collect(Collectors.joining(" "));
+    }
+
+    private void checkIndex(int index) {
+        if (index < 0 || index >= length()) {
+            throw new IndexOutOfBoundsException("Index '" + index + "' out of range for length " + length());
+        }
     }
 
     public static class RuleInterval  {

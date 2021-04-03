@@ -1,7 +1,6 @@
 import areacomp.AreaFunction;
 import areacomp.areas.LengthFirstArea;
 import areacomp.areas.NaiveArea;
-import areacomp.v3.AreaCompV3;
 import areacomp.v4.AreaCompV4;
 import unified.interfaces.UnifiedCompressor;
 import utils.Benchmark;
@@ -23,16 +22,16 @@ public class Main {
         }
 
         final AreaFunction area = new NaiveArea();
-        
+
         final var compressors = List.of(
                 //new Sequitur(),
-                //new RePair()//,
+                //new RePair(),
+                //,new AreaCompV1(area)
+                //new AreaCompV2(area),
                 //new AreaCompV3(new ChildArea()),
                 //new AreaCompV3(new LengthFirstArea()),
                 new AreaCompV4(new LengthFirstArea())
-                //new AreaCompV3(new DepthWithAddArea())
-                //,new AreaCompV2(area)
-                //,new AreaCompV1(area)
+                //new AreaCompV3(new DepthWithAddArea()),
         );
 
         final String fileName = args[0];
@@ -62,7 +61,7 @@ public class Main {
 
         Benchmark.getAllValues().forEach((algName, values) -> {
             System.out.println("Times for " + algName + ":");
-            values.forEach((counterName, time) -> System.out.printf("%-20s: %dms%n", counterName, time / 1000000));
+            values.forEach((counterName, time) -> System.out.printf("%-25s: %s%n", counterName, time.toString()));
             System.out.println();
         });
 

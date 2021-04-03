@@ -65,13 +65,13 @@ Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall 
 
 \subsection{AreaComp V1}
 
-Die erste Version ist eine naive Implementierung. Der Algorithmus verwaltet eine Menge von Regeln. In jedem Durchlauf wird nacheinander jede Regel aus der Menge entnommen und das Suffix- und LCP-Array für die rechte Seite dieser Regel berechnet. Es wird nun eine Prioritätswarteschlange erzeugt, die alle möglichen LCP-Intervalle enthält. Das beste LCP-Intervall wird daraus entnommen. 
+Die erste Version ist eine naive Implementierung. Der Algorithmus verwaltet eine Menge von Regeln. In jedem Durchlauf wird nacheinander jede Regel $(X \rightarrow w) \in P$ aus der Menge entnommen und das Suffix- und LCP-Array für die rechte Seite dieser Regel berechnet. Es wird nun eine Prioritätswarteschlange erzeugt, die alle möglichen LCP-Intervalle enthält. Das beste LCP-Intervall wird daraus entnommen. Sei $p \in (N \cup \Sigma)^*$ das, durch das LCP-Intervall bestimmte, zu ersetzende Muster. Die Indizes, an denen ein Vorkommen von $p$ in $w$ existiert, kann einfach mithilfe des Suffix- und LCP-Array berechnet werden.
 
-Es werden nun alle durch das LCP-Intervall bestimmten Vorkommen darauf untersucht, ob sich diese mit Anderen überschneiden. Diese sich überschneidenden Vorkommen werden entfernt. Sind nun nur noch weniger als zwei Positionen übrig, so wird das nächst-beste LCP-Intervall aus der Warteschlange entnommen und der Vorgang wiederholt. Sind keine Intervalle mehr übrig, so fahre zur nächsten Produktionsregel fort.
+Es werden nun alle bestimmten Vorkommen darauf untersucht, ob sich diese mit Anderen überschneiden. Hierzu werden die Indizes, an denen $p$ vorkommt, aufsteigend sortiert und durchlaufen. Dabei werden alle Indizes gelöscht, die einen Abstand von weniger als $|p|$ zum letzten Index haben, gelöscht. Damit bleiben nur Vorkommen übrig, die sich nicht überschneiden. Sind nun nur noch weniger als zwei Positionen übrig, so wird das nächst-beste LCP-Intervall aus der Warteschlange entnommen und der Vorgang wiederholt. Sind keine Intervalle mehr übrig, so fahre zur nächsten Produktionsregel fort.
 
 Der von diesem Intervall bestimmte Substring wird dann durch ein neues Nichtterminal und eine zugehörige Produktionsregel ersetzt. Zu diesem Zweck wird die gesamte Grammatik nach Vorkommen durchsucht und diese durch das Nichtterminal ersetzt.
 
-Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden, ist gleich der Datenstruktur, die Sequitur benutzt. Allerdings benutzt der Algorithmus zusätzlich eine Hashtabelle, die eine ID auf ihre zugehörige Regel abbildet.
+Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden, ist gleich der Datenstruktur, die Sequitur benutzt. Allerdings verwendet der Algorithmus zusätzlich eine Hashtabelle, die eine ID auf ihre zugehörige Regel abbildet.
 
 Diese Implementierung hat nicht das Problem, dass sich überschneidende Substitutionen entstehen können, da Suffix- und LCP-Array für jede Regel symbolweise neu erzeugt werden. 
 
@@ -124,7 +124,9 @@ Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die n
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $P \in \in \Sigma^*$ mit $k := |P|$  ein zu substituierendes Muster und $id_P \in \mathbb{N}$ die ID der Regel, die auf $P$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - k$ ein Index in $s$. Wird nun ein Vorkommen von $P$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_P, i} := [i, i + k - 1]$ Ersetzungsintervall der Regel $id_P$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
+Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
+
+\paragraph{Neue Datenstrukturen}
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
 	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste der IDs derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die IDs in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
@@ -143,7 +145,76 @@ Wir führen nun zwei Datenstrukturen ein:
 	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinander folgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
 \end{itemize}
 
-Wird nun $P$ in $s$ am Index $i$ substituiert, so wird nun $id_P$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + k - 1$ an die richtige Stelle eingefügt, sowie in \texttt{ruleIntervalStarts}$[i]$.
+\paragraph{Substitution}
+Wird nun $p$ in $s$ am Index $i$ substituiert, so wird nun $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + l - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
 
-Mithilfe dieser Datenstrukturen kann bestimmt werden, ob eine Substitution eines Musters an einem Index möglich ist. Etwa kann $P$ nur dann substituiert werden, wenn die Indizes $i$ und $i + k - 1$ zu demselben Ersetzungsintervall gehören. Ansonsten, müssten Teile unterschiedlicher Produktsionsregeln durch \textit{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.
+Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, werden, wie bei V1, sich überschneidende Vorkommen entfernt. Daraufhin wird geprüft, ob die Substitution an den übrigen Indizes möglich ist. Dies wird mithilfe von \texttt{ruleIntervals} und \texttt{ruleIntervalStarts} bewältigt.
+
+\subparagraph{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
+
+\begin{enumerate}
+	\item Die IDs der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
+	\item Die Startindizes der Ersetzungsintervalle der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen. 
+\end{enumerate}
+
+Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Ansonsten, müssten Teile unterschiedlicher Produktionsregeln durch \textit{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.\\\\
+Ob ein Vorkommen diese Bedingungen erfüllt, wird folgendermaßen geprüft:
+
+Die IDs der tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + l - 1$ bestimmen. Die IDs sind dann jeweils die letzten Elemente in den abgerufenen Listen.
+
+Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die ID $id_T \in \mathbb{N}$ der tiefsten Regel an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $id_T$ enthält.
+
+\subparagraph{Unterschiedliche Vorkommen}
+
+Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Grammatik für den String $abcabcde$:
+
+\begin{align*}
+	R0 &\rightarrow R1\ R1\ d\ e\\
+	R1 &\rightarrow a\ b\ c
+\end{align*}
+
+Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
+Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurde. Demnach, darf $ab$ nicht nochmals ersetzt werden. 
+Es muss nun möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \textit{in der Grammatik} mehrmals vorkommen.
+Dies kann mit dem folgenden Algorithmus festgestellt werden:
+
+\begin{algorithm}
+	\caption{differingOccurrences}
+	\begin{algorithmic}
+		\REQUIRE $positions:$ Liste von Startindizes
+		\STATE $firstRuleId \leftarrow -1$
+		\STATE $set \leftarrow \emptyset$
+		\FOR {$i$ \textbf{in} $positions$}
+			\STATE $ruleId \leftarrow \text{Regel-ID des Ersetzungsintervall bei } i$
+			\STATE $startIndex \leftarrow \text{Startindex des Ersetzungsintervall bei } i$
+			
+			\IF {$firstRuleId = -1$}
+				\STATE $firstRuleId \leftarrow ruleId$
+			\ELSIF {$ruleId \neq firstRuleId$ \OR $startIndex \in set$}
+				\RETURN \TRUE
+			\ENDIF
+			\STATE $set \leftarrow set \cup \{startIndex\}$
+		\ENDFOR
+		\RETURN \FALSE
+	\end{algorithmic}
+\end{algorithm}
+
+Wir speichern die erste Regel-ID, der wir begegnen. Kommt später eine andere Regel-ID vor, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
+Wir iterieren durch die Indizes, an denen $p$ vorkommt.Für jeden dieser Indizes $j \in \mathbb{N}$ bestimmen wir den Anfangsindex des tiefsten Ersetzungsintervalls bei $j$. 
+Falls wir diesen Anfangsindex noch nicht gesehen haben, speichern wir diesen. Falls doch, brechen wir ab und geben $\texttt{true}$. 
+Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, so dass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
+
+\begin{enumerate}
+	\item[\textbf{Fall 1}] Die Regel-IDs der beiden Intervalle sind gleich.\\
+	In diesem Fall sind die Intervalle gleich. Da $k < j$ gilt, gibt es also in derselben Regel mindestens zwei Vorkommen von dem Muster $p$. Damit kann der Algorithmus also terminieren und $\texttt{true}$ zurückgeben.
+	\item[\textbf{Fall 2}] Die Regel-IDs sind unterschiedlich.\\
+	Dieser Fall wird durch die Bedingung $ruleId \neq firstRuleId$ bemerkt und der Algorithmus gibt korrekterweise $\texttt{true}$ zurück.
+\end{enumerate}
+
+Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel-ID besitzen gibt der Algorithmus $\texttt{false}$ zurück.
+
+\subparagraph{Faktorisieren}
+
+Nach der Vorbearbeitung durch die Beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
+
 
