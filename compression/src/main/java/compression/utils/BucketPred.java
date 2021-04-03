@@ -163,13 +163,14 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     private boolean bucketIndexOccupied(int bucketIndex) {
-        return forwardIndexOccupied(bucketIndex) && backwardIndexOccupied(bucketIndex);
+        return forwardIndexOccupied(bucketIndex);
     }
 
     private boolean forwardIndexOccupied(int bucketIndex) {
         return bucketsForward[bucketIndex] != null && bucketsForward[bucketIndex].index == bucketIndex;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean backwardIndexOccupied(int bucketIndex) {
         return bucketsBackward[bucketIndex] != null && bucketsBackward[bucketIndex].index == bucketIndex;
     }
@@ -305,7 +306,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         final int expectedSize;
 
         public BucketPredIterator() {
-            this(Integer.MIN_VALUE, true, Integer.MAX_VALUE, true);
+            this(0, true, Integer.MAX_VALUE, true);
         }
 
         public BucketPredIterator(int min, boolean minInclusive, int max, boolean maxInclusive) {
@@ -316,12 +317,11 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
             this.currentBucket = bucketsBackward[bucketIndex];
             // If this bucket index is not occupied, we need to look for the next one. In that case we start at the beginning of that bucket
             if(bucketIndexOccupied(bucketIndex)) {
-                this.nextLocalIndex = indexInBucket(this.min);
-            } else if (currentBucket != null) {
-                this.nextLocalIndex = currentBucket.nextSetBit(0);
+                this.nextLocalIndex = indexInBucket(this.min) - 1;
             } else {
                 this.nextLocalIndex = -1;
             }
+            goToNextSetBit();
             this.expectedSize = size();
         }
 
@@ -339,10 +339,12 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
             return currentBucket != null && getNextIndex() <= max;
         }
 
-        @Override
-        public T next() {
-            if(!hasNext()) throw new NoSuchElementException();
-            final var temp = get(getNextIndex());
+        private void goToNextSetBit() {
+            if(currentBucket == null) {
+                this.nextLocalIndex = -1;
+                return;
+            }
+
             // Advance to the next set bit in the bucket
             this.nextLocalIndex = currentBucket.nextSetBit(this.nextLocalIndex + 1);
             // If there is no next set bit...
@@ -357,16 +359,24 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
                     this.nextLocalIndex = currentBucket.nextSetBit(0);
                 }
             }
+        }
+
+        @Override
+        public T next() {
+            if(!hasNext()) throw new NoSuchElementException();
+            final var temp = get(getNextIndex());
+            goToNextSetBit();
+
             return temp;
         }
     }
 
-    @SuppressWarnings("unchecked")
+
     private class Bucket {
 
-        BitSet bits;
-        int index;
-        Object[] data;
+        private final BitSet bits;
+        private int index;
+        private final Object[] data;
 
         public Bucket(int index, int bucketSize) {
             this.index = index;
@@ -376,19 +386,20 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
 
         public T put(int localIndex, T value) {
-            final T temp = (T) data[localIndex];
-            data[localIndex] = value;
-            bits.set(localIndex);
+            final T temp = get(localIndex);
+            this.data[localIndex] = value;
+            this.bits.set(localIndex);
             return temp;
         }
 
         public T remove(int localIndex) {
-            final T temp = (T) data[localIndex];
-            data[localIndex] = null;
-            bits.clear(localIndex);
+            final T temp = get(localIndex);
+            this.data[localIndex] = null;
+            this.bits.clear(localIndex);
             return temp;
         }
 
+        @SuppressWarnings("unchecked")
         public T get(int localIndex) {
             return (T) data[localIndex];
         }
