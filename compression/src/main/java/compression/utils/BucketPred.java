@@ -175,6 +175,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         return bucketsBackward[bucketIndex] != null && bucketsBackward[bucketIndex].index == bucketIndex;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Override
     public Entry<Integer, T> floorEntry(Integer index) {
         checkRange(index);

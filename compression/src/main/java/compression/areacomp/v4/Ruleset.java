@@ -1,7 +1,6 @@
 package compression.areacomp.v4;
 
 import compression.areacomp.AreaFunction;
-import org.apache.commons.collections4.list.TreeList;
 import compression.unified.UnifiedNonTerminal;
 import compression.unified.UnifiedRuleset;
 import compression.unified.UnifiedTerminal;
@@ -10,11 +9,23 @@ import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
 import compression.utils.RuleIntervalIndex;
+import org.apache.commons.collections4.list.TreeList;
 
 import java.util.*;
 
 @SuppressWarnings("Duplicates")
 class Ruleset implements ToUnifiedRuleset {
+
+    // TODO If a grammar exists like
+    //  A -> BBcBBc
+    //  B -> ab
+    //  It would not replace BBc with a new rule, since the rule index looks like this:
+    //  B[0,1], B[2,3], A[4,4], B[5,6], B[7,8], A[9,9]
+    //  Therefore, a request for the deepest rule at 0 and 4 respectively, would yield B and A respectively
+    //  The algorithm would forbid replacing this, though this would be valid
+    //  There likely needs to be a (most likely larger) change to RuleIntervalIndex to support multiple values at the same index
+    //  That might incur a runtime penalty, but also could make markRange faster, since it does not need to iterate through intervals to override
+    //  and link slices of the same interval. Also it might cause a memory penalty.
 
     public static final String ALGORITHM_NAME = AreaCompV4.class.getSimpleName();
 

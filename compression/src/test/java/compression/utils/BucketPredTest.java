@@ -21,9 +21,6 @@ public class BucketPredTest {
         System.out.println();
     }
 
-
-
-
     @Test
     void testGet() {
         Assertions.assertNull(pred.get(0), "Value returned, despite key not being mapped");
@@ -73,6 +70,21 @@ public class BucketPredTest {
         Assertions.assertEquals(List.of("Yey", "Hi", "nice"), pred.valueRange(1, false, 25, true));
         Assertions.assertEquals(List.of("Go", "Yey", "Hi"), pred.valueRange(1, true, 25, false));
         Assertions.assertEquals(List.of("Yey", "Hi"), pred.valueRange(1, false, 25, false));
+    }
+
+    @Test
+    void testOutOfBounds() {
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> pred.get(-1), "Did not throw out of bounds exception despite index being -1");
+        Assertions.assertDoesNotThrow(() -> pred.get(0), "Threw exception at index 0");
+        Assertions.assertDoesNotThrow(() -> pred.get(199), "Threw exception at index 0");
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> pred.get(200), "Did not throw out of bounds exception despite index being 200");
+    }
+
+    @Test
+    void testPutReplace() {
+        Assertions.assertEquals("Go", pred.get(1));
+        Assertions.assertEquals("Go", pred.put(1, "Stop"), "Did not return old value of index 1 upon inserting new value");
+        Assertions.assertEquals("Stop", pred.get(1), "Value was not replaced");
     }
 
 }

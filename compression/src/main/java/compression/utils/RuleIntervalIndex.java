@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 
 public class RuleIntervalIndex {
 
-    private Predecessor<Integer, RuleInterval> intervalMap;
+    private final Predecessor<Integer, RuleInterval> intervalMap;
 
     private final int len;
 
@@ -94,6 +94,12 @@ public class RuleIntervalIndex {
         }
     }
 
+    /**
+     *  A temporary list, to prevent a ConcurrentModificationException to be thrown when modifying the map, while the
+     *  iterator exists. Only to be used in {@link #replaceIntervals(int, int, int, RuleInterval)}
+     */
+    private final Deque<RuleInterval> TO_INSERT = new ArrayDeque<>();
+
     private void replaceIntervals(int ruleId, int start, int end, RuleInterval startInterval) {
 
         // Add all intervals that are between start and end
@@ -103,9 +109,7 @@ public class RuleIntervalIndex {
         RuleInterval firstInterval = null;
         RuleInterval lastInterval = null;
 
-        // A temporary list, to prevent a ConcurrentModificationException to be thrown when modifying the map, while the
-        // iterator exists
-        var toInsert = new LinkedList<RuleInterval>();
+
 
         for(
                 Iterator<RuleInterval> iterator = intervalMap.valueRangeIterator(startInterval.start, true, end, true);
@@ -133,14 +137,15 @@ public class RuleIntervalIndex {
                 if(lastInterval != null){
                     lastInterval.append(ruleInterval);
                 }
-                toInsert.add(ruleInterval);
+                TO_INSERT.add(ruleInterval);
                 lastInterval = ruleInterval;
                 startIndex = -1;
                 endIndex = -1;
             }
         }
 
-        for (RuleInterval interval : toInsert) {
+        while (!TO_INSERT.isEmpty()) {
+            var interval = TO_INSERT.pop();
             intervalMap.put(interval.start, interval);
         }
     }
