@@ -2,6 +2,8 @@ package compression.areacomp;
 
 import compression.utils.AugmentedString;
 
+import java.util.Arrays;
+
 @FunctionalInterface
 public interface AreaFunction {
 
@@ -61,6 +63,11 @@ public interface AreaFunction {
         @Override
         public int compareTo(AreaData o) {
             return Integer.compare(this.area, o.area);
+        }
+
+        @Override
+        public String toString() {
+            return "Area[[%d, %d], area: %d, len: %d, pos: %s]".formatted(low, high, area, len, Arrays.toString(viablePositions));
         }
     }
 }

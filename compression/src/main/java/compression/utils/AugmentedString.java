@@ -240,12 +240,14 @@ public class AugmentedString implements CharSequence {
         // Add the first child interval if its length is greater than 1 and has a high enough l-value
         if(currentLIndex - 1 > low && lValue(low, currentLIndex - 1) >= minLValue) {
             intervals.add(new Interval(low, currentLIndex - 1));
+            addChildIntervals(low, currentLIndex - 1, minLValue, intervals);
         }
 
         while (hasNextLIndex(currentLIndex)) {
             int nextLIndex = nextLIndex(currentLIndex);
             if(nextLIndex - 1 > currentLIndex && lValue(currentLIndex, nextLIndex - 1) >= minLValue) {
                 intervals.add(new Interval(currentLIndex, nextLIndex - 1));
+                addChildIntervals(currentLIndex, nextLIndex - 1, minLValue, intervals);
             }
             currentLIndex = nextLIndex;
         }
@@ -253,6 +255,7 @@ public class AugmentedString implements CharSequence {
         int lValue = lValue(currentLIndex, high);
         if(high > currentLIndex && lValue >= minLValue) {
             intervals.add(new Interval(currentLIndex, high));
+            addChildIntervals(currentLIndex, high, minLValue, intervals);
         }
     }
 
@@ -277,6 +280,7 @@ public class AugmentedString implements CharSequence {
      * @param lcp The lcp array for which to compute the child table
      * @param childTable The child table to populate
      */
+    @SuppressWarnings("ConstantConditions")
     private static void childUpDown(int[] lcp, ChildTableEntry[] childTable) {
         int lastIndex = -1;
         stack.push(0);

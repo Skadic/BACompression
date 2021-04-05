@@ -1,6 +1,7 @@
 package compression.areacomp.v4;
 
 import compression.areacomp.AreaFunction;
+import compression.areacomp.v4.RuleIntervalIndex.RuleInterval;
 import compression.unified.UnifiedNonTerminal;
 import compression.unified.UnifiedRuleset;
 import compression.unified.UnifiedTerminal;
@@ -35,14 +36,14 @@ class Ruleset implements ToUnifiedRuleset {
 
     private final RuleIntervalIndex intervalIndex;
 
-    private final Map<Integer, List<RuleInterval>> ruleRangeStarts;
+    private final Map<Integer, List<RuleIntervalStarts>> ruleRangeStarts;
 
-    private record RuleInterval(int id, int start, int end) {
+    private record RuleIntervalStarts(int id, int start, int end) {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            RuleInterval that = (RuleInterval) o;
+            RuleIntervalStarts that = (RuleIntervalStarts) o;
             return id == that.id && start == that.start && end == that.end;
         }
 
@@ -67,7 +68,7 @@ class Ruleset implements ToUnifiedRuleset {
         intervalIndex = new RuleIntervalIndex(0, s.length());
         ruleRangeStarts = new HashMap<>();
         ruleRangeStarts.put(0, new TreeList<>());
-        ruleRangeStarts.get(0).add(new RuleInterval(0, 0, s.length() - 1));
+        ruleRangeStarts.get(0).add(new RuleIntervalStarts(0, 0, s.length() - 1));
         underlying = s;
         Benchmark.stopTimer(ALGORITHM_NAME, "construction");
         numRules = 1;
@@ -98,7 +99,8 @@ class Ruleset implements ToUnifiedRuleset {
 
         for (var interval : augS.getLCPIntervals(2)) {
             final var data = fun.area(augS, interval.start() + 1, interval.end());
-            if(data.area > 0) queue.add(data);
+            if(data.area > 0)
+                queue.add(data);
         }
 
         Benchmark.stopTimer(ALGORITHM_NAME, "queue");
@@ -229,7 +231,7 @@ class Ruleset implements ToUnifiedRuleset {
     private int[] inBoundary(int[] positions, int len) {
         IN_BOUNDARY_LIST.clear();
         for (int position : positions) {
-            if (!crossesBoundary(position, position + len)) {
+            if (!crossesBoundary(position, position + len - 1)) {
                 IN_BOUNDARY_LIST.add(position);
             }
         }
@@ -266,7 +268,7 @@ class Ruleset implements ToUnifiedRuleset {
             starts = new TreeList<>();
             ruleRangeStarts.put(from, starts);
         }
-        starts.add(new RuleInterval(id, from, to));
+        starts.add(new RuleIntervalStarts(id, from, to));
         intervalIndex.mark(id, from, to);
     }
 
@@ -284,10 +286,19 @@ class Ruleset implements ToUnifiedRuleset {
         //  The same is true for when "to" is the index of the end of the deepest interval
         //  This corresponds to having a non-terminal as the start/end position of the substring to replace
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
-        var fromInterval = intervalIndex.deepestIntervalAt(from);
-        var toInterval = intervalIndex.deepestIntervalAt(to - 1);
+        RuleInterval fromInterval = intervalIndex.deepestIntervalAt(from);
 
-        boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.start() != toInterval.start();
+        if (from > fromInterval.start() && to > fromInterval.end()) {
+            return true;
+        } else if (from == fromInterval.start()){
+            while (from == fromInterval.start() && to > fromInterval.end()){
+                fromInterval = fromInterval.parent();
+            }
+        }
+
+        RuleInterval toInterval = intervalIndex.deepestIntervalAt(to);
+
+        boolean b = !fromInterval.equals(toInterval);
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
         return b;
     }
@@ -302,7 +313,7 @@ class Ruleset implements ToUnifiedRuleset {
 
         // The Stack which contains all nested rule intervals at the current index.
         // The most deeply nested interval is at the top of the stack. The second deepest interval is the second element etc.
-        Deque<RuleInterval> nestingStack = new ArrayDeque<>();
+        Deque<RuleIntervalStarts> nestingStack = new ArrayDeque<>();
 
         // The Stack which contains the tentative symbol list of the rule which corresponds to the interval at the same
         // position in nestingStack.
@@ -325,7 +336,7 @@ class Ruleset implements ToUnifiedRuleset {
 
             // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
             if(ruleRangeStarts.containsKey(i)) {
-                for (RuleInterval interval : ruleRangeStarts.get(i)) {
+                for (RuleIntervalStarts interval : ruleRangeStarts.get(i)) {
                     nestingStack.push(interval);
                     symbolStack.push(new ArrayList<>());
                 }
