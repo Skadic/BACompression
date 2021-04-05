@@ -32,16 +32,20 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         this(universeSize, 9);
     }
 
-    private void checkRange(int index) {
-        if(index < 0 || universeSize <= index) {
+    private void checkIndex(int index) {
+        if(index < 0 || index >= universeSize) {
             throw new IndexOutOfBoundsException(index);
         }
     }
 
     @Override
     public T get(Integer index) {
-        checkRange(index);
-        Bucket bucket = bucketsForward[bucketIndex(index)];
+        checkIndex(index);
+        int bucketIndex = bucketIndex(index);
+        // If there is no bucket here, don't try getting a value from it, as it would be a pointer to a different bucket
+        if(!bucketIndexOccupied(bucketIndex)) return null;
+
+        Bucket bucket = bucketsForward[bucketIndex];
         return bucket != null ? bucket.get(indexInBucket(index)) : null;
     }
 
@@ -59,7 +63,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
     @Override
     public T put(Integer index, T value) {
-        checkRange(index);
+        checkIndex(index);
         Objects.requireNonNull(value);
 
         final int bucketIndex = bucketIndex(index);
@@ -81,7 +85,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
     @Override
     public T remove(Integer index) {
-        checkRange(index);
+        checkIndex(index);
 
         final int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
@@ -118,6 +122,12 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         }
     }
 
+    /**
+     * Gets an empty {@link Bucket}. If there are unused buckets in {@link #bucketCache}, then use one of them instead of allocating
+     * a new bucket.
+     * @param bucketIndex The index in the bucket array into which the new bucket is supposed to be inserted.
+     * @return A new bucket, ready to be inserted into the arrays
+     */
     private Bucket retrieveBucket(int bucketIndex) {
         if(bucketCache.isEmpty()) {
             return new Bucket(bucketIndex, bucketSize);
@@ -128,6 +138,13 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         }
     }
 
+    /**
+     * Delete an unused {@link Bucket} at the given index in the bucket arrays. The bucket is removed from the arrays,
+     * and the pointers to the next/previous bucket in {@link #bucketsBackward} and {@link #bucketsForward} are updated.
+     * The removed bucket is then inserted into {@link #bucketCache} so it can be reused when a new bucket is needed elsewhere
+     * when calling {@link #retrieveBucket(int)}. This serves to reduce unnecessary reallocations.
+     * @param bucketIndex The index in the bucket arrays that should be cleared
+     */
     private void deleteBucket(int bucketIndex) {
         int current;
 
@@ -154,31 +171,57 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         }
     }
 
+    /**
+     * For any index in the data structure this gets the bucket in which the index can be found
+     * @param index The index
+     * @return The index of the bucket in {@link #bucketsForward} and {@link #bucketsBackward} which contain the given index
+     */
     private int bucketIndex(int index) {
         return index / bucketSize;
     }
 
+    /**
+     * For any index in the data structure this gets the local index in the bucket in which the index can be found
+     * @param index The index
+     * @return The local index in the bucket which contains the given index
+     */
     private int indexInBucket(int index) {
         return index % bucketSize;
     }
 
+    /**
+     * Checks whether the given index is actually occupied by a bucket and not just a pointer to a previous or next bucket
+     * @param bucketIndex The index of the bucket in {@link #bucketsForward} and {@link #bucketsBackward}
+     * @return true if there is an actual bucket at this index, false if it is just a pointer to a different bucket
+     */
     private boolean bucketIndexOccupied(int bucketIndex) {
         return forwardIndexOccupied(bucketIndex);
     }
 
+    /**
+     * Checks whether the given index in {@link #bucketsForward} is actually occupied by a bucket and not just a pointer to a previous bucket
+     * @param bucketIndex The index of the bucket in {@link #bucketsForward}
+     * @return true if there is an actual bucket at this index, false if it is just a pointer to a different bucket
+     */
     private boolean forwardIndexOccupied(int bucketIndex) {
         return bucketsForward[bucketIndex] != null && bucketsForward[bucketIndex].index == bucketIndex;
     }
 
+    /**
+     * Checks whether the given index in {@link #bucketsBackward} is actually occupied by a bucket and not just a pointer to a next bucket
+     * @param bucketIndex The index of the bucket in {@link #bucketsBackward}
+     * @return true if there is an actual bucket at this index, false if it is just a pointer to a different bucket
+     */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean backwardIndexOccupied(int bucketIndex) {
         return bucketsBackward[bucketIndex] != null && bucketsBackward[bucketIndex].index == bucketIndex;
     }
 
+
     @SuppressWarnings("DuplicatedCode")
     @Override
     public Entry<Integer, T> floorEntry(Integer index) {
-        checkRange(index);
+        checkIndex(index);
         int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
 
@@ -217,7 +260,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     @SuppressWarnings("Duplicates")
     @Override
     public Entry<Integer, T> ceilingEntry(Integer index) {
-        checkRange(index);
+        checkIndex(index);
         int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
 
@@ -253,16 +296,22 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         return new Entry<>(valueIndex, value);
     }
 
+    /**
+     * Returns the greatest value in the data structure whose key is lesser than the given index
+     * @param index The index
+     * @return The greatest value in the data structure whose key is lesser than to the given index
+     */
+    @Override
+    public Entry<Integer, T> lowerEntry(Integer index) {
+        checkIndex(index);
+        return index > 0 ? floorEntry(index - 1) : null;
+    }
+
     @Override
     public Entry<Integer, T> higherEntry(Integer key) {
         return ceilingEntry(key + 1);
     }
 
-    @Override
-    public Entry<Integer, T> lowerEntry(Integer key) {
-        checkRange(key);
-        return key > 0 ? floorEntry(key - 1) : null;
-    }
 
     @Override
     public Collection<T> values() {
@@ -271,14 +320,9 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
     @Override
     public Collection<T> valueRange(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
-        if(!toInclusive) to--;
         List<T> list = new ArrayList<>((int) Math.sqrt(to - from + 1));
-        Entry<Integer, T> current = floorEntry(to);
 
-        while (current != null && (fromInclusive && current.key() >= from || !fromInclusive && current.key() > from)) {
-            list.add(0, current.value());
-            current = lowerEntry(current.key());
-        }
+        valueRangeIterator(from, fromInclusive, to, toInclusive).forEachRemaining(list::add);
 
         return list;
     }

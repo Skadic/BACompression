@@ -1,10 +1,14 @@
-package compression.utils;
+package compression.areacomp.v3;
+
+import compression.utils.Benchmark;
+import compression.utils.BucketPred;
+import compression.utils.Predecessor;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RuleIntervalIndex {
+class RuleIntervalIndex {
 
     private final Predecessor<Integer, RuleInterval> intervalMap;
 
@@ -20,7 +24,7 @@ public class RuleIntervalIndex {
 
     /**
      * Marks the area with the given rule id
-     * @param ruleId
+     * @param ruleId The rule id
      * @param start inclusive
      * @param end inclusive
      */
@@ -209,7 +213,7 @@ public class RuleIntervalIndex {
         }
     }
 
-    public static class RuleInterval  {
+    static class RuleInterval  {
 
         /**
          * The id of the rule this interval is factorized by

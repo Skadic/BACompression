@@ -8,7 +8,6 @@ import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
-import compression.utils.RuleIntervalIndex;
 import org.apache.commons.collections4.list.TreeList;
 
 import java.util.*;
@@ -196,9 +195,9 @@ class Ruleset implements ToUnifiedRuleset {
         // then the pattern "c" appears twice in the string in rule 1 at index 3
         // The corresponding map entry would then be (1, (3, 2))
         for (var pos : positions) {
-            final var ruleInterval = intervalIndex.intervalAt(pos);
+            final var ruleInterval = intervalIndex.deepestIntervalAt(pos);
             final var ruleId = ruleInterval.ruleId();
-            final var startIndex = ruleInterval.totalStart();
+            final var startIndex = ruleInterval.start();
 
             if(firstRuleId == -1){
                 firstRuleId = ruleId;
@@ -246,7 +245,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public int ruleIntervalStartIndex(int index) {
         Benchmark.startTimer(ALGORITHM_NAME, "ruleIntervalStartIndex");
-        int current = intervalIndex.totalStartIndex(index);
+        int current = intervalIndex.intervalStartIndex(index);
         Benchmark.stopTimer(ALGORITHM_NAME, "ruleIntervalStartIndex");
 
         return current;
@@ -278,12 +277,17 @@ class Ruleset implements ToUnifiedRuleset {
      * @return true, if the interval starts in the same rule range as it started. false otherwise
      */
     public boolean crossesBoundary(int from, int to) {
-
+        // TODO
+        //  The test to determine whether a substitution is legal must be adapted
+        //  The issue is listed in the note at the top of this class
+        //  If "from" is the index of the start of the deepest interval, a replacement can still take place
+        //  The same is true for when "to" is the index of the end of the deepest interval
+        //  This corresponds to having a non-terminal as the start/end position of the substring to replace
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
-        var fromInterval = intervalIndex.intervalAt(from);
-        var toInterval = intervalIndex.intervalAt(to - 1);
+        var fromInterval = intervalIndex.deepestIntervalAt(from);
+        var toInterval = intervalIndex.deepestIntervalAt(to - 1);
 
-        boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.totalStart() != toInterval.totalStart();
+        boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.start() != toInterval.start();
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
         return b;
     }
@@ -292,15 +296,6 @@ class Ruleset implements ToUnifiedRuleset {
         return numRules++;
     }
 
-    /**
-     * Gets the id of the most deeply nested rule which occupies this index
-     *
-     * @param index The given index
-     * @return The index of the rule
-     */
-    public int getDeepestRuleIdAt(int index) {
-        return intervalIndex.deepestRuleAt(index);
-    }
 
     @Override
     public UnifiedRuleset toUnified() {

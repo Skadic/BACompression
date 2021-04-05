@@ -3,7 +3,6 @@ package compression.areacomp.v3;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import compression.utils.RuleIntervalIndex;
 
 import java.util.Optional;
 import java.util.TreeMap;
@@ -19,7 +18,7 @@ public class RuleIntervalIndexTest {
     private static final String STR = "abacabacabacabac";
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp() {
         ruleset = new Ruleset(STR);
         topLevelRule = ruleset.getTopLevelRule();
         topLevelId = topLevelRule.getId();

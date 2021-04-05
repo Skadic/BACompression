@@ -8,7 +8,6 @@ import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
-import compression.utils.RuleIntervalIndex;
 
 import java.util.*;
 import java.util.function.Function;
@@ -239,7 +238,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @param index The given index
      * @return The index of the rule
      */
-    public int getDeepestRuleIdAt(int index) { ;
+    public int getDeepestRuleIdAt(int index) {
         return intervalIndex.deepestRuleAt(index);
     }
 
