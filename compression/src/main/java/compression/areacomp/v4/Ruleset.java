@@ -294,6 +294,9 @@ class Ruleset implements ToUnifiedRuleset {
             while (from == fromInterval.start() && to > fromInterval.end()){
                 fromInterval = fromInterval.parent();
             }
+            if(to > fromInterval.end()) {
+                return true;
+            }
         }
 
         RuleInterval toInterval = intervalIndex.deepestIntervalAt(to);

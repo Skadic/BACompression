@@ -124,7 +124,7 @@ Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die n
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
+Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
 
 \paragraph{Neue Datenstrukturen}
 Wir führen nun zwei Datenstrukturen ein: 
@@ -217,6 +217,9 @@ Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen
 
 Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
-Hierzu wird die erste Position
+Hierzu wird der erste Index $i_0$, an dem $p$ vorkommt, aus dem Array entnommen.  Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabetext beschreiben. Es müssen diese Indizes also so vorverarbeitet werden, um den tatsächlichen lokalen Index in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
+
+Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, lässt sich also derjenige lokale Index $li_0$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbol}[li_0]$ das Terminal $s_{i_0}$ zu finden ist.
+
 
 
