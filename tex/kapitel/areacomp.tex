@@ -61,9 +61,8 @@ Es kann vorkommen, dass ein zu ersetzendes Muster überlappend vorkommt, wie etw
 
 Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall $I_1 := LCP[i_1..j_1]$ durchgeführt worden sein, die sich mit einer späteren Substitution durch ein LCP-Intervall $I_2 := LCP[i_2..j_2]$ überschneiden. In diesem Fall, kann der tatsächliche Nutzen der Substitution sinken. Es muss also dafür gesorgt werden, dass bereits ersetzte Teile des Strings nicht nochmals ersetzt werden.
 
-\section{Implementation}
 
-\subsection{AreaComp V1}
+\section{AreaComp V1}
 
 Die erste Version ist eine naive Implementierung. Der Algorithmus verwaltet eine Menge von Regeln. In jedem Durchlauf wird nacheinander jede Regel $(X \rightarrow w) \in P$ aus der Menge entnommen und das Suffix- und LCP-Array für die rechte Seite dieser Regel berechnet. Es wird nun eine Prioritätswarteschlange erzeugt, die alle möglichen LCP-Intervalle enthält. Das beste LCP-Intervall wird daraus entnommen. Sei $p \in (N \cup \Sigma)^*$ das, durch das LCP-Intervall bestimmte, zu ersetzende Muster. Die Indizes, an denen ein Vorkommen von $p$ in $w$ existiert, kann einfach mithilfe des Suffix- und LCP-Array berechnet werden.
 
@@ -75,9 +74,9 @@ Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden
 
 Diese Implementierung hat nicht das Problem, dass sich überschneidende Substitutionen entstehen können, da Suffix- und LCP-Array für jede Regel symbolweise neu erzeugt werden. 
 
-\subsubsection{Probleme}
+\subsection{Probleme}
 
-\paragraph{Laufzeit}
+\subsubsection{Laufzeit}
 Das größte Problem dieser Implementierung ist die Laufzeit. Sei $s \in \Sigma^*$ mit $n := |s|$ $\mathcal{O}(n)$ der Eingabestring.
 
 In jedem Durchlauf wird für jede Regel $X \rightarrow w \in P, X \in N, w \in (N \cup \Sigma)^*$ das im Bezug auf die Flächenfunktion beste LCP-Intervall berechnet. Dessen Berechnung dominiert die Laufzeit dieser Version des Algorithmus. 
@@ -88,9 +87,10 @@ Da die Gesamtlänge der Grammatik $n$ nicht überschreiten kann, ist die Laufzei
 
 In jedem Durchlauf, in dem eine Substitution möglich ist, wird mindestens eine Substitution durchgeführt. Da durch jede Substitution die Grammatik um mindestens $1$ Zeichen kleiner wird (entweder mindestens $2$ Vorkommen der Länge mindestens $3$ oder mindestens $2$ Vorkommen der Länge mindestens $2$), können im Worst-Case insgesamt $\mathcal{O}(n)$ Durchläufe stattfinden.
 
-Insgesamt resultiert also eine sehr hohe Laufzeit von ungefähr $\mathcal{O}(n^4)$.
+Insgesamt resultiert also eine sehr hohe Laufzeit von etwa $\mathcal{O}(n^4)$.
 
-\paragraph{Erkennung von Wiederholungen}
+\subsubsection{Erkennung von Wiederholungen}
+
 Diese Version des Algorithmus erkennt keine wiederholten Vorkommen von Substrings, falls diese in verschiedenen Produktionsregeln auftreten.
 Etwa würde in der folgenden Grammatik das wiederholte Vorkommen von $abc$ nicht erkannt werden:
 
@@ -101,11 +101,13 @@ Etwa würde in der folgenden Grammatik das wiederholte Vorkommen von $abc$ nicht
 
 Dies liegt daran, dass das Suffix- und LCP-Array, in dem nach wiederholten Vorkommen gesucht wird, für jede Produktionsregel einzeln berechnet werden. Dabei werden natürlich alle Vorkommen außerhalb dieser Produktionsregel nicht erfasst.
 
-\subsection{AreaComp V2}
+\section{AreaComp V2}
+
+\subsection{Implementierung}
 
 Gegenüber der ersten Version des Algorithmus gibt es mehrere Verbesserungen:
 
-\paragraph{Datenstrukturen} Regeln bestehen nun nicht mehr aus der verketteten Struktur wie bei Sequitur. Stattdessen besitzt eine Produktionsregel nun zwei dynamische Arrays. \texttt{symbols} enthält die Symbole und \texttt{cumulativeLength} ist die Präfixsumme über die (voll expandierte) Länge der einzelnen Symbole in der Symbolliste.
+\subsubsection{Datenstrukturen} Regeln bestehen nun nicht mehr aus der verketteten Struktur wie bei Sequitur. Stattdessen besitzt eine Produktionsregel nun zwei dynamische Arrays. \texttt{symbols} enthält die Symbole und \texttt{cumulativeLength} ist die Präfixsumme über die (voll expandierte) Länge der einzelnen Symbole in der Symbolliste.
 
 Sei zum Beispiel die Grammatik: 
 \begin{align*}
@@ -118,7 +120,7 @@ Dann gilt für die Produktionsregel $A$:
 	\texttt{cumulativeLength} &= [3, 6, 7, 8]
 \end{align*}
 
-\paragraph{Suffix- und LCP-Array}
+\subsubsection{Suffix- und LCP-Array}
 Im Gegensatz zu Version 1 wird in Version 2 das Suffix- und LCP-Array, und damit auch die Prioritätswarteschlange, nur einmal zu Anfang des Algorithmus global für den Eingabestring berechnet. Damit wird die wiederholte Berechnung in jedem Durchlauf gespart. 
 Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die nicht in derselben Regel liegen, nicht erfasst.
 
@@ -126,7 +128,7 @@ Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme sch
 
 Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
 
-\paragraph{Neue Datenstrukturen}
+\subsubsection{Neue Datenstrukturen}
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
 	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste der IDs derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die IDs in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
@@ -145,12 +147,12 @@ Wir führen nun zwei Datenstrukturen ein:
 	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinander folgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
 \end{itemize}
 
-\paragraph{Substitution}
+\subsubsection{Substitution}
 Wird nun $p$ in $s$ am Index $i$ substituiert, so wird nun $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + l - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
 
 Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, werden, wie bei V1, sich überschneidende Vorkommen entfernt. Daraufhin wird geprüft, ob die Substitution an den übrigen Indizes möglich ist. Dies wird mithilfe von \texttt{ruleIntervals} und \texttt{ruleIntervalStarts} bewältigt.
 
-\subparagraph{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
+\paragraph{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
 
 \begin{enumerate}
 	\item Die IDs der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
@@ -164,7 +166,7 @@ Die IDs der tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up
 
 Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die ID $id_T \in \mathbb{N}$ der tiefsten Regel an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $id_T$ enthält.
 
-\subparagraph{Unterschiedliche Vorkommen}
+\paragraph{Unterschiedliche Vorkommen}
 
 Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Grammatik für den String $abcabcde$:
 
@@ -211,15 +213,31 @@ Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfang
 	Dieser Fall wird durch die Bedingung $ruleId \neq firstRuleId$ bemerkt und der Algorithmus gibt korrekterweise $\texttt{true}$ zurück.
 \end{enumerate}
 
-Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel-ID besitzen gibt der Algorithmus $\texttt{false}$ zurück.
+Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel-ID besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
 
-\subparagraph{Faktorisieren}
+\paragraph{Faktorisieren}
 
 Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
-Hierzu wird der erste Index $i_0$, an dem $p$ vorkommt, aus dem Array entnommen.  Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabetext beschreiben. Es müssen diese Indizes also so vorverarbeitet werden, um den tatsächlichen lokalen Index in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
+Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabetext beschreiben. Es muss dieser Index also so vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
 
-Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, lässt sich also derjenige lokale Index $li_0$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbol}[li_0]$ das Terminal $s_{i_0}$ zu finden ist.
+Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, 
+lässt sich also derjenige lokale Index $j$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
+Von dort an kann dann durch Iterieren durch $\texttt{symbols}$ die erforderliche Anzahl an Symbolen durch das neue Nichtterminal ersetzt werden.
+Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, in dem die ID der neuen Regel an die entsprechenden Stellen eingefügt wird.
+
+\subsection{Probleme}
+
+\subsubsection{Laufzeit}
+
+Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Zwar entfallen durch die neuen Datenstrukturen etwa das wiederholte Neuberechnen des Suffix- und LCP-Arrays und die Scans durch die gesamte Grammatik.
+
+Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des LCP-Arrays in betracht. Von diesen Intervallen sind bei weitem nicht alle von Nutzen. Dadurch ergibt sich immer noch eine sehr schlechte Laufzeit.
+
+\section{AreaComp V3}
+
+In Version 3 des Algorithmus werden die Wahl der LCP-Intervalle, die in Betracht gezogen werden sollen, eingeschränkt. Ebenfalls wird effizienteres Markieren von Ersetzungsintervallen mithilfe einer neuen Datenstruktur, basierend auf einer Predecessor-Datenstruktur, möglich gemacht. 
+Die Grundlage hierfür bieten die Kind-Intervalle von Abouelhoda et al. \cite{abouelhoda_optimal_2002}.
 
 
 

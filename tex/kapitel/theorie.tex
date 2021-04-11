@@ -98,3 +98,80 @@ Das LCP-Array ist ein Array $LCP$, für das zu einem gegebenen Suffix-Array $SA$
 Es sei $LCP[0] := 0$. Es gilt $LCP[i] = k$ für $1 \leq i < n$ wenn der längste gemeinsame Präfix von $S_{SA[i-1]}$ und $S_{SA[i]}$ die Länge $k$ hat. $LCP[i]$ ist also die Länge des längsten gemeinsamen Präfixes zweier lexikographisch benachbarter Suffixe von $x$. 
 
 Das LCP-Array kann mithilfe von $SA$ \cite{kasai_linear-time_2001} oder alternativ während der Berechnung von SA \cite{fischer_inducing_2011} in $\mathcal{O}(n)$ Laufzeit berechnet werden.
+
+\section{Predecessor Datenstrukturen}
+
+\subsection{Predecessor-Problem}
+
+Nach \cite{dinklage_engineering_2021} ist das Predecessor-Problem die Aufgabe, eine Menge $S \subset \mathbb{Z}$ zu verwalten, sodass folgende Operationen für ein $x \in \mathbb{Z}$ möglich sind:
+
+\begin{itemize}
+	\item $\texttt{insert(x)}$ Einfügen von $x$ in die Datenstruktur
+	\item $\texttt{delete(x)}$ Löschen von $x$ aus der Datenstruktur
+	\item $\texttt{predecessor(x)}$ Abfrage des größten $x' \in S$ mit $x' \leq x$
+\end{itemize}
+
+Eine Predecessor-Datenstruktur ist dann eine Datenstruktur, die das Predecessor-Problem möglichst effizient löst.
+
+\subsection{Bucket-Predecessor-Struktur}
+
+In der finalen Version des in dieser Arbeit vorgestellten Algorithmus kommt eine Version der Predecessor-Datenstruktur aus Kapitel 4 in \cite{dinklage_engineering_2021} zum Einsatz.
+
+Diese basiert darauf, ein Universum $U$ der Größe $u := |U|$, in Buckets der Größe $b \ll u$ eingeteilt werden. Dabei ist $b = 2^k$ für ein $k \in \mathbb{N}$. Für ein $i \in \{0, \dots, u \backslash b \}$ erhält dann der Bucket an Index $i$ nur Schlüssel im Interval $[bi, b(i + 1) - 1]$. Ein Bucket heißt \textit{aktiv}, wenn er mindestens einen Schlüssel aus $S$ enthält.
+Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist ein Schlüssel in einem Bucket enthalten, so wird das entsprechende Bit im Bitvektor auf $1$ gesetzt. Ebenso wird ein Bit auf $0$ gesetzt, wenn der zugehörige Schlüssel aus der Datenstruktur gelöscht wird.
+
+Wir speichern nun aktive Buckets in einem Array $\texttt{buckets}$ der Größe $u \backslash b$. Falls der Bucket mit Index $i$ aktiv ist, so zeigt $\texttt{buckets}[i]$ auf diesen Bucket. Falls der Bucket mit Index $i$ nicht aktiv ist, so zeigt $\texttt{buckets}[i]$ auf den aktiven Bucket mit Index $j < i$, so dass $j$ maximal ist, falls solch ein Bucket existiert.
+
+Dies ergibt also eine aus zwei Ebenen bestehende Struktur. Die \textit{Top-Level} Ebene, bestehend aus dem $\texttt{buckets}$ Array und die \textit{Bucket} Ebene, bestehend aus den Buckets selbst.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw=none] (Top) at (0,0) {Top-Level};
+		\node[draw=none] (Bucket) at (0,-1.5) {Bucket-Level};
+		
+		\matrix (toparr) [matrix of nodes, nodes={draw, minimum width=25mm, minimum height=7mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth] at (7, 0) {
+			$[0, 7]$ & $[8, 15]$ & $[16, 23]$ & $[24, 31]$ \\
+		};
+		
+		
+		\matrix (bucketsarr) [matrix of nodes, nodes={draw, minimum width=25mm, minimum height=7mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth] at (7, -1.5) {
+			$10010100$ & $00001000$ & |[draw=none]| & |[draw=none]| \\
+		};
+	
+		\draw[->] (toparr-1-1.south) -- (bucketsarr-1-1.north);
+		\draw[->] (toparr-1-2.south) -- (bucketsarr-1-2.north);
+		\draw[->] (toparr-1-3.south) -- (bucketsarr-1-2.north);
+		\draw[->] (toparr-1-4.south) -- (bucketsarr-1-2.north);
+		
+		\node[draw=none, below=2mm of bucketsarr-1-1] (B0) {$B_0$};
+		\node[draw=none, below=2mm of bucketsarr-1-2] (B1) {$B_1$};
+		
+	\end{tikzpicture}
+	\caption{Ein Beispiel für die Bucket-Predecessor Datenstruktur mit $U := [0, 31],$ $u = 32$ und $b := 2^3$. In Bucket $B_0$ befinden sich die Schlüssel $0, 3, 5$ und in $B_1$ befindet sich der Schlüssel $12$. Die Indizes $2$ und $3$ im Top-Level zeigen ebenfalls auf $B_1$, da keine Schlüssel im Bereich $[16, 31]$ in der Datenstruktur liegen}.
+\end{figure}
+Die Operationen werden dann folgendermaßen umgesetzt:
+
+\paragraph{\texttt{insert(x)}}
+
+Zuerst wird der Index $i$ bestimmt, in dessen Bucket sich $x$ befinden muss. Dabei gilt $i = x \backslash b$. Falls der Bucket bei Index $i$ inaktiv ist, muss ein neuer Bucket erzeugt werden. Dieser wird dann in $\texttt{buckets[i]}$ eingefügt.
+Jetzt müssen noch die Einträge in $\texttt{buckets}$ bis zum nächsten aktiven Bucket so aktualisiert werden, dass sie ebenfalls auf $\texttt{buckets[i]}$ zeigen.
+
+Ist dies geschehen, oder war der Bucket bereits aktiv, kann das Bit an Index $x \mod b$ im Bucket auf $1$ gesetzt.
+
+\paragraph{\texttt{delete(x)}}
+
+Wieder wird der Index $i$ bestimmt, in dessen Bucket dem sich $x$ befinden müsste. Ist der Bucket bei Index $i$ inaktiv, oder ist der Index $x \mod b$ in diesem Bucket nicht $1$, so geschieht nichts, denn $x$ war nicht in der Datenstruktur vorhanden.
+
+Sonst, setze das Bit $x \mod b$ im Bucket auf $0$. Sind alle Bits des Bitvektors $0$, so wird dieser Bucket entfernt. Dazu werden alle Einträge in $\texttt{buckets}$ von $i$ bis zum nächsten aktiven Bucket so aktualisiert, dass sie auf den vorherigen aktiven Bucket \textit{vor} Index $i$ zeigen.
+
+\paragraph{\texttt{predecessor(x)}}
+
+Wieder bestimmen wir den Index $i$ bestimmt, in dem sich $x$ befindet. Ist der Bucket an diesem Index inaktiv, so bestimme den Index des höchsten $1$-Bits im Bucket $\texttt{buckets[i]}$ (dieser Eintrag zeigt ja auf den letzten aktiven Bucket vor $i$). Daraus lässt sich dann der Vorgänger von $x$ bestimmen.
+
+Ist der Bucket aktiv, so bestimme den höchsten Index im Bucket vor oder bei $x \mod b$, dessen Bit $1$ ist. Gibt es solch ein Bit nicht, so ist der Vorgänger stattdessen das höchste $1$-Bit in dem vorhergehenden aktiven Bucket.
+
+
+
+
