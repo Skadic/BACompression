@@ -9,7 +9,6 @@ import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
-import org.apache.commons.collections4.list.TreeList;
 
 import java.util.*;
 
@@ -36,23 +35,6 @@ class Ruleset implements ToUnifiedRuleset {
 
     private final RuleIntervalIndex intervalIndex;
 
-    private final Map<Integer, List<RuleIntervalStarts>> ruleRangeStarts;
-
-    private record RuleIntervalStarts(int id, int start, int end) {
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            RuleIntervalStarts that = (RuleIntervalStarts) o;
-            return id == that.id && start == that.start && end == that.end;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, start, end);
-        }
-    }
-
     /**
      * Amount of rules in the set. This is used for getting new rule IDs in {@link #nextRuleID()}
      */
@@ -66,9 +48,6 @@ class Ruleset implements ToUnifiedRuleset {
     public Ruleset(String s) {
         Benchmark.startTimer(ALGORITHM_NAME, "construction");
         intervalIndex = new RuleIntervalIndex(0, s.length());
-        ruleRangeStarts = new HashMap<>();
-        ruleRangeStarts.put(0, new TreeList<>());
-        ruleRangeStarts.get(0).add(new RuleIntervalStarts(0, 0, s.length() - 1));
         underlying = s;
         Benchmark.stopTimer(ALGORITHM_NAME, "construction");
         numRules = 1;
@@ -219,7 +198,6 @@ class Ruleset implements ToUnifiedRuleset {
 
 
     private static final List<Integer> IN_BOUNDARY_LIST = new ArrayList<>();
-
     /**
      * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
      * @param positions The positions to filter
@@ -263,12 +241,6 @@ class Ruleset implements ToUnifiedRuleset {
      *
      */
     public void markRange(int id, int from, int to) {
-        var starts = ruleRangeStarts.get(from);
-        if (starts == null) {
-            starts = new TreeList<>();
-            ruleRangeStarts.put(from, starts);
-        }
-        starts.add(new RuleIntervalStarts(id, from, to));
         intervalIndex.mark(id, from, to);
     }
 
@@ -311,8 +283,8 @@ class Ruleset implements ToUnifiedRuleset {
     }
 
 
-    @Override
-    public UnifiedRuleset toUnified() {
+
+    /*public UnifiedRuleset toUnifieds() {
 
         // The Stack which contains all nested rule intervals at the current index.
         // The most deeply nested interval is at the top of the stack. The second deepest interval is the second element etc.
@@ -352,6 +324,60 @@ class Ruleset implements ToUnifiedRuleset {
 
         while (!nestingStack.isEmpty()){
             final int id = nestingStack.pop().id;
+            final List<UnifiedSymbol> symbols = symbolStack.pop();
+            ruleset.putRule(id, symbols);
+
+            if(!symbolStack.isEmpty()) {
+                symbolStack.peek().add(new UnifiedNonTerminal(id));
+            }
+        }
+
+
+        return ruleset;
+    }
+    */
+
+    @Override
+    public UnifiedRuleset toUnified() {
+
+        // The Stack which contains all nested rule intervals at the current index.
+        // The most deeply nested interval is at the top of the stack. The second deepest interval is the second element etc.
+        Deque<RuleInterval> nestingStack = new ArrayDeque<>();
+
+        // The Stack which contains the tentative symbol list of the rule which corresponds to the interval at the same
+        // position in nestingStack.
+        Deque<List<UnifiedSymbol>> symbolStack = new ArrayDeque<>();
+        UnifiedRuleset ruleset = new UnifiedRuleset();
+
+        final var chars = underlying.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            // If the index moved past the current rule interval, remove all intervals which ended and add the resulting rules
+            // to the ruleset
+            while (!nestingStack.isEmpty() && i > nestingStack.peek().end()){
+                final int id = nestingStack.pop().ruleId();
+                final List<UnifiedSymbol> symbols = symbolStack.pop();
+                ruleset.putRule(id, symbols);
+
+                if(!symbolStack.isEmpty()) {
+                    symbolStack.peek().add(new UnifiedNonTerminal(id));
+                }
+            }
+
+            // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
+
+            for (RuleInterval interval : intervalIndex.intervalsAtStartIndex(i)) {
+                nestingStack.push(interval);
+                symbolStack.push(new ArrayList<>());
+            }
+
+
+            // Add the current char to the most deeply nested rule's stack
+            char c = chars[i];
+            symbolStack.peek().add(new UnifiedTerminal(c));
+        }
+
+        while (!nestingStack.isEmpty()){
+            final int id = nestingStack.pop().ruleId();
             final List<UnifiedSymbol> symbols = symbolStack.pop();
             ruleset.putRule(id, symbols);
 

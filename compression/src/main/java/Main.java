@@ -23,7 +23,7 @@ public class Main {
 
         final AreaFunction area = new NaiveArea();
 
-        final var compressors = List.of(
+        final List<UnifiedCompressor> compressors = List.of(
                 //new Sequitur(),
                 //new RePair(),
                 //,new AreaCompV1(area)

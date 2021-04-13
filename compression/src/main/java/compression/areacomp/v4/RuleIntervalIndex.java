@@ -160,7 +160,7 @@ class RuleIntervalIndex {
      */
     public List<RuleInterval> intervalsAtStartIndex(int index) {
         List<RuleInterval> list = intervalsAtStartIndexModifiable(index);
-        return list != null ? Collections.unmodifiableList(list) : null;
+        return list != null ? Collections.unmodifiableList(list) : Collections.emptyList();
     }
 
     private List<RuleInterval> floorIntervalsModifiable(int index) {
@@ -170,7 +170,7 @@ class RuleIntervalIndex {
 
     public List<RuleInterval> floorIntervals(int index) {
         List<RuleInterval> list = floorIntervalsModifiable(index);
-        return list != null ? Collections.unmodifiableList(list) : null;
+        return list != null ? Collections.unmodifiableList(list) : Collections.emptyList();
     }
 
     public int length() {

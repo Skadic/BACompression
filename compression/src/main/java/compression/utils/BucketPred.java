@@ -308,8 +308,9 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public Entry<Integer, T> higherEntry(Integer key) {
-        return ceilingEntry(key + 1);
+    public Entry<Integer, T> higherEntry(Integer index) {
+        checkIndex(index);
+        return index > 0 ? ceilingEntry(index + 1) : null;
     }
 
 

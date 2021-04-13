@@ -243,22 +243,6 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
         return node != null ? new Entry<>(node.key, node.content) : null;
     }
 
-    public Integer floorKey(int key) {
-        return floorEntry(key).key();
-    }
-
-    public Integer ceilingKey(int key) {
-        return ceilingEntry(key).key();
-    }
-
-    public Integer lowerKey(int key) {
-        return lowerEntry(key).key();
-    }
-
-    public Integer higherKey(int key) {
-        return higherEntry(key).key();
-    }
-
 
 
     private Node searchLowestAncestor(int key) {
