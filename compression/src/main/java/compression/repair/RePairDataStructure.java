@@ -419,18 +419,17 @@ class RePairDataStructure implements ToUnifiedRuleset {
                 });
 
         while(!pairs.isEmpty()) {
-            final var symbol = pairs.poll();
-            if(symbol instanceof SymbolPair pair) {
-                ruleset.putRule(pair.getId(), Arrays.asList(unify.apply(pair.getLeft()), unify.apply(pair.getRight())));
-                if(pair.getLeft() instanceof SymbolPair left && !processed.contains(left.getId())) {
-                    processed.add(left.getId());
-                    pairs.add(left);
-                }
-                if(pair.getRight() instanceof SymbolPair right && !processed.contains(right.getId())) {
-                    processed.add(right.getId());
-                    pairs.add(right);
-                }
+            final SymbolPair pair = pairs.poll();
+            ruleset.putRule(pair.getId(), Arrays.asList(unify.apply(pair.getLeft()), unify.apply(pair.getRight())));
+            if(pair.getLeft() instanceof SymbolPair left && !processed.contains(left.getId())) {
+                processed.add(left.getId());
+                pairs.add(left);
             }
+            if(pair.getRight() instanceof SymbolPair right && !processed.contains(right.getId())) {
+                processed.add(right.getId());
+                pairs.add(right);
+            }
+
         }
 
         return ruleset;
