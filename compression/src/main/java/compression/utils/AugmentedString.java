@@ -35,12 +35,10 @@ public class AugmentedString implements CharSequence {
      * The child table used to determine the LCP Intervals in accordance with Abouelhoda et al's paper "Optimal Exact String Matching
      * Based on Suffix Arrays"
      */
-    private final ChildTableEntry[] childTable;
-
-    //private final int[] childTab;
+    private final int[] childTable;
 
     /**
-     * A static stack used for {@link #childUpDown(int[], ChildTableEntry[])} and {@link #childNextLIndex(int[], ChildTableEntry[])}
+     * A static stack used for {@link #childUpDownCompressed(int[], int[])} and {@link #childNextLIndexCompressed(int[], int[])}
      * to prevent repeated allocation of memory
      */
     private static final Deque<Integer> stack = new ArrayDeque<>();
@@ -64,7 +62,8 @@ public class AugmentedString implements CharSequence {
         this.inverseSuffixArray = null;
         this.lcp = suffixData.getLCP();
         this.lcp[0] = 0;
-        this.childTable = childTable(lcp);
+        this.childTable = childTableCompressed(lcp);
+        //System.out.println("Compressed child array: " + Arrays.toString(childTableCompressed(lcp)));
     }
 
 
@@ -154,32 +153,108 @@ public class AugmentedString implements CharSequence {
      * @param lcp The lcp array for which to compute the child table
      * @return The child table
      */
-    private static ChildTableEntry[] childTable(int[] lcp) {
-        ChildTableEntry[] childTable = new ChildTableEntry[lcp.length];
-        for (int i = 0; i < childTable.length; i++) {
-            childTable[i] = new ChildTableEntry(-1, -1, -1);
-        }
+    private static int[] childTableCompressed(int[] lcp) {
+        int[] childTable = new int[lcp.length];
+        Arrays.fill(childTable, -1);
 
-        childUpDown(lcp, childTable);
-        childNextLIndex(lcp, childTable);
+        childUpDownCompressed(lcp, childTable);
+        childNextLIndexCompressed(lcp, childTable);
 
         return childTable;
     }
 
+    /**
+     * Calculates the "up" and "down" fields of {@link #childTable} with Abouelhoda et al's Algorithm
+     * @param lcp The lcp array for which to compute the child table
+     * @param childTable The child table to populate
+     */
+    private static void childUpDownCompressed(int[] lcp, int[] childTable) {
+        int lastIndex = -1;
+        stack.push(0);
+        for (int i = 1; i < lcp.length; i++) {
+            int top = stack.peek();
+            while (lcp[i] < lcp[top]) {
+                lastIndex = stack.pop();
+                top = stack.peek();
+                if(lcp[i] <= lcp[top] && lcp[top] != lcp[lastIndex]) {
+                    childTable[top] = lastIndex;
+                }
+            }
+
+            if (lcp[i] >= lcp[top]) {
+                if (lastIndex != -1) {
+                    childTable[i - 1] = lastIndex;
+                    lastIndex = -1;
+                }
+                stack.push(i);
+            }
+        }
+        stack.clear();
+    }
+
+    /**
+     * Calculates the "nextLIndex" fields of {@link #childTable} with Abouelhoda et al's Algorithm
+     * @param lcp The lcp array for which to compute the child table
+     * @param childTable The child table to populate
+     */
+    private static void childNextLIndexCompressed(int[] lcp, int[] childTable) {
+        stack.push(0);
+        for (int i = 1; i < lcp.length; i++) {
+            while(lcp[i] < lcp[stack.peek()]) {
+                stack.pop();
+            }
+            if (lcp[i] == lcp[stack.peek()]) {
+                childTable[stack.pop()] = i;
+            }
+            stack.push(i);
+        }
+        stack.clear();
+    }
+
+
     public int up(int i) {
-        return i >= 0 && i < childTable.length ? childTable[i].up : -1;
+        if (i < 0 || i >= childTable.length) {
+            return -1;
+        }
+
+        if (lcp(i - 1) > lcp(i)) {
+            return childTable[i - 1];
+        }
+
+        return -1;
+        //return i >= 0 && i < childTable.length ? childTable[i].up : -1;
+        //return i > 0 && i < childTab.length ? childTab[i - 1] : -1;
     }
 
     public int down(int i) {
-        return i >= 0 && i < childTable.length ? childTable[i].down : -1;
+        if (i < 0 || i >= childTable.length) {
+            return -1;
+        }
+        // If this is true, then i contains the down value
+        if (lcp(i) < lcp(childTable[i])) {
+            return childTable[i];
+        }
+
+        return -1;
+        //return i >= 0 && i < childTable.length ? childTable[i].down : -1;
     }
 
     public int nextLIndex(int i) {
-        return i >= 0 && i < childTable.length ? childTable[i].nextLIndex : -1;
+        if (i < 0 || i >= childTable.length - 1) {
+            return -1;
+        }
+
+        // If this is true, then i contains the next l value
+        if (lcp(i) == lcp(childTable[i])) {
+            return childTable[i];
+        }
+
+        return -1;
+       //return i >= 0 && i < childTable.length ? childTable[i].nextLIndex : -1;
     }
 
     public boolean hasNextLIndex(int i) {
-        return nextLIndex(i) != -1;
+        return childTable[i] > i && lcp(i) == lcp(childTable[i]) && nextLIndex(i) != -1;
     }
 
     public Collection<Interval> getAllLCPIntervals() {
@@ -277,55 +352,6 @@ public class AugmentedString implements CharSequence {
         } else {
             return lcp(down(low));
         }
-    }
-
-    /**
-     * Calculates the "up" and "down" fields of {@link #childTable} with Abouelhoda et al's Algorithm
-     * @param lcp The lcp array for which to compute the child table
-     * @param childTable The child table to populate
-     */
-    @SuppressWarnings("ConstantConditions")
-    private static void childUpDown(int[] lcp, ChildTableEntry[] childTable) {
-        int lastIndex = -1;
-        stack.push(0);
-        for (int i = 1; i < lcp.length; i++) {
-            int top = stack.peek();
-            while (lcp[i] < lcp[top]) {
-                lastIndex = stack.pop();
-                top = stack.peek();
-                if(lcp[i] <= lcp[top] && lcp[top] != lcp[lastIndex]) {
-                    childTable[top].down = lastIndex;
-                }
-            }
-
-            if (lcp[i] >= lcp[top]) {
-                if (lastIndex != -1) {
-                    childTable[i].up = lastIndex;
-                    lastIndex = -1;
-                }
-                stack.push(i);
-            }
-        }
-        stack.clear();
-    }
-
-    /**
-     * Calculates the "nextLIndex" fields of {@link #childTable} with Abouelhoda et al's Algorithm
-     * @param lcp The lcp array for which to compute the child table
-     * @param childTable The child table to populate
-     */
-    private static void childNextLIndex(int[] lcp, ChildTableEntry[] childTable) {
-        stack.push(0);
-        for (int i = 1; i < lcp.length; i++) {
-            while(lcp[i] < lcp[stack.peek()]) {
-                stack.pop();
-            }
-            if (lcp[i] == lcp[stack.peek()]) {
-                childTable[stack.pop()].nextLIndex = i;
-            }
-            stack.push(i);
-        }
-        stack.clear();
     }
 
     /**
