@@ -15,17 +15,6 @@ import java.util.*;
 @SuppressWarnings("Duplicates")
 class Ruleset implements ToUnifiedRuleset {
 
-    // TODO If a grammar exists like
-    //  A -> BBcBBc
-    //  B -> ab
-    //  It would not replace BBc with a new rule, since the rule index looks like this:
-    //  B[0,1], B[2,3], A[4,4], B[5,6], B[7,8], A[9,9]
-    //  Therefore, a request for the deepest rule at 0 and 4 respectively, would yield B and A respectively
-    //  The algorithm would forbid replacing this, though this would be valid
-    //  There likely needs to be a (most likely larger) change to RuleIntervalIndex to support multiple values at the same index
-    //  That might incur a runtime penalty, but also could make markRange faster, since it does not need to iterate through intervals to override
-    //  and link slices of the same interval. Also it might cause a memory penalty.
-
     public static final String ALGORITHM_NAME = AreaCompV4.class.getSimpleName();
 
     /**
@@ -91,7 +80,8 @@ class Ruleset implements ToUnifiedRuleset {
             var areaData = queue.remove();
 
             // The positions at which the pattern can be found
-            int[] positions = areaData.viablePositions;
+            int[] positions = Arrays.stream(augS.getSuffixArray(), areaData.low - 1, areaData.high + 1)
+                    .toArray();
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
@@ -104,13 +94,20 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-            //positions = nonOverlapping(positions, len);
+            positions = nonOverlapping(positions, len);
+
+            /*var multipleOccurrences = differingOccurences(positions);
+
+            if(!multipleOccurrences) {
+                continue;
+            }*/
+
             Benchmark.startTimer(ALGORITHM_NAME, "in boundary");
             positions = inBoundary(positions, len);
             Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
 
             Benchmark.startTimer(ALGORITHM_NAME, "multiple occurrences");
-            final var multipleOccurrences = differingOccurences(positions);
+            var multipleOccurrences = differingOccurences(positions);
             Benchmark.stopTimer(ALGORITHM_NAME, "multiple occurrences");
 
             Benchmark.stopTimer(ALGORITHM_NAME, "positions");
@@ -146,6 +143,26 @@ class Ruleset implements ToUnifiedRuleset {
             markRange(nextId, position, position + len - 1);
             Benchmark.stopTimer(ALGORITHM_NAME, "markRange");
         }
+    }
+
+
+    /**
+     * Removes all overlapping occurences of a pattern from an array of positions
+     *
+     * @param positions     All occurences of the pattern
+     * @param patternLength The length of the pattern
+     * @return The occurences of the pattern with overlapping occurences removed
+     */
+    private static int[] nonOverlapping(int[] positions, int patternLength) {
+        final List<Integer> list = new ArrayList<>();
+        int last = Short.MIN_VALUE;
+        for (Integer i : positions) {
+            if (i - last >= patternLength) {
+                list.add(i);
+                last = i;
+            }
+        }
+        return list.stream().mapToInt(i -> i).toArray();
     }
 
     /**
@@ -251,24 +268,17 @@ class Ruleset implements ToUnifiedRuleset {
      * @return true, if the interval starts in the same rule range as it started. false otherwise
      */
     public boolean crossesBoundary(int from, int to) {
-        // TODO
-        //  The test to determine whether a substitution is legal must be adapted
-        //  The issue is listed in the note at the top of this class
-        //  If "from" is the index of the start of the deepest interval, a replacement can still take place
-        //  The same is true for when "to" is the index of the end of the deepest interval
-        //  This corresponds to having a non-terminal as the start/end position of the substring to replace
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
         RuleInterval fromInterval = intervalIndex.deepestIntervalAt(from);
 
-        if (from > fromInterval.start() && to > fromInterval.end()) {
-            return true;
-        } else if (from == fromInterval.start()){
+        if (from == fromInterval.start()){
             while (from == fromInterval.start() && to > fromInterval.end()){
                 fromInterval = fromInterval.parent();
             }
-            if(to > fromInterval.end()) {
-                return true;
-            }
+        }
+
+        if(to > fromInterval.end()) {
+            return true;
         }
 
         RuleInterval toInterval = intervalIndex.deepestIntervalAt(to);
@@ -281,61 +291,6 @@ class Ruleset implements ToUnifiedRuleset {
     private int nextRuleID() {
         return numRules++;
     }
-
-
-
-    /*public UnifiedRuleset toUnifieds() {
-
-        // The Stack which contains all nested rule intervals at the current index.
-        // The most deeply nested interval is at the top of the stack. The second deepest interval is the second element etc.
-        Deque<RuleIntervalStarts> nestingStack = new ArrayDeque<>();
-
-        // The Stack which contains the tentative symbol list of the rule which corresponds to the interval at the same
-        // position in nestingStack.
-        Deque<List<UnifiedSymbol>> symbolStack = new ArrayDeque<>();
-        UnifiedRuleset ruleset = new UnifiedRuleset();
-
-        final var chars = underlying.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            // If the index moved past the current rule interval, remove all intervals which ended and add the resulting rules
-            // to the ruleset
-            while (!nestingStack.isEmpty() && i > nestingStack.peek().end){
-                final int id = nestingStack.pop().id;
-                final List<UnifiedSymbol> symbols = symbolStack.pop();
-                ruleset.putRule(id, symbols);
-
-                if(!symbolStack.isEmpty()) {
-                    symbolStack.peek().add(new UnifiedNonTerminal(id));
-                }
-            }
-
-            // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
-            if(ruleRangeStarts.containsKey(i)) {
-                for (RuleIntervalStarts interval : ruleRangeStarts.get(i)) {
-                    nestingStack.push(interval);
-                    symbolStack.push(new ArrayList<>());
-                }
-            }
-
-            // Add the current char to the most deeply nested rule's stack
-            char c = chars[i];
-            symbolStack.peek().add(new UnifiedTerminal(c));
-        }
-
-        while (!nestingStack.isEmpty()){
-            final int id = nestingStack.pop().id;
-            final List<UnifiedSymbol> symbols = symbolStack.pop();
-            ruleset.putRule(id, symbols);
-
-            if(!symbolStack.isEmpty()) {
-                symbolStack.peek().add(new UnifiedNonTerminal(id));
-            }
-        }
-
-
-        return ruleset;
-    }
-    */
 
     @Override
     public UnifiedRuleset toUnified() {

@@ -2,8 +2,6 @@ package compression.areacomp;
 
 import compression.utils.AugmentedString;
 
-import java.util.Arrays;
-
 @FunctionalInterface
 public interface AreaFunction {
 
@@ -34,12 +32,6 @@ public interface AreaFunction {
         public final int high;
 
         /**
-         * All positions at which it is possible to replace the pattern.
-         * It might not be the same as the original positions array, since overlapping occurrences cannot be replaced
-         */
-        public final int[] viablePositions;
-
-        /**
          * The area value of the interval
          */
         public final int area;
@@ -52,10 +44,9 @@ public interface AreaFunction {
         /**
          * Creates a new area data object with the given data
          */
-        public AreaData(int low, int high, int[] viablePositions, int area, int len) {
+        public AreaData(int low, int high, int area, int len) {
             this.low = low;
             this.high = high;
-            this.viablePositions = viablePositions;
             this.area = area;
             this.len = len;
         }
@@ -67,7 +58,7 @@ public interface AreaFunction {
 
         @Override
         public String toString() {
-            return "Area[[%d, %d], area: %d, len: %d, pos: %s]".formatted(low, high, area, len, Arrays.toString(viablePositions));
+            return "Area[[%d, %d], area: %d, len: %d]".formatted(low, high, area, len);
         }
     }
 }

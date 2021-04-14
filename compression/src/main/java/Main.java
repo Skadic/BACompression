@@ -7,6 +7,7 @@ import compression.utils.Benchmark;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -40,7 +41,7 @@ public class Main {
 
         final String input;
         try {
-             input = Files.readString(inputPath);
+             input = Files.readString(inputPath, StandardCharsets.ISO_8859_1);
         } catch (NoSuchFileException e) {
             System.err.printf("File '%s' does not exist%n", fileName);
             return;

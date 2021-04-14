@@ -81,7 +81,8 @@ die lexikographisch sortierte Reihenfolge der Suffixe des String $x$ ist \cite{a
 
 Ein Eintrag $SA[i]$ beschreibt also den Index in $x$, an dem das lexikographisch $i$-kleinste (bei $0$ anfangend) Suffix beginnt. $SA$ kann in Laufzeit $\mathcal{O}(n)$ berechnet werden \cite{nong_two_2011}. 
 
-Oftmals (etwa \cite{fischer_inducing_2011, nong_two_2011}) wird an $x$ noch ein weiteres Symbol $\$ \notin \Sigma$ angehängt, das lexikographisch kleiner als alle Zeichen in $x$ ist. Für den String $x\$ = x_0\dots x_{n-1} \$$ und das zugehörige Suffix-Array gilt dann: $SA[0] = n$ und $S_{SA[0]} = \$$. Dieses Suffix repräsentiert dann das leere Suffix.
+Oftmals wird an $x$ noch ein weiteres Symbol $\$ \notin \Sigma$ angehängt, das lexikographisch kleiner (etwa \cite{fischer_inducing_2011, nong_two_2011}) oder größer (etwa \cite{abouelhoda_optimal_2002}) als alle Zeichen in $x$ ist. Für den String $x\$ = x_0\dots x_{n-1} \$$ und das zugehörige Suffix-Array gilt dann: $SA[0] = n$ und $S_{SA[0]} = \$$ beziehungsweise $SA[n] = n$ und $S_{SA[n]} = \$$. 
+Dieses Suffix repräsentiert dann das leere Suffix. In dieser Arbeit wird $\$$ als lexikographisch \textit{größer} gewählt.
 
 \subsection{Inverses Suffix-Array}
 
@@ -172,6 +173,43 @@ Wieder bestimmen wir den Index $i$ bestimmt, in dem sich $x$ befindet. Ist der B
 
 Ist der Bucket aktiv, so bestimme den höchsten Index im Bucket vor oder bei $x \mod b$, dessen Bit $1$ ist. Gibt es solch ein Bit nicht, so ist der Vorgänger stattdessen das höchste $1$-Bit in dem vorhergehenden aktiven Bucket.
 
+\section{Maximale LCP-Intervalle}
+
+In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Maximale LCP-Intervalle bezeichnen um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
+
+\subsection{Maximale LCP-Intervalle}
+
+Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{maximales LCP-Intervall} mit LCP-Wert $l$, wenn gilt:
+
+\begin{enumerate}
+	\item $LCP[i] < l$
+	\item $LCP[k] \geq l$ für alle $k$ mit $i < k \leq j$
+	\item $LCP[k] = l$ für mindestens ein $k$ mit $i < k \leq j$
+	\item $LCP[j + 1] < l$
+\end{enumerate}
+
+Wir bezeichnen $[i..j]$ dann auch als $l$-Intervall oder als $l-[i..j]$. Zudem bezeichnen wir jeden Index $k$ mit $i < k \leq j$ und $LCP[k] = l$ als $l$-Index.
+
+\subsection{Eingebettete und umschließende maximale LCP-Intervalle}
+
+Ein $m$-Intervall $[a..b]$ heißt \textit{eingebettet} in ein $l$-Intervall $[i..j]$ mit $i \leq a < b \leq j$, falls $m > l$. $[i..j]$ heißt dann auch $[a..b]$ \textit{umschließendes} Intervall.
+
+Falls zusätzlich gilt, dass es kein anderes in $[i..j]$ eingebettetes Intervall gibt, das auch $[a..b]$ umschließt, dann heißt $[a..b]$ \textit{Kind-Intervall} von $[i..j]$.
+
+Die Kind-Intervalle von $[i..j]$ lassen sich durch die $l$-Indizes bestimmen. Seien $i_1 < i_2 < \dots < i_k$ die $l$-Indizes von $[i..j]$ in aufsteigender Reihenfolge, so sind die 
+Kind-Intervalle gerade $[i.. i_1 - 1], [i_1.. i_2 - 1], \dots [i_k..j]$.
+
+\subsection{Kind-Intervallbaum und Kind-Array}
+
+Mithilfe dieser Definitionen lassen sich die Beziehungen der Kind-Intervalle mit ihren jeweiligen Eltern-Intervallen als Baum beschreiben.
+Doch dieser Baum muss nicht explizit gespeichert weden. Hierbei kommt das Kind-Array zum Einsatz. Dieses ist ein $n + 1$ großes Array, dessen Einträge jeweils 3 Werte besitzen.
+
+Diese Einträge sind folgendermaßen definiert:
+
+\begin{align*}
+	up &:= \min\{q \in [0..i-1]\ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [q + 1..i - 1] : LCP[k] \geq LCP[q]\} 
+	down &:= 
+\end{align*}
 
 
 

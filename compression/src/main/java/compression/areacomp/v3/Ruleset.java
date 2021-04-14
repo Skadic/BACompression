@@ -90,7 +90,8 @@ class Ruleset implements ToUnifiedRuleset {
             var areaData = queue.remove();
 
             // The positions at which the pattern can be found
-            int[] positions = areaData.viablePositions;
+            int[] positions = Arrays.stream(augS.getSuffixArray(), areaData.low - 1, areaData.high + 1)
+                    .toArray();
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
@@ -103,7 +104,8 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-            //positions = nonOverlapping(positions, len);
+            positions = nonOverlapping(positions, len);
+
             Benchmark.startTimer(ALGORITHM_NAME, "in boundary");
             positions = inBoundary(positions, len);
             Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
@@ -123,6 +125,26 @@ class Ruleset implements ToUnifiedRuleset {
             Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
         }
         Benchmark.stopTimer(ALGORITHM_NAME, "total time");
+    }
+
+
+    /**
+     * Removes all overlapping occurences of a pattern from an array of positions
+     *
+     * @param positions     All occurences of the pattern
+     * @param patternLength The length of the pattern
+     * @return The occurences of the pattern with overlapping occurences removed
+     */
+    private static int[] nonOverlapping(int[] positions, int patternLength) {
+        final List<Integer> list = new ArrayList<>();
+        int last = Short.MIN_VALUE;
+        for (Integer i : positions) {
+            if (i - last >= patternLength) {
+                list.add(i);
+                last = i;
+            }
+        }
+        return list.stream().mapToInt(i -> i).toArray();
     }
 
     /**

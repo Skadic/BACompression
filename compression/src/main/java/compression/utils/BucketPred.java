@@ -17,6 +17,8 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
     private int size;
 
+    private final Map<Integer, T> values;
+
     @SuppressWarnings("unchecked")
     public BucketPred(int universeSize, int bucketSizeExponent) {
         this.bucketSize = (int) Math.pow(2, bucketSizeExponent);
@@ -24,6 +26,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
         int bucketCount = (int) Math.ceil(universeSize / (double) bucketSize);
         this.bucketsForward = (Bucket[]) Array.newInstance(Bucket.class, bucketCount);
         this.bucketsBackward = (Bucket[]) Array.newInstance(Bucket.class, bucketCount);
+        this.values = new HashMap<>((int) Math.sqrt(universeSize));
         this.bucketCache = new ArrayDeque<>();
         size = 0;
     }
@@ -41,24 +44,34 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     @Override
     public T get(Integer index) {
         checkIndex(index);
+        return getValue(index);
+    }
+
+    public boolean containsKey(Integer index) {
+        final int bucketIndex = bucketIndex(index);
+        return bucketIndexOccupied(bucketIndex) && bucketsForward[bucketIndex].isBitSet(indexInBucket(index));
+    }
+
+    private T getValue(int index) {
         int bucketIndex = bucketIndex(index);
         // If there is no bucket here, don't try getting a value from it, as it would be a pointer to a different bucket
         if(!bucketIndexOccupied(bucketIndex)) return null;
 
-        Bucket bucket = bucketsForward[bucketIndex];
-        return bucket != null ? bucket.get(indexInBucket(index)) : null;
-    }
-
-    public boolean containsKey(Integer index) {
-        return get(index) != null;
+        /*Bucket bucket = bucketsForward[bucketIndex];
+        return bucket != null ? bucket.get(indexInBucket(index)) : null;*/
+        return values.get(index);
     }
 
     private T insert(int bucketIndex, int indexInBucket, T value) {
-        return bucketsForward[bucketIndex].put(indexInBucket, value);
+        //return bucketsForward[bucketIndex].put(indexInBucket, value);
+        bucketsForward[bucketIndex].setBit(indexInBucket, true);
+        return values.put(bucketIndex * bucketSize + indexInBucket, value);
     }
 
     private T delete(int bucketIndex, int indexInBucket) {
-        return bucketsForward[bucketIndex].remove(indexInBucket);
+        //return bucketsForward[bucketIndex].remove(indexInBucket);
+        bucketsForward[bucketIndex].setBit(indexInBucket, false);
+        return values.remove(bucketIndex * bucketSize + indexInBucket);
     }
 
     @Override
@@ -221,7 +234,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     @SuppressWarnings("DuplicatedCode")
     @Override
     public Entry<Integer, T> floorEntry(Integer index) {
-        checkIndex(index);
+        //checkIndex(index);
         int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
 
@@ -422,27 +435,29 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
         private final BitSet bits;
         private int index;
-        private final Object[] data;
+        private Object[] data;
 
         public Bucket(int index, int bucketSize) {
             this.index = index;
             this.bits = new BitSet(bucketSize + 1);
-            this.data = new Object[bucketSize];
+            //this.data = new Object[bucketSize];
         }
 
 
         public T put(int localIndex, T value) {
-            final T temp = get(localIndex);
-            this.data[localIndex] = value;
+            //final T temp = get(localIndex);
+            //this.data[localIndex] = value;
             this.bits.set(localIndex);
-            return temp;
+            //return temp;
+            return null;
         }
 
         public T remove(int localIndex) {
-            final T temp = get(localIndex);
-            this.data[localIndex] = null;
+            //final T temp = get(localIndex);
+            //this.data[localIndex] = null;
             this.bits.clear(localIndex);
-            return temp;
+            //return temp;
+            return null;
         }
 
         @SuppressWarnings("unchecked")
@@ -452,6 +467,15 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
         public boolean isEmpty() {
             return bits.isEmpty();
+        }
+
+
+        public void setBit(int index, boolean value) {
+            bits.set(index, value);
+        }
+
+        public boolean isBitSet(int index) {
+            return bits.get(index);
         }
 
         public int nextSetBit(int from) {

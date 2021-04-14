@@ -37,6 +37,7 @@ public class AugmentedString implements CharSequence {
      */
     private final ChildTableEntry[] childTable;
 
+    //private final int[] childTab;
 
     /**
      * A static stack used for {@link #childUpDown(int[], ChildTableEntry[])} and {@link #childNextLIndex(int[], ChildTableEntry[])}
@@ -48,16 +49,19 @@ public class AugmentedString implements CharSequence {
      * Creates a new augmented string from the given String and generates the associated data
      * @param s The string to augment
      */
+    @SuppressWarnings("StringBufferReplaceableByString")
     public AugmentedString(CharSequence s) {
         // Workaround for AreaComp V1
         // Since Rules in V1 don't just return their symbols upon calling toString, here a StringBuilder is used,
         // which only uses the CharSequence interface and thus works correctly here.
+
         this.underlying = new StringBuilder(s).append(Character.MAX_VALUE).toString();
 
 
         final var suffixData = SuffixArrays.createWithLCP(underlying);
         this.suffixArray = suffixData.getSuffixArray();
-        this.inverseSuffixArray = inverseSuffixArray(suffixArray);
+        //this.inverseSuffixArray = inverseSuffixArray(suffixArray);
+        this.inverseSuffixArray = null;
         this.lcp = suffixData.getLCP();
         this.lcp[0] = 0;
         this.childTable = childTable(lcp);

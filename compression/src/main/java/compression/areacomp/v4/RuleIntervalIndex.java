@@ -17,7 +17,7 @@ class RuleIntervalIndex {
 
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new BucketPred<>(len, 10);
+        this.intervalMap = new BucketPred<>(len, 12);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
         List<RuleInterval> list = LIST_SUPPLIER.get();
@@ -122,7 +122,8 @@ class RuleIntervalIndex {
      */
     public RuleInterval deepestContainingInterval(int from, int to) {
         checkInterval(from, to);
-        List<RuleInterval> currentList = floorIntervalsModifiable(from);
+        // Should actually be floorIntervalsModifiable here
+        List<RuleInterval> currentList = intervalMap.floorEntry(from).value();
         final int currentIndex = currentList.size() - 1;
         RuleInterval current = currentList.get(currentIndex);
         while (current != null) {
@@ -143,7 +144,7 @@ class RuleIntervalIndex {
      * @return The deepest nested interval which contains the index
      */
     public RuleInterval deepestIntervalAt(int index) {
-        checkIndex(index);
+        //checkIndex(index);
         return deepestContainingInterval(index, index);
     }
 
@@ -164,8 +165,9 @@ class RuleIntervalIndex {
     }
 
     private List<RuleInterval> floorIntervalsModifiable(int index) {
-        checkIndex(index);
-        return intervalMap.floorEntry(index).value();
+        //checkIndex(index);
+        final var entry = intervalMap.floorEntry(index);
+        return entry.value();
     }
 
     public List<RuleInterval> floorIntervals(int index) {
@@ -212,7 +214,7 @@ class RuleIntervalIndex {
         /**
          * The id of the rule this interval is factorized by
          */
-        private int ruleId;
+        private final int ruleId;
 
         private RuleInterval parent;
 
@@ -221,12 +223,12 @@ class RuleIntervalIndex {
         /**
          * Inclusive start index of the interval
          */
-        private int start;
+        private final int start;
 
         /**
          * Inclusive end interval of the interval
          */
-        private int end;
+        private final int end;
 
         public RuleInterval(int ruleId, int start, int end, int depth) {
             this.start = start;
