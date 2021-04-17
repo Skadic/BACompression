@@ -1,5 +1,8 @@
 package compression.utils;
 
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
@@ -17,7 +20,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
     private int size;
 
-    private final Map<Integer, T> values;
+    private final Int2ObjectMap<T> values;
 
     @SuppressWarnings("unchecked")
     public BucketPred(int universeSize, int bucketSizeExponent) {
@@ -26,7 +29,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
         int bucketCount = (int) Math.ceil(universeSize / (double) bucketSize);
         this.bucketsForward = (Bucket[]) Array.newInstance(Bucket.class, bucketCount);
         this.bucketsBackward = (Bucket[]) Array.newInstance(Bucket.class, bucketCount);
-        this.values = new HashMap<>((int) Math.sqrt(universeSize));
+        this.values = new Int2ObjectOpenHashMap<>((int) Math.sqrt(universeSize));
         this.bucketCache = new ArrayDeque<>();
         size = 0;
     }

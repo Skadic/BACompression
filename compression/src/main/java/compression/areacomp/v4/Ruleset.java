@@ -9,6 +9,8 @@ import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.*;
 
@@ -151,28 +153,6 @@ class Ruleset implements ToUnifiedRuleset {
         }
     }
 
-
-    /**
-     * Removes all overlapping occurences of a pattern from an array of positions
-     *
-     * @param positions     All occurences of the pattern
-     * @param patternLength The length of the pattern
-     * @return The occurences of the pattern with overlapping occurences removed
-     */
-    private static int[] nonOverlapping(int[] positions, int patternLength) {
-        final List<Integer> list = new ArrayList<>();
-        int last = Short.MIN_VALUE;
-        for (int i : positions) {
-            if (i - last >= patternLength) {
-                list.add(i);
-                last = i;
-            }
-        }
-        return list.stream().mapToInt(i -> i).toArray();
-    }
-
-    //private static final List<Integer> IN_BOUNDARY_LIST = new ArrayList<>();
-
     /**
      * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
      * Also filters out overlapping occurrences.
@@ -198,6 +178,10 @@ class Ruleset implements ToUnifiedRuleset {
         return count;
     }
 
+    // Map from rule area start -> rule id -> occurrence count
+    IntSet DIFFERING_OCCURRENCES_SET = new IntOpenHashSet();
+
+
     /**
      * Determines, whether there are multiple Occurrences of the same pattern in distinct contexts regarding already existing rules
      * For example, the string "aaaaaa" and the grammar
@@ -215,11 +199,10 @@ class Ruleset implements ToUnifiedRuleset {
      */
     private boolean differingOccurences(int[] positions) {
         if(positions.length == 0) return false;
+        DIFFERING_OCCURRENCES_SET.clear();
 
         int firstRuleId = -1;
 
-        // Map from rule area start -> rule id -> occurrence count
-        var set = new HashSet<Integer>();
 
         // Count how often this pattern appears at specific indices inside the right side of a rule
         // E.g. if the String is "abacdabac" and only the Rule "R1 -> abac" exists so far (which implies the structure "R1 d R1")
@@ -234,14 +217,14 @@ class Ruleset implements ToUnifiedRuleset {
 
             if(firstRuleId == -1){
                 firstRuleId = ruleId;
-            } else if(ruleId != firstRuleId || set.contains(startIndex)) {
+            } else if(ruleId != firstRuleId || DIFFERING_OCCURRENCES_SET.contains(startIndex)) {
                 // This interval (or at least one that starts at the same index) already has an interval.
                 // This new one must be distinct from that other one. If it's the very same interval, that is obvious.
                 // If this is a different interval from before, it can't be the same rule id, since then it would have a later start id
                 // Therefore the occurrences must be distinct also
                 return true;
             }
-            set.add(startIndex);
+            DIFFERING_OCCURRENCES_SET.add(startIndex);
         }
 
 
