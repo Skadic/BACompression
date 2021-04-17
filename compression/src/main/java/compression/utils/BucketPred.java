@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
+public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
 
     private final Deque<Bucket> bucketCache;
@@ -42,12 +42,12 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public T get(Integer index) {
+    public T get(int index) {
         checkIndex(index);
         return getValue(index);
     }
 
-    public boolean containsKey(Integer index) {
+    public boolean containsKey(int index) {
         final int bucketIndex = bucketIndex(index);
         return bucketIndexOccupied(bucketIndex) && bucketsForward[bucketIndex].isBitSet(indexInBucket(index));
     }
@@ -75,7 +75,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public T put(Integer index, T value) {
+    public T put(int index, T value) {
         checkIndex(index);
         Objects.requireNonNull(value);
 
@@ -97,7 +97,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public T remove(Integer index) {
+    public T remove(int index) {
         checkIndex(index);
 
         final int bucketIndex = bucketIndex(index);
@@ -233,7 +233,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
     @SuppressWarnings("DuplicatedCode")
     @Override
-    public Entry<Integer, T> floorEntry(Integer index) {
+    public IntEntry<T> floorEntry(int index) {
         //checkIndex(index);
         int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
@@ -267,12 +267,12 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
         int valueIndex = containingBucketIndex + containingBucketLocalIndex;
         T value = get(valueIndex);
-        return new Entry<>(valueIndex, value);
+        return new IntEntry<>(valueIndex, value);
     }
 
     @SuppressWarnings("Duplicates")
     @Override
-    public Entry<Integer, T> ceilingEntry(Integer index) {
+    public IntEntry<T> ceilingEntry(int index) {
         checkIndex(index);
         int bucketIndex = bucketIndex(index);
         final int localIndex = indexInBucket(index);
@@ -306,7 +306,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
 
         int valueIndex = containingBucketIndex + containingBucketLocalIndex;
         T value = get(valueIndex);
-        return new Entry<>(valueIndex, value);
+        return new IntEntry<>(valueIndex, value);
     }
 
     /**
@@ -315,13 +315,13 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
      * @return The greatest value in the data structure whose key is lesser than to the given index
      */
     @Override
-    public Entry<Integer, T> lowerEntry(Integer index) {
+    public IntEntry<T> lowerEntry(int index) {
         checkIndex(index);
         return index > 0 ? floorEntry(index - 1) : null;
     }
 
     @Override
-    public Entry<Integer, T> higherEntry(Integer index) {
+    public IntEntry<T> higherEntry(int index) {
         checkIndex(index);
         return index > 0 ? ceilingEntry(index + 1) : null;
     }
@@ -333,7 +333,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public Collection<T> valueRange(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
+    public Collection<T> valueRange(int from, boolean fromInclusive, int to, boolean toInclusive) {
         List<T> list = new ArrayList<>((int) Math.sqrt(to - from + 1));
 
         valueRangeIterator(from, fromInclusive, to, toInclusive).forEachRemaining(list::add);
@@ -342,7 +342,7 @@ public class BucketPred<T> implements Predecessor<Integer, T>, Iterable<T> {
     }
 
     @Override
-    public Iterator<T> valueRangeIterator(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
+    public Iterator<T> valueRangeIterator(int from, boolean fromInclusive, int to, boolean toInclusive) {
         return new BucketPredIterator(from, fromInclusive, to, toInclusive);
     }
 

@@ -2,7 +2,7 @@ package compression.areacomp.v3;
 
 import compression.utils.Benchmark;
 import compression.utils.BucketPred;
-import compression.utils.Predecessor;
+import compression.utils.IntPredecessor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 
 class RuleIntervalIndex {
 
-    private final Predecessor<Integer, RuleInterval> intervalMap;
+    private final IntPredecessor<RuleInterval> intervalMap;
 
     private final int len;
 
@@ -195,7 +195,7 @@ class RuleIntervalIndex {
         return len;
     }
 
-    public Predecessor<Integer, RuleInterval> getIntervalMap() {
+    public IntPredecessor<RuleInterval> getIntervalMap() {
         return intervalMap;
     }
 

@@ -94,7 +94,7 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-            positions = nonOverlapping(positions, len);
+            //positions = nonOverlapping(positions, len);
 
             /*var multipleOccurrences = differingOccurences(positions);
 
@@ -103,8 +103,12 @@ class Ruleset implements ToUnifiedRuleset {
             }*/
 
             Benchmark.startTimer(ALGORITHM_NAME, "in boundary");
-            positions = inBoundary(positions, len);
-            Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
+            int positionCount = inBoundary(positions, len);
+            if (positionCount <= 1) {
+                Benchmark.stopTimer(ALGORITHM_NAME, "positions");
+                Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
+                continue;
+            }
 
             Benchmark.startTimer(ALGORITHM_NAME, "multiple occurrences");
             var multipleOccurrences = differingOccurences(positions);
@@ -112,7 +116,7 @@ class Ruleset implements ToUnifiedRuleset {
 
             Benchmark.stopTimer(ALGORITHM_NAME, "positions");
 
-            if(positions.length <= 1 || !multipleOccurrences) {
+            if(!multipleOccurrences) {
                 continue;
             }
 
@@ -139,6 +143,8 @@ class Ruleset implements ToUnifiedRuleset {
 
         // Iterate through the positions and substitute each occurrence.
         for (int position : positions) {
+            if(position == -1) continue;
+
             Benchmark.startTimer(ALGORITHM_NAME, "markRange");
             markRange(nextId, position, position + len - 1);
             Benchmark.stopTimer(ALGORITHM_NAME, "markRange");
@@ -156,13 +162,40 @@ class Ruleset implements ToUnifiedRuleset {
     private static int[] nonOverlapping(int[] positions, int patternLength) {
         final List<Integer> list = new ArrayList<>();
         int last = Short.MIN_VALUE;
-        for (Integer i : positions) {
+        for (int i : positions) {
             if (i - last >= patternLength) {
                 list.add(i);
                 last = i;
             }
         }
         return list.stream().mapToInt(i -> i).toArray();
+    }
+
+    //private static final List<Integer> IN_BOUNDARY_LIST = new ArrayList<>();
+
+    /**
+     * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
+     * Also filters out overlapping occurrences.
+     * @param positions The positions to filter
+     * @param len The length of the pattern
+     * @return The amount of valid positions
+     *
+     * @see #crossesBoundary(int, int)
+     */
+    private int inBoundary(int[] positions, int len) {
+        int count = 0;
+        int last = Short.MIN_VALUE;
+        for (int i = 0; i < positions.length; i++) {
+            int position = positions[i];
+            if (position - last >= len && !crossesBoundary(position, position + len - 1)) {
+                last = position;
+                count++;
+            } else {
+                positions[i] = -1;
+            }
+        }
+
+        return count;
     }
 
     /**
@@ -193,7 +226,9 @@ class Ruleset implements ToUnifiedRuleset {
         // then the pattern "c" appears twice in the string in rule 1 at index 3
         // The corresponding map entry would then be (1, (3, 2))
         for (var pos : positions) {
-            final var ruleInterval = intervalIndex.deepestIntervalAt(pos);
+            if(pos == -1) continue;
+
+            final var ruleInterval = intervalIndex.deepestContainingInterval(pos, pos);
             final var ruleId = ruleInterval.ruleId();
             final var startIndex = ruleInterval.start();
 
@@ -212,42 +247,6 @@ class Ruleset implements ToUnifiedRuleset {
 
         return false;
     }
-
-
-    private static final List<Integer> IN_BOUNDARY_LIST = new ArrayList<>();
-    /**
-     * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule range and end in another.
-     * @param positions The positions to filter
-     * @param len The length of the pattern
-     * @return All positions in the given array, that start and end in the same rule range
-     *
-     * @see #crossesBoundary(int, int)
-     */
-    private int[] inBoundary(int[] positions, int len) {
-        IN_BOUNDARY_LIST.clear();
-        for (int position : positions) {
-            if (!crossesBoundary(position, position + len - 1)) {
-                IN_BOUNDARY_LIST.add(position);
-            }
-        }
-
-        return IN_BOUNDARY_LIST.stream().mapToInt(i -> i).toArray();
-    }
-
-    /**
-     * Calculates the index at which the range of the deepest nested rule, occupying the given index, starts.
-     * @param index The index to check
-     * @return The first index of the rule range that index is part of
-     *
-     */
-    public int ruleIntervalStartIndex(int index) {
-        Benchmark.startTimer(ALGORITHM_NAME, "ruleIntervalStartIndex");
-        int current = intervalIndex.intervalStartIndex(index);
-        Benchmark.stopTimer(ALGORITHM_NAME, "ruleIntervalStartIndex");
-
-        return current;
-    }
-
 
     /**
      * Marks an area as being part of the rule with the given id
@@ -269,7 +268,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public boolean crossesBoundary(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
-        RuleInterval fromInterval = intervalIndex.deepestIntervalAt(from);
+        RuleInterval fromInterval = intervalIndex.deepestContainingInterval(from, from);
 
         if (from == fromInterval.start()){
             while (from == fromInterval.start() && to > fromInterval.end()){
@@ -281,7 +280,7 @@ class Ruleset implements ToUnifiedRuleset {
             return true;
         }
 
-        RuleInterval toInterval = intervalIndex.deepestIntervalAt(to);
+        RuleInterval toInterval = intervalIndex.deepestContainingInterval(to, to);
 
         boolean b = !fromInterval.equals(toInterval);
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class XFastTrie<T> implements Predecessor<Integer, T> {
+public class XFastTrie<T> implements IntPredecessor<T> {
 
     private final Map<Integer, Node>[] lss;
     private int size;
@@ -26,7 +26,7 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
     }
 
     @Override
-    public T put(Integer key, T value) {
+    public T put(int key, T value) {
         Benchmark.startTimer(XFastTrie.class.getSimpleName(), "put");
         var prevContent = lss[0].get(key);
         if(prevContent != null) {
@@ -148,7 +148,7 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
     }
 
     @Override
-    public T remove(Integer key) {
+    public T remove(int key) {
         Benchmark.startTimer(XFastTrie.class.getSimpleName(), "remove");
         final var removed = lss[0].get(key);
 
@@ -209,41 +209,39 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
 
 
     @Override
-    public T get(Integer key) {
+    public T get(int key) {
         return getOrDefault(key, null);
     }
 
     @Override
-    public T getOrDefault(Integer key, T def) {
+    public T getOrDefault(int key, T def) {
         var node = lss[0].get(key);
         return node != null ? node.content : def;
     }
 
     @Override
-    public Entry<Integer, T> floorEntry(Integer key) {
+    public IntEntry<T> floorEntry(int key) {
         var node = floorNode(key);
-        return node != null ? new Entry<>(node.key, node.content) : null;
+        return node != null ? new IntEntry<>(node.key, node.content) : null;
     }
 
     @Override
-    public Entry<Integer, T> ceilingEntry(Integer key) {
+    public IntEntry<T> ceilingEntry(int key) {
         var node = ceilingNode(key);
-        return node != null ? new Entry<>(node.key, node.content) : null;
+        return node != null ? new IntEntry<>(node.key, node.content) : null;
     }
 
     @Override
-    public Entry<Integer, T> lowerEntry(Integer key) {
+    public IntEntry<T> lowerEntry(int key) {
         var node = floorNode(key - 1);
-        return node != null ? new Entry<>(node.key, node.content) : null;
+        return node != null ? new IntEntry<>(node.key, node.content) : null;
     }
 
     @Override
-    public Entry<Integer, T> higherEntry(Integer key) {
+    public IntEntry<T> higherEntry(int key) {
         var node = ceilingNode(key + 1);
-        return node != null ? new Entry<>(node.key, node.content) : null;
+        return node != null ? new IntEntry<>(node.key, node.content) : null;
     }
-
-
 
     private Node searchLowestAncestor(int key) {
         Benchmark.startTimer(XFastTrie.class.getSimpleName(), "lowest ancestor");
@@ -340,7 +338,8 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
         return list;
     }
 
-    public Collection<T> valueRange(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
+    @Override
+    public Collection<T> valueRange(int from, boolean fromInclusive, int to, boolean toInclusive) {
         if(root() == null) return List.of();
         List<T> list = new ArrayList<>(lss[0].size());
 
@@ -359,7 +358,7 @@ public class XFastTrie<T> implements Predecessor<Integer, T> {
     }
 
     @Override
-    public Iterator<T> valueRangeIterator(Integer from, boolean fromInclusive, Integer to, boolean toInclusive) {
+    public Iterator<T> valueRangeIterator(int from, boolean fromInclusive, int to, boolean toInclusive) {
         return new Iterator<>() {
             Node current = fromInclusive ? ceilingNode(from) : ceilingNode(from + 1);
 

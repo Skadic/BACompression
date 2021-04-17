@@ -1,7 +1,7 @@
 package compression.areacomp.v4;
 
 import compression.utils.BucketPred;
-import compression.utils.Predecessor;
+import compression.utils.IntPredecessor;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -11,7 +11,7 @@ class RuleIntervalIndex {
 
     private static final Supplier<List<RuleInterval>> LIST_SUPPLIER = ArrayList::new;
 
-    private final Predecessor<Integer, List<RuleInterval>> intervalMap;
+    private final IntPredecessor<List<RuleInterval>> intervalMap;
 
     private final int len;
 
@@ -45,12 +45,15 @@ class RuleIntervalIndex {
         // This interval is 1 deeper than its parent
         int intervalDepth = parent.depth + 1;
         var interval = new RuleInterval(ruleId, start, end, intervalDepth);
-        interval.setParent(parent);
+
 
         // The index at which the new interval should go in the list
         int depthIndex = findDepthIndex(list, intervalDepth);
 
         list.add(depthIndex, interval);
+
+        interval.setParent(parent);
+        interval.setFirstAtStartIndex(list.get(0));
 
         // Start at the index after the newly added interval
         depthIndex++;
@@ -99,7 +102,7 @@ class RuleIntervalIndex {
      */
     public int deepestRuleIdAt(int index) {
         checkIndex(index);
-        RuleInterval ruleInterval = deepestIntervalAt(index);
+        RuleInterval ruleInterval = deepestContainingInterval(index, index);
         return ruleInterval != null ? ruleInterval.ruleId : -1;
     }
 
@@ -110,7 +113,7 @@ class RuleIntervalIndex {
      */
     public int intervalStartIndex(int index) {
         checkIndex(index);
-        RuleInterval ruleInterval = deepestIntervalAt(index);
+        RuleInterval ruleInterval = deepestContainingInterval(index, index);
         return ruleInterval != null ? ruleInterval.start : -1;
     }
 
@@ -124,17 +127,26 @@ class RuleIntervalIndex {
         checkInterval(from, to);
         // Should actually be floorIntervalsModifiable here
         List<RuleInterval> currentList = intervalMap.floorEntry(from).value();
-        final int currentIndex = currentList.size() - 1;
-        RuleInterval current = currentList.get(currentIndex);
+        RuleInterval current = currentList.get(currentList.size() - 1);
+        //int i = 0;
         while (current != null) {
             // If an interval that contains index has been found, return
             if(to <= current.end) {
+                //if(i >= 20) System.out.println("Iterations: " + i);
                 return current;
             }
 
-            current = current.parent();
+            if(to <= current.firstAtStartIndex().end()) {
+                current = current.parent();
+            } else {
+                current = current.firstAtStartIndex();
+                if(current.hasParent()) {
+                    current = current.parent();
+                }
+            }
+            //i++;
         }
-
+        //if(i >= 20) System.out.println("Iterations: " + i);
         return null;
     }
 
@@ -216,8 +228,19 @@ class RuleIntervalIndex {
          */
         private final int ruleId;
 
+        /**
+         * The Interval in which this one is nested in
+         */
         private RuleInterval parent;
 
+        /**
+         * The least nested rule that also starts at this index
+         */
+        private RuleInterval firstAtStartIndex;
+
+        /**
+         * The nesting depth of this interval
+         */
         private int depth;
 
         /**
@@ -236,6 +259,7 @@ class RuleIntervalIndex {
             this.ruleId = ruleId;
             this.depth = depth;
             this.parent = null;
+            this.firstAtStartIndex = null;
         }
 
         public int ruleId() {
@@ -255,10 +279,17 @@ class RuleIntervalIndex {
         }
 
 
+        public void setFirstAtStartIndex(RuleInterval firstAtStartIndex) {
+            this.firstAtStartIndex = firstAtStartIndex;
+        }
+
+        public RuleInterval firstAtStartIndex() {
+            return this.firstAtStartIndex;
+        }
+
         public boolean hasParent() {
             return parent != null;
         }
-
 
         public void setParent(RuleInterval parent) {
             this.parent = parent;

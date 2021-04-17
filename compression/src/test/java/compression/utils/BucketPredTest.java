@@ -33,22 +33,22 @@ public class BucketPredTest {
     @Test
     void testFloor() {
         Assertions.assertNull(pred.floorEntry(0));
-        Assertions.assertEquals(new Predecessor.Entry<>(1, "Go"), pred.floorEntry(1), "when passing 1");
-        Assertions.assertEquals(new Predecessor.Entry<>(1, "Go"), pred.floorEntry(2), "when passing 2");
-        Assertions.assertEquals(new Predecessor.Entry<>(3, "Yey"), pred.floorEntry(3), "when passing 3");
-        Assertions.assertEquals(new Predecessor.Entry<>(3, "Yey"), pred.floorEntry(4), "when passing 4");
-        Assertions.assertEquals(new Predecessor.Entry<>(25, "nice"), pred.floorEntry(100), "when passing 100");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(1, "Go"), pred.floorEntry(1), "when passing 1");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(1, "Go"), pred.floorEntry(2), "when passing 2");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(3, "Yey"), pred.floorEntry(3), "when passing 3");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(3, "Yey"), pred.floorEntry(4), "when passing 4");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(25, "nice"), pred.floorEntry(100), "when passing 100");
     }
 
     @Test
     void testCeil() {
         Assertions.assertNull(pred.floorEntry(0));
-        Assertions.assertEquals(new XFastTrie.Entry<>(1, "Go"), pred.ceilingEntry(1), "when passing 1");
-        Assertions.assertEquals(new XFastTrie.Entry<>(3, "Yey"), pred.ceilingEntry(2), "when passing 2");
-        Assertions.assertEquals(new XFastTrie.Entry<>(3, "Yey"), pred.ceilingEntry(3), "when passing 3");
-        Assertions.assertEquals(new XFastTrie.Entry<>(5, "Hi"), pred.ceilingEntry(4), "when passing 4");
-        Assertions.assertEquals(new XFastTrie.Entry<>(25, "nice"), pred.ceilingEntry(6), "when passing 6");
-        Assertions.assertEquals(new XFastTrie.Entry<>(25, "nice"), pred.ceilingEntry(25), "when passing 25");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(1, "Go"), pred.ceilingEntry(1), "when passing 1");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(3, "Yey"), pred.ceilingEntry(2), "when passing 2");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(3, "Yey"), pred.ceilingEntry(3), "when passing 3");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(5, "Hi"), pred.ceilingEntry(4), "when passing 4");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(25, "nice"), pred.ceilingEntry(6), "when passing 6");
+        Assertions.assertEquals(new IntPredecessor.IntEntry<>(25, "nice"), pred.ceilingEntry(25), "when passing 25");
         Assertions.assertNull(pred.ceilingEntry(26), "when passing 26");
     }
 
