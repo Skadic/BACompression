@@ -1,13 +1,10 @@
-import compression.areacomp.AreaFunction;
 import compression.areacomp.areas.LengthFirstArea;
-import compression.areacomp.areas.NaiveArea;
 import compression.areacomp.v4.AreaCompV4;
 import compression.unified.interfaces.UnifiedCompressor;
 import compression.utils.Benchmark;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -21,8 +18,6 @@ public class Main {
             System.out.println("Please specify an input file");
             return;
         }
-
-        final AreaFunction area = new NaiveArea();
 
         final List<UnifiedCompressor> compressors = List.of(
                 //new Sequitur(),
@@ -41,15 +36,15 @@ public class Main {
 
         final String input;
         try {
-             input = Files.readString(inputPath, StandardCharsets.ISO_8859_1);
+             input = Files.readString(inputPath);
         } catch (NoSuchFileException e) {
-            System.err.printf("File '%s' does not exist%n", fileName);
+            System.err.printf("File '%s' does not exist%n. Please make sure the input file is an a directory called \"input\".\n The input path should be relative to that directory", fileName);
             return;
         }
 
         if(!Files.exists(outputPath.getParent())) {
             Files.createDirectories(outputPath.getParent());
-        };
+        }
 
         try (PrintStream out = new PrintStream(Files.newOutputStream(outputPath))) {
             out.println("On a test string of " + input.length() + " characters.\n");

@@ -58,7 +58,7 @@ public interface AreaFunction {
 
         @Override
         public String toString() {
-            return "Area[[%d, %d], area: %d, len: %d]".formatted(low, high, area, len);
+            return String.format("Area[[%d, %d], area: %d, len: %d]", low, high, area, len);
         }
     }
 }

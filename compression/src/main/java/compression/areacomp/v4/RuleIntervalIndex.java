@@ -9,12 +9,24 @@ import java.util.stream.Collectors;
 
 class RuleIntervalIndex {
 
+    /**
+     * A function that creates a new {@link List} to contain the {@link RuleInterval}s
+     */
     private static final Supplier<List<RuleInterval>> LIST_SUPPLIER = ArrayList::new;
 
+    /**
+     * The Predecessor structure, which contains all intervals that are substituted by some production rule, starting at a given index
+     * This maps from the start index of an interval, to a list of all intervals which start at that point in order of their nesting depth
+     */
     private final IntPredecessor<List<RuleInterval>> intervalMap;
 
     private final int len;
 
+    /**
+     * Creates a new index structure
+     * @param topLevelRuleId The id of the top-level rule
+     * @param len The length of the input text
+     */
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
         this.intervalMap = new BucketPred<>(len, 12);
@@ -46,24 +58,33 @@ class RuleIntervalIndex {
         int intervalDepth = parent.depth + 1;
         var interval = new RuleInterval(ruleId, start, end, intervalDepth);
 
+        // Add the new interval into its appropriate place in the list according to its depth
+        for(ListIterator<RuleInterval> it = list.listIterator(list.size()); it.hasPrevious();) {
+            RuleInterval current = it.previous();
+            if(current.depth > interval.depth) {
+                // This interval is deeper than our new one. Its depth increases by 1 once the new interval is inserted
+                current.depth++;
+            } else if(current.depth == interval.depth){
+                // This interval is in the place that our new interval should be. It is now 1 deeper than before since the new
+                // interval took its place
+                current.depth++;
+                it.add(interval);
+                break;
+            } else {
+                // This happens if the new interval is the deepest interval in the list. It should be added to the end of the list
+                it.next();
+                it.add(interval);
+                break;
+            }
+        }
 
-        // The index at which the new interval should go in the list
-        int depthIndex = findDepthIndex(list, intervalDepth);
-
-        list.add(depthIndex, interval);
+        // If the list is empty, the for-loop is not entered, so insert it manually
+        if(list.isEmpty()) {
+            list.add(interval);
+        }
 
         interval.setParent(parent);
         interval.setFirstAtStartIndex(list.get(0));
-
-        // Start at the index after the newly added interval
-        depthIndex++;
-        if(depthIndex < list.size()) {
-            list.get(depthIndex).setParent(interval);
-        }
-        for(; depthIndex < list.size(); depthIndex++) {
-            list.get(depthIndex).depth++;
-        }
-
     }
 
     /**
@@ -126,7 +147,7 @@ class RuleIntervalIndex {
     public RuleInterval deepestContainingInterval(int from, int to) {
         checkInterval(from, to);
         // Should actually be floorIntervalsModifiable here
-        List<RuleInterval> currentList = intervalMap.floorEntry(from).value();
+        List<RuleInterval> currentList = floorIntervalsModifiable(from);
         RuleInterval current = currentList.get(currentList.size() - 1);
         //int i = 0;
         while (current != null) {
