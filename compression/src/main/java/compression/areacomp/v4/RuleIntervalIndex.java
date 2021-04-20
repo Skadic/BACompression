@@ -1,24 +1,21 @@
 package compression.areacomp.v4;
 
 import compression.utils.BucketPred;
-import compression.utils.IntPredecessor;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 class RuleIntervalIndex {
 
     /**
-     * A function that creates a new {@link List} to contain the {@link RuleInterval}s
-     */
-    private static final Supplier<List<RuleInterval>> LIST_SUPPLIER = ArrayList::new;
-
-    /**
      * The Predecessor structure, which contains all intervals that are substituted by some production rule, starting at a given index
-     * This maps from the start index of an interval, to a list of all intervals which start at that point in order of their nesting depth
+     * This maps from the start index of an interval, to the deepest nested {@link RuleInterval} at the index.
+     * The less deeply nested Intervals can be accessed using {@link RuleInterval#parent()}.
      */
-    private final IntPredecessor<List<RuleInterval>> intervalMap;
+    private final BucketPred<RuleInterval> intervalMap;
 
     private final int len;
 
@@ -32,9 +29,7 @@ class RuleIntervalIndex {
         this.intervalMap = new BucketPred<>(len, 12);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
-        List<RuleInterval> list = LIST_SUPPLIER.get();
-        list.add(new RuleInterval(topLevelRuleId, 0, len - 1, 0));
-        intervalMap.put(topLevelRuleId, list);
+        intervalMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1, 0));
     }
 
     /**
@@ -45,75 +40,41 @@ class RuleIntervalIndex {
      */
     public void mark(int ruleId, int start, int end) {
         checkInterval(start, end);
+        RuleInterval current = deepestNestedIntervalAtStartIndex(start);
+        var interval = new RuleInterval(ruleId, start, end, -1);
 
-        var parent = deepestContainingInterval(start, end);
-        var list = intervalsAtStartIndexModifiable(start);
-
-        if(list == null) {
-            list = LIST_SUPPLIER.get();
-            intervalMap.put(start, list);
+        // If there was no interval at that index before
+        if(current == null) {
+            var parent = deepestIntervalContaining(start, end);
+            interval.depth = parent.depth + 1;
+            interval.insertParent(parent);
+            interval.setFirstAtStartIndex(interval);
+            intervalMap.put(start, interval);
+            return;
         }
 
-        // This interval is 1 deeper than its parent
-        int intervalDepth = parent.depth + 1;
-        var interval = new RuleInterval(ruleId, start, end, intervalDepth);
-
+        // If this new interval is the new deepest nested interval
         // Add the new interval into its appropriate place in the list according to its depth
-        for(ListIterator<RuleInterval> it = list.listIterator(list.size()); it.hasPrevious();) {
-            RuleInterval current = it.previous();
-            if(current.depth > interval.depth) {
-                // This interval is deeper than our new one. Its depth increases by 1 once the new interval is inserted
-                current.depth++;
-            } else if(current.depth == interval.depth){
-                // This interval is in the place that our new interval should be. It is now 1 deeper than before since the new
-                // interval took its place
-                current.depth++;
-                it.add(interval);
-                break;
-            } else {
-                // This happens if the new interval is the deepest interval in the list. It should be added to the end of the list
-                it.next();
-                it.add(interval);
+        if(current.contains(interval)) {
+            interval.insertParent(current);
+            interval.depth = current.depth + 1;
+            interval.setFirstAtStartIndex(current.firstAtStartIndex());
+            // Since current is now the new deepest interval, it replaces the previous deepest interval
+            intervalMap.put(start, interval);
+            return;
+        }
+
+        for(; true; current = current.parent()) {
+            current.depth++;
+
+            // If there are no more less-deeply nested intervals at this start index, break
+            if(!current.hasParent() || current.parent().start() != start || interval.parent().contains(interval)) {
                 break;
             }
         }
 
-        // If the list is empty, the for-loop is not entered, so insert it manually
-        if(list.isEmpty()) {
-            list.add(interval);
-        }
-
-        interval.setParent(parent);
-        interval.setFirstAtStartIndex(list.get(0));
-    }
-
-    /**
-     * Find the index at which an interval with the given depth must fit in this list.
-     * Since the list contains depth values in ascending order, this is just a binary search.
-     *
-     * @param intervals The list of rule intervals in which to search for the correct place
-     * @param depth The depth of a new interval that is to be inserted into the list
-     * @return The index at which the new interval should be inserted
-     */
-    private static int findDepthIndex(List<RuleInterval> intervals, int depth) {
-        if(intervals.isEmpty() || intervals.get(intervals.size() - 1).depth < depth) return intervals.size();
-
-        int lo = 0;
-        int hi = intervals.size() - 1;
-
-        while(lo <= hi) {
-            final int mid = (lo + hi) / 2;
-            final int midDepth = intervals.get(mid).depth;
-            if(midDepth == depth) {
-                return mid;
-            } else if (depth < midDepth) {
-                hi = mid;
-            } else {
-                lo = mid;
-            }
-        }
-
-        return -1;
+        current.insertParent(interval);
+        interval.setFirstAtStartIndex(current.hasParent() ? current.parent().firstAtStartIndex() : interval);
     }
 
     /**
@@ -123,7 +84,7 @@ class RuleIntervalIndex {
      */
     public int deepestRuleIdAt(int index) {
         checkIndex(index);
-        RuleInterval ruleInterval = deepestContainingInterval(index, index);
+        RuleInterval ruleInterval = deepestIntervalContaining(index, index);
         return ruleInterval != null ? ruleInterval.ruleId : -1;
     }
 
@@ -134,7 +95,7 @@ class RuleIntervalIndex {
      */
     public int intervalStartIndex(int index) {
         checkIndex(index);
-        RuleInterval ruleInterval = deepestContainingInterval(index, index);
+        RuleInterval ruleInterval = deepestIntervalContaining(index, index);
         return ruleInterval != null ? ruleInterval.start : -1;
     }
 
@@ -144,11 +105,9 @@ class RuleIntervalIndex {
      * @param to The inclusive end index of the interval to check for
      * @return Return the deepest nested interval that contains the interval [from, to] if there is such an interval. null otherwise
      */
-    public RuleInterval deepestContainingInterval(int from, int to) {
+    public RuleInterval deepestIntervalContaining(int from, int to) {
         checkInterval(from, to);
-        // Should actually be floorIntervalsModifiable here
-        List<RuleInterval> currentList = floorIntervalsModifiable(from);
-        RuleInterval current = currentList.get(currentList.size() - 1);
+        RuleInterval current = deepestFloorInterval(from);
         //int i = 0;
         while (current != null) {
             // If an interval that contains index has been found, return
@@ -176,36 +135,31 @@ class RuleIntervalIndex {
      * @param index The index to search for
      * @return The deepest nested interval which contains the index
      */
-    public RuleInterval deepestIntervalAt(int index) {
+    public RuleInterval deepestIntervalContainingIndex(int index) {
         //checkIndex(index);
-        return deepestContainingInterval(index, index);
+        return deepestIntervalContaining(index, index);
     }
 
 
-    private List<RuleInterval> intervalsAtStartIndexModifiable(int index) {
+    /**
+     * Gets the most deeply nested interval that starts at this index
+     * @param index The index to search for
+     * @return
+     */
+    public RuleInterval deepestNestedIntervalAtStartIndex(int index) {
         checkIndex(index);
         return intervalMap.get(index);
     }
 
     /**
-     * Get the unmodifiable list of intervals that start at the given index.
-     * @param index The start index of the intervals to search for
-     * @return The unmodifiable list of intervals that start at the given index if there are any. null otherwise
+     * Returns the deepest nested interval at the greatest index smaller or equal to the given index
+     * @param index
+     * @return
      */
-    public List<RuleInterval> intervalsAtStartIndex(int index) {
-        List<RuleInterval> list = intervalsAtStartIndexModifiable(index);
-        return list != null ? Collections.unmodifiableList(list) : Collections.emptyList();
-    }
-
-    private List<RuleInterval> floorIntervalsModifiable(int index) {
+    private RuleInterval deepestFloorInterval(int index) {
         //checkIndex(index);
         final var entry = intervalMap.floorEntry(index);
         return entry.value();
-    }
-
-    public List<RuleInterval> floorIntervals(int index) {
-        List<RuleInterval> list = floorIntervalsModifiable(index);
-        return list != null ? Collections.unmodifiableList(list) : Collections.emptyList();
     }
 
     public int length() {
@@ -215,9 +169,9 @@ class RuleIntervalIndex {
     @Override
     public String toString() {
         return intervalMap.values().stream()
-                .map(list -> {
-                    final var sj = new StringJoiner(", ", "%d: [".formatted(list.get(0).start), "]");
-                    list.forEach(interval -> sj.add("%d: %d".formatted(interval.ruleId, interval.end)));
+                .map(deepestInterval -> {
+                    final var sj = new StringJoiner(", ", "%d: [".formatted(deepestInterval.start()), "]");
+                    deepestInterval.forEach(interval -> sj.add("%d: %d".formatted(interval.ruleId, interval.end)));
                     return sj.toString();
                 })
                 .collect(Collectors.joining(", "));
@@ -242,7 +196,7 @@ class RuleIntervalIndex {
         }
     }
 
-    static class RuleInterval  {
+    static class RuleInterval implements Iterable<RuleInterval> {
 
         /**
          * The id of the rule this interval is factorized by
@@ -299,6 +253,12 @@ class RuleIntervalIndex {
             return end - start;
         }
 
+        public void insertParent(RuleInterval newParent) {
+            if(hasParent()) {
+                newParent.parent = this.parent;
+            }
+            this.parent = newParent;
+        }
 
         public void setFirstAtStartIndex(RuleInterval firstAtStartIndex) {
             this.firstAtStartIndex = firstAtStartIndex;
@@ -316,6 +276,12 @@ class RuleIntervalIndex {
             this.parent = parent;
         }
 
+        /**
+         * Retrieves this interval's parent Interval
+         * @return The parent interval, or null if there is no parent
+         *
+         * @see #parent
+         */
         public RuleInterval parent() {
             return parent;
         }
@@ -323,6 +289,37 @@ class RuleIntervalIndex {
         @Override
         public String toString() {
             return new StringJoiner(", ", "(", ")").add("R" + ruleId).add(String.valueOf(start)).add(String.valueOf(end)).add(String.valueOf(depth)).toString();
+        }
+
+        /**
+         * Returns true, if the other Interval is contained in the bounds of this one
+         * @return true, if the other Interval is contained in the bounds of this one, false if other is null or the other interval is not contained in this one
+         */
+        public boolean contains(RuleInterval other) {
+            if(other == null) return false;
+            return this.start <= other.start && other.end <= this.end;
+        }
+
+        @Override
+        public Iterator<RuleInterval> iterator() {
+            return new Iterator<>() {
+                RuleInterval current = RuleInterval.this;
+                final int start = RuleInterval.this.start;
+
+                @Override
+                public boolean hasNext() {
+                    return current != null && current.start == start;
+                }
+
+                @Override
+                public RuleInterval next() {
+                    if(!hasNext()) throw new NoSuchElementException();
+
+                    final var temp = current;
+                    current = current.parent();
+                    return temp;
+                }
+            };
         }
 
         @Override

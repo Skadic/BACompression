@@ -17,6 +17,8 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("Duplicates")
 class Ruleset implements ToUnifiedRuleset {
@@ -215,7 +217,7 @@ class Ruleset implements ToUnifiedRuleset {
         for (var pos : positions) {
             if(pos == -1) continue;
 
-            final var ruleInterval = intervalIndex.deepestContainingInterval(pos, pos);
+            final var ruleInterval = intervalIndex.deepestIntervalContaining(pos, pos);
             final var ruleId = ruleInterval.ruleId();
             final var startIndex = ruleInterval.start();
 
@@ -255,7 +257,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public boolean crossesBoundary(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
-        RuleInterval fromInterval = intervalIndex.deepestContainingInterval(from, from);
+        RuleInterval fromInterval = intervalIndex.deepestIntervalContaining(from, from);
 
         if (from == fromInterval.start()){
             while (from == fromInterval.start() && to > fromInterval.end()){
@@ -267,7 +269,7 @@ class Ruleset implements ToUnifiedRuleset {
             return true;
         }
 
-        RuleInterval toInterval = intervalIndex.deepestContainingInterval(to, to);
+        RuleInterval toInterval = intervalIndex.deepestIntervalContaining(to, to);
 
         boolean b = !fromInterval.equals(toInterval);
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
@@ -309,9 +311,18 @@ class Ruleset implements ToUnifiedRuleset {
 
             // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
 
-            for (RuleInterval interval : intervalIndex.intervalsAtStartIndex(i)) {
-                nestingStack.push(interval);
-                symbolStack.push(new ArrayList<>());
+
+            final RuleInterval deepestInterval = intervalIndex.deepestNestedIntervalAtStartIndex(i);
+
+            if(deepestInterval != null) {
+                List<RuleInterval> intervals = StreamSupport.stream(deepestInterval.spliterator(), false)
+                        .collect(Collectors.toList());
+
+                for (ListIterator<RuleInterval> it = intervals.listIterator(intervals.size()); it.hasPrevious(); ) {
+                    RuleInterval interval = it.previous();
+                    nestingStack.push(interval);
+                    symbolStack.push(new ArrayList<>());
+                }
             }
 
 
