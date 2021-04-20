@@ -16,6 +16,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
     private final Bucket[] bucketsBackward;
 
     private final int bucketSize;
+    private final int bucketSizeExponent;
     private final int universeSize;
 
     private int size;
@@ -24,6 +25,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
     @SuppressWarnings("unchecked")
     public BucketPred(int universeSize, int bucketSizeExponent) {
+        this.bucketSizeExponent = bucketSizeExponent;
         this.bucketSize = (int) Math.pow(2, bucketSizeExponent);
         this.universeSize = universeSize;
         int bucketCount = (int) Math.ceil(universeSize / (double) bucketSize);
@@ -193,7 +195,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
      * @return The index of the bucket in {@link #bucketsForward} and {@link #bucketsBackward} which contain the given index
      */
     private int bucketIndex(int index) {
-        return index / bucketSize;
+        return index >> bucketSizeExponent;
     }
 
     /**
@@ -202,7 +204,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
      * @return The local index in the bucket which contains the given index
      */
     private int indexInBucket(int index) {
-        return index % bucketSize;
+        return index & (bucketSize - 1);
     }
 
     /**

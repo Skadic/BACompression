@@ -9,6 +9,10 @@ import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
 import compression.utils.AugmentedString;
 import compression.utils.Benchmark;
+import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
+import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
@@ -286,6 +290,9 @@ class Ruleset implements ToUnifiedRuleset {
         Deque<List<UnifiedSymbol>> symbolStack = new ArrayDeque<>();
         UnifiedRuleset ruleset = new UnifiedRuleset();
 
+        Int2ObjectMap<UnifiedNonTerminal> nonTerminals = new Int2ObjectOpenHashMap<>();
+        Char2ObjectMap<UnifiedTerminal> terminals = new Char2ObjectOpenHashMap<>();
+
         final var chars = underlying.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             // If the index moved past the current rule interval, remove all intervals which ended and add the resulting rules
@@ -296,7 +303,7 @@ class Ruleset implements ToUnifiedRuleset {
                 ruleset.putRule(id, symbols);
 
                 if(!symbolStack.isEmpty()) {
-                    symbolStack.peek().add(new UnifiedNonTerminal(id));
+                    symbolStack.peek().add(nonTerminals.computeIfAbsent(id, UnifiedNonTerminal::new));
                 }
             }
 
@@ -310,7 +317,7 @@ class Ruleset implements ToUnifiedRuleset {
 
             // Add the current char to the most deeply nested rule's stack
             char c = chars[i];
-            symbolStack.peek().add(new UnifiedTerminal(c));
+            symbolStack.peek().add(terminals.computeIfAbsent(c, _c -> new UnifiedTerminal(c)));
         }
 
         while (!nestingStack.isEmpty()){
