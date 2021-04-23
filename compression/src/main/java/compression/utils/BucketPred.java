@@ -3,12 +3,32 @@ package compression.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
+
+    private static PrintStream DBG_OUT;
+    static {
+        try {
+            Path path = Path.of("debug", "BucketPred", "log.txt");
+            if(!Files.exists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
+
+            DBG_OUT = new PrintStream(Files.newOutputStream(path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     private final Deque<Bucket> bucketCache;
@@ -79,8 +99,13 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
         return values.remove(bucketIndex * bucketSize + indexInBucket);
     }
 
+    int counter = 0;
     @Override
     public T put(int index, T value) {
+        if(++counter % 25000 == 0) {
+            DBG_OUT.println(getState());
+            counter = 0;
+        }
         checkIndex(index);
         Objects.requireNonNull(value);
 
@@ -100,6 +125,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
         return null;
     }
+
 
     @Override
     public T remove(int index) {
@@ -438,57 +464,113 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
     private class Bucket {
 
-        private final BitSet bits;
         private int index;
-        private Object[] data;
+
+        private BitSet bits;
+        private IntList bitList;
+        private final int cutoff = (int) Math.ceil(BucketPred.this.bucketSize / 32D);
 
         public Bucket(int index, int bucketSize) {
             this.index = index;
             this.bits = new BitSet(bucketSize + 1);
-            //this.data = new Object[bucketSize];
         }
 
-
-        public T put(int localIndex, T value) {
-            //final T temp = get(localIndex);
-            //this.data[localIndex] = value;
-            this.bits.set(localIndex);
-            //return temp;
-            return null;
-        }
-
-        public T remove(int localIndex) {
-            //final T temp = get(localIndex);
-            //this.data[localIndex] = null;
-            this.bits.clear(localIndex);
-            //return temp;
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        public T get(int localIndex) {
-            return (T) data[localIndex];
+        private boolean bitsetMode() {
+            return bits != null;
         }
 
         public boolean isEmpty() {
             return bits.isEmpty();
         }
 
-
         public void setBit(int index, boolean value) {
-            bits.set(index, value);
+            if(value) {
+                if (bitsetMode()){
+                    bits.set(index);
+                } else {
+                    bitList.add(index);
+                    if(size() > cutoff) {
+                        rebuild();
+                    }
+                }
+            } else {
+                if (bitsetMode()){
+                    bits.clear(index);
+                    if(size() > cutoff) {
+                        rebuild();
+                    }
+                } else {
+                    bitList.rem(index);
+                }
+            }
         }
 
         public boolean isBitSet(int index) {
-            return bits.get(index);
+            if(bitsetMode()) {
+                return bits.get(index);
+            } else {
+                return bitList.contains(index);
+            }
         }
 
+        @SuppressWarnings("Duplicates")
         public int nextSetBit(int from) {
-            return bits.nextSetBit(from);
+            if(bitsetMode()) {
+                return bits.nextSetBit(from);
+            } else {
+                int next = -1;
+                for (int i = 0, s = bitList.size(); i < s; i++) {
+                    int current = bitList.getInt(i);
+                    if(current == from) {
+                        return from;
+                    }
+                    if(current >= from && (current < next || next == -1)) {
+                        next = current;
+                    }
+                }
+
+                return next;
+            }
         }
 
+        @SuppressWarnings("Duplicates")
         public int previousSetBit(int to) {
-            return bits.previousSetBit(to);
+            if(bitsetMode()) {
+                return bits.previousSetBit(to);
+            } else {
+                int previous = -1;
+                for (int i = 0, s = bitList.size(); i < s; i++) {
+                    int current = bitList.getInt(i);
+                    if(current == to) {
+                        return to;
+                    }
+                    if(current <= to && (current > previous || previous == -1)) {
+                        previous = current;
+                    }
+                }
+
+                return previous;
+            }
+        }
+
+        public void rebuild() {
+            if(size() > cutoff) {
+                bitList = new IntArrayList(BucketPred.this.bucketSize);
+                bits.stream().forEach(bitList::add);
+                bits = null;
+            } else {
+                bits = new BitSet(BucketPred.this.bucketSize + 1);
+                bitList.forEach((int i) -> bits.set(i));
+                bitList = null;
+            }
+        }
+
+        public int size() {
+            if(bitsetMode()) {
+                return bits.size();
+            } else {
+                return bitList.size();
+            }
         }
     }
 
@@ -496,5 +578,37 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
         public OccupiedBucketException(int index) {
             super("Index already occupied with Bucket: " + index);
         }
+    }
+
+    private static record BucketState(double averageFill, int minimumFill, int maximumFill, int totalAmount, int bucketCount) {
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", BucketState.class.getSimpleName() + "[", "]")
+                    .add("averageFill=" + averageFill)
+                    .add("minimumFill=" + minimumFill)
+                    .add("maximumFill=" + maximumFill)
+                    .add("totalAmount=" + totalAmount)
+                    .add("bucketCount=" + bucketCount)
+                    .toString();
+        }
+    }
+
+    private BucketState getState() {
+        int n = 0;
+        int sum = 0;
+        int max = Integer.MIN_VALUE;
+        int min = Integer.MAX_VALUE;
+
+        Bucket current = bucketsForward[bucketsForward.length - 1];
+        while(current != null) {
+            final int cardinality = current.bits.cardinality();
+            sum += cardinality;
+            max = Math.max(max, cardinality);
+            min = Math.min(min, cardinality);
+            n++;
+            current = current.index > 0 ? bucketsForward[current.index - 1] : null;
+        }
+
+        return new BucketState(sum / (double) n, min, max, sum, n);
     }
 }
