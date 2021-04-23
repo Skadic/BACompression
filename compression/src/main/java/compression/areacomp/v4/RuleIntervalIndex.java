@@ -26,10 +26,13 @@ class RuleIntervalIndex {
      */
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new BucketPred<>(len, 12);
+        this.intervalMap = new BucketPred<>(len, 8);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
-        intervalMap.put(topLevelRuleId, new RuleInterval(topLevelRuleId, 0, len - 1, 0));
+        final var interval = new RuleInterval(topLevelRuleId, 0, len - 1, 0);
+        interval.setFirstAtStartIndex(interval);
+        intervalMap.put(topLevelRuleId, interval);
+
     }
 
     /**
@@ -56,8 +59,8 @@ class RuleIntervalIndex {
         // If this new interval is the new deepest nested interval
         // Add the new interval into its appropriate place in the list according to its depth
         if(current.contains(interval)) {
-            interval.insertParent(current);
             interval.depth = current.depth + 1;
+            interval.insertParent(current);
             interval.setFirstAtStartIndex(current.firstAtStartIndex());
             // Since current is now the new deepest interval, it replaces the previous deepest interval
             intervalMap.put(start, interval);
@@ -73,8 +76,9 @@ class RuleIntervalIndex {
             }
         }
 
+        interval.depth = current.depth + 1;
         current.insertParent(interval);
-        interval.setFirstAtStartIndex(current.hasParent() ? current.parent().firstAtStartIndex() : interval);
+        interval.setFirstAtStartIndex(interval.hasParent() ? interval.parent().firstAtStartIndex() : interval);
     }
 
     /**
