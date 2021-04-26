@@ -102,10 +102,10 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
     int counter = 0;
     @Override
     public T put(int index, T value) {
-        if(++counter % 25000 == 0) {
+        /*if(++counter % 25000 == 0) {
             DBG_OUT.println(getState());
             counter = 0;
-        }
+        }*/
         checkIndex(index);
         Objects.requireNonNull(value);
 
@@ -174,7 +174,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
      */
     private Bucket retrieveBucket(int bucketIndex) {
         if(bucketCache.isEmpty()) {
-            return new Bucket(bucketIndex, bucketSize);
+            return new Bucket(bucketIndex);
         } else {
             Bucket reused = bucketCache.pop();
             reused.index = bucketIndex;
@@ -470,9 +470,10 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
         private IntList bitList;
         private final int cutoff = (int) Math.ceil(BucketPred.this.bucketSize / 32D);
 
-        public Bucket(int index, int bucketSize) {
+        public Bucket(int index) {
             this.index = index;
             this.bits = new BitSet(bucketSize + 1);
+            //this.bitList = new IntArrayList(cutoff + 1);
         }
 
         private boolean bitsetMode() {
@@ -554,7 +555,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
         }
 
         public void rebuild() {
-            if(size() > cutoff) {
+            if(bitsetMode()) {
                 bitList = new IntArrayList(BucketPred.this.bucketSize);
                 bits.stream().forEach(bitList::add);
                 bits = null;
@@ -601,7 +602,7 @@ public class BucketPred<T> implements IntPredecessor<T>, Iterable<T> {
 
         Bucket current = bucketsForward[bucketsForward.length - 1];
         while(current != null) {
-            final int cardinality = current.bits.cardinality();
+            final int cardinality = current.size();
             sum += cardinality;
             max = Math.max(max, cardinality);
             min = Math.min(min, cardinality);

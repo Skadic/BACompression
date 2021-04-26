@@ -217,7 +217,7 @@ class Ruleset implements ToUnifiedRuleset {
         for (var pos : positions) {
             if(pos == -1) continue;
 
-            final var ruleInterval = intervalIndex.deepestIntervalContaining(pos, pos);
+            final var ruleInterval = intervalIndex.intervalContaining(pos);
             final var ruleId = ruleInterval.ruleId();
             final var startIndex = ruleInterval.start();
 
@@ -257,7 +257,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public boolean crossesBoundary(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
-        RuleInterval fromInterval = intervalIndex.deepestIntervalContaining(from, from);
+        RuleInterval fromInterval = intervalIndex.intervalContaining(from);
 
         if (from == fromInterval.start()){
             while (from == fromInterval.start() && to > fromInterval.end()){
@@ -269,7 +269,7 @@ class Ruleset implements ToUnifiedRuleset {
             return true;
         }
 
-        RuleInterval toInterval = intervalIndex.deepestIntervalContaining(to, to);
+        RuleInterval toInterval = intervalIndex.intervalContaining(to);
 
         boolean b = !fromInterval.equals(toInterval);
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
@@ -292,11 +292,12 @@ class Ruleset implements ToUnifiedRuleset {
         Deque<List<UnifiedSymbol>> symbolStack = new ArrayDeque<>();
         UnifiedRuleset ruleset = new UnifiedRuleset();
 
+        // Cache maps for Symbols, so they can be reused if they have already been created for a symbol
         Int2ObjectMap<UnifiedNonTerminal> nonTerminals = new Int2ObjectOpenHashMap<>();
         Char2ObjectMap<UnifiedTerminal> terminals = new Char2ObjectOpenHashMap<>();
 
-        final var chars = underlying.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
+
+        for (int i = 0; i < underlying.length(); i++) {
             // If the index moved past the current rule interval, remove all intervals which ended and add the resulting rules
             // to the ruleset
             while (!nestingStack.isEmpty() && i > nestingStack.peek().end()){
@@ -309,12 +310,11 @@ class Ruleset implements ToUnifiedRuleset {
                 }
             }
 
-            // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rules
-
-
-            final RuleInterval deepestInterval = intervalIndex.deepestNestedIntervalAtStartIndex(i);
+            // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rule
+            final RuleInterval deepestInterval = intervalIndex.intervalAtStartIndex(i);
 
             if(deepestInterval != null) {
+                // A list of all intervals that start at this index, starting at the deepest one
                 List<RuleInterval> intervals = StreamSupport.stream(deepestInterval.spliterator(), false)
                         .collect(Collectors.toList());
 
@@ -327,7 +327,7 @@ class Ruleset implements ToUnifiedRuleset {
 
 
             // Add the current char to the most deeply nested rule's stack
-            char c = chars[i];
+            char c = underlying.charAt(i);
             symbolStack.peek().add(terminals.computeIfAbsent(c, _c -> new UnifiedTerminal(c)));
         }
 

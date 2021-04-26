@@ -26,7 +26,7 @@ class RuleIntervalIndex {
      */
     public RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new BucketPred<>(len, 8);
+        this.intervalMap = new BucketPred<>(len, 16);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
         final var interval = new RuleInterval(topLevelRuleId, 0, len - 1, 0);
@@ -43,12 +43,12 @@ class RuleIntervalIndex {
      */
     public void mark(int ruleId, int start, int end) {
         checkInterval(start, end);
-        RuleInterval current = deepestNestedIntervalAtStartIndex(start);
+        RuleInterval current = intervalAtStartIndex(start);
         var interval = new RuleInterval(ruleId, start, end, -1);
 
         // If there was no interval at that index before
         if(current == null) {
-            var parent = deepestIntervalContaining(start, end);
+            var parent = intervalContaining(start, end);
             interval.depth = parent.depth + 1;
             interval.insertParent(parent);
             interval.setFirstAtStartIndex(interval);
@@ -82,36 +82,14 @@ class RuleIntervalIndex {
     }
 
     /**
-     * Gets the rule id of the deepest nested interval that contains the given index
-     * @param index The index to search for
-     * @return The rule id of the deepest interval that contains the given index if it exists. -1 otherwise
-     */
-    public int deepestRuleIdAt(int index) {
-        checkIndex(index);
-        RuleInterval ruleInterval = deepestIntervalContaining(index, index);
-        return ruleInterval != null ? ruleInterval.ruleId : -1;
-    }
-
-    /**
-     * Gets the start index of the deepest nested interval that contains the given index
-     * @param index The index to search for
-     * @return The start id of the deepest interval that contains the given index if it exists. -1 otherwise
-     */
-    public int intervalStartIndex(int index) {
-        checkIndex(index);
-        RuleInterval ruleInterval = deepestIntervalContaining(index, index);
-        return ruleInterval != null ? ruleInterval.start : -1;
-    }
-
-    /**
      * Get the deepest nested interval that contains the given interval
      * @param from The inclusive start index of the interval to check for
      * @param to The inclusive end index of the interval to check for
      * @return Return the deepest nested interval that contains the interval [from, to] if there is such an interval. null otherwise
      */
-    public RuleInterval deepestIntervalContaining(int from, int to) {
+    public RuleInterval intervalContaining(int from, int to) {
         checkInterval(from, to);
-        RuleInterval current = deepestFloorInterval(from);
+        RuleInterval current = floorInterval(from);
         //int i = 0;
         while (current != null) {
             // If an interval that contains index has been found, return
@@ -139,18 +117,17 @@ class RuleIntervalIndex {
      * @param index The index to search for
      * @return The deepest nested interval which contains the index
      */
-    public RuleInterval deepestIntervalContainingIndex(int index) {
+    public RuleInterval intervalContaining(int index) {
         //checkIndex(index);
-        return deepestIntervalContaining(index, index);
+        return intervalContaining(index, index);
     }
-
 
     /**
      * Gets the most deeply nested interval that starts at this index
      * @param index The index to search for
-     * @return
+     * @return The interval if such exists, null otherwise
      */
-    public RuleInterval deepestNestedIntervalAtStartIndex(int index) {
+    public RuleInterval intervalAtStartIndex(int index) {
         checkIndex(index);
         return intervalMap.get(index);
     }
@@ -160,7 +137,7 @@ class RuleIntervalIndex {
      * @param index
      * @return
      */
-    private RuleInterval deepestFloorInterval(int index) {
+    private RuleInterval floorInterval(int index) {
         //checkIndex(index);
         final var entry = intervalMap.floorEntry(index);
         return entry.value();

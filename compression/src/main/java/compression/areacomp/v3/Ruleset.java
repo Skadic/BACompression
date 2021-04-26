@@ -219,7 +219,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     public int ruleRangeStartIndex(int index) {
         long now = System.nanoTime();
-        int current = intervalIndex.startInterval(index).totalStart();
+        int current = intervalIndex.startOfIntervalContaining(index).totalStart();
         Benchmark.updateTime(ALGORITHM_NAME, "ruleRangeStartIndex", System.nanoTime() - now);
 
         return current;
@@ -246,8 +246,8 @@ class Ruleset implements ToUnifiedRuleset {
     public boolean crossesBoundary(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
 
-        var fromInterval = intervalIndex.intervalAt(from);
-        var toInterval = intervalIndex.intervalAt(to - 1);
+        var fromInterval = intervalIndex.intervalContaining(from);
+        var toInterval = intervalIndex.intervalContaining(to - 1);
 
         boolean b = fromInterval.ruleId() != toInterval.ruleId() || fromInterval.totalStart() != toInterval.totalStart();
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
@@ -261,7 +261,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @return The index of the rule
      */
     public int getDeepestRuleIdAt(int index) {
-        return intervalIndex.deepestRuleAt(index);
+        return intervalIndex.ruleIdContaining(index);
     }
 
     /**

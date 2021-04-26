@@ -27,7 +27,7 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
      * Creates a new empty ruleset
      */
     public UnifiedRuleset() {
-        rules = new TreeMap<>();
+        rules = new HashMap<>();
     }
 
     public int getTopLevelRuleId() {

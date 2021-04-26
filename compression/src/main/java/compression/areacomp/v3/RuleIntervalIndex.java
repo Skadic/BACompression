@@ -104,6 +104,13 @@ class RuleIntervalIndex {
      */
     private final Deque<RuleInterval> TO_INSERT = new ArrayDeque<>();
 
+    /**
+     *
+     * @param ruleId
+     * @param start
+     * @param end
+     * @param startInterval
+     */
     private void replaceIntervals(int ruleId, int start, int end, RuleInterval startInterval) {
 
         // Add all intervals that are between start and end
@@ -112,8 +119,6 @@ class RuleIntervalIndex {
 
         RuleInterval firstInterval = null;
         RuleInterval lastInterval = null;
-
-
 
         for(
                 Iterator<RuleInterval> iterator = intervalMap.valueRangeIterator(startInterval.start, true, end, true);
@@ -154,12 +159,22 @@ class RuleIntervalIndex {
         }
     }
 
-    public int deepestRuleAt(int index) {
+    /**
+     * Gets the id of the deepest nested rule that contains this index
+     * @param index The index which the interval should contain
+     * @return The id of the rule of the deepest nested rule interval at this index
+     */
+    public int ruleIdContaining(int index) {
         final RuleInterval value = intervalMap.floorEntry(index).value();
         return value.ruleId();
     }
 
-    public RuleInterval startInterval(int index) {
+    /**
+     * Gets the first slice of the interval
+     * @param index The index which the returned interval is part of
+     * @return The first slice of the interval which contains the index
+     */
+    public RuleInterval startOfIntervalContaining(int index) {
         checkIndex(index);
         Benchmark.startTimer("Index", "startInterval");
         final RuleInterval ruleInterval = intervalMap.get(intervalMap.floorEntry(index).value().totalStart);
@@ -168,35 +183,20 @@ class RuleIntervalIndex {
         return ruleInterval;
     }
 
-    public int totalStartIndex(int index) {
-        checkIndex(index);
-        Benchmark.startTimer("Index", "startInterval");
-        final int ruleInterval = intervalMap.floorEntry(index).value().totalStart;
-        Benchmark.stopTimer("Index", "startInterval");
-
-        return ruleInterval;
-    }
-
-
-
-    public RuleInterval intervalAt(int index) {
+    /**
+     * Gets the interval slice, which the given index is contained in
+     * @param index The index which the returned interval is part of
+     * @return The interval slice, which the given index is contained in
+     */
+    public RuleInterval intervalContaining(int index) {
         Benchmark.startTimer("Index", "intervalAt");
         final RuleInterval value = intervalMap.floorEntry(index).value();
         Benchmark.stopTimer("Index", "intervalAt");
         return value;
     }
 
-    public Optional<RuleInterval> rangeByStartIndex(int index) {
-        checkIndex(index);
-        return Optional.ofNullable(intervalMap.getOrDefault(index, null));
-    }
-
     public int length() {
         return len;
-    }
-
-    public IntPredecessor<RuleInterval> getIntervalMap() {
-        return intervalMap;
     }
 
     @Override
