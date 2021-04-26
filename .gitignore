@@ -14,6 +14,13 @@ build
 *.fdb_latexmk
 *.blg
 *.bbl
+*.out
 reference/
 */.gradle/
 */output/*
+*.png
+compression/input
+compression/debug
+compression/output
+*.nps
+*.zip
