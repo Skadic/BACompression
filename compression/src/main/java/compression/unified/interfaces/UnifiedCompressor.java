@@ -54,8 +54,14 @@ public interface UnifiedCompressor {
         // Output the compression time in milliseconds
         out.println("Compression " + name() + ": " + (duration / 1000000) + "ms");
 
+
         // Turn this Ruleset into a compression.unified representation
+        now = System.nanoTime();
         UnifiedRuleset unified = ruleset.toUnified();
+        duration = System.nanoTime() - now;
+
+        out.println("Time to turn into unified Ruleset: " + (duration / 1000000) + "ms");
+
 
         // If enabled, print the grammar to the PrintStream
         if(PRINT) out.print(unified.getAsString());
