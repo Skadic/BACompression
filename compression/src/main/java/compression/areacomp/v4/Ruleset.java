@@ -17,8 +17,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @SuppressWarnings("Duplicates")
 class Ruleset implements ToUnifiedRuleset {
@@ -311,15 +309,12 @@ class Ruleset implements ToUnifiedRuleset {
             }
 
             // If new rules are starting at this index, add them to the stack to designate them as more deeply nested rule
-            final RuleInterval deepestInterval = intervalIndex.intervalAtStartIndex(i);
+            RuleInterval intervalAt = intervalIndex.intervalAtStartIndex(i);
 
-            if(deepestInterval != null) {
-                // A list of all intervals that start at this index, starting at the deepest one
-                List<RuleInterval> intervals = StreamSupport.stream(deepestInterval.spliterator(), false)
-                        .collect(Collectors.toList());
-
-                for (ListIterator<RuleInterval> it = intervals.listIterator(intervals.size()); it.hasPrevious(); ) {
-                    RuleInterval interval = it.previous();
+            if(intervalAt != null) {
+                intervalAt = intervalAt.firstAtStartIndex();
+                for (Iterator<RuleInterval> it = intervalAt.deeperIterator(); it.hasNext(); ) {
+                    RuleInterval interval = it.next();
                     nestingStack.push(interval);
                     symbolStack.push(new ArrayList<>());
                 }

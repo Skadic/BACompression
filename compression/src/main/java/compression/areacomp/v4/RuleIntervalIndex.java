@@ -152,7 +152,7 @@ class RuleIntervalIndex {
         return intervalMap.values().stream()
                 .map(deepestInterval -> {
                     final var sj = new StringJoiner(", ", "%d: [".formatted(deepestInterval.start()), "]");
-                    deepestInterval.forEach(interval -> sj.add("%d: %d".formatted(interval.ruleId, interval.end)));
+                    deepestInterval.firstAtStartIndex().deeperIterator().forEachRemaining(interval -> sj.add("%d: %d".formatted(interval.ruleId, interval.end)));
                     return sj.toString();
                 })
                 .collect(Collectors.joining(", "));
@@ -177,7 +177,7 @@ class RuleIntervalIndex {
         }
     }
 
-    static class RuleInterval implements Iterable<RuleInterval> {
+    static class RuleInterval {
 
         /**
          * The id of the rule this interval is factorized by
@@ -193,6 +193,11 @@ class RuleIntervalIndex {
          * The least nested rule that also starts at this index
          */
         private RuleInterval firstAtStartIndex;
+
+        /**
+         * The next most deepest Interval that also starts at this start index
+         */
+        private RuleInterval nextAtStartIndex;
 
         /**
          * The nesting depth of this interval
@@ -237,8 +242,10 @@ class RuleIntervalIndex {
         public void insertParent(RuleInterval newParent) {
             if(hasParent()) {
                 newParent.parent = this.parent;
+                this.parent.nextAtStartIndex = newParent;
             }
             this.parent = newParent;
+            newParent.nextAtStartIndex = this;
         }
 
         public void setFirstAtStartIndex(RuleInterval firstAtStartIndex) {
@@ -281,8 +288,7 @@ class RuleIntervalIndex {
             return this.start <= other.start && other.end <= this.end;
         }
 
-        @Override
-        public Iterator<RuleInterval> iterator() {
+        public Iterator<RuleInterval> shallowerIterator() {
             return new Iterator<>() {
                 RuleInterval current = RuleInterval.this;
                 final int start = RuleInterval.this.start;
@@ -303,6 +309,27 @@ class RuleIntervalIndex {
             };
         }
 
+        public Iterator<RuleInterval> deeperIterator() {
+            return new Iterator<>() {
+                RuleInterval current = RuleInterval.this;
+                final int start = RuleInterval.this.start;
+
+                @Override
+                public boolean hasNext() {
+                    return current != null && current.start == start;
+                }
+
+                @Override
+                public RuleInterval next() {
+                    if(!hasNext()) throw new NoSuchElementException();
+
+                    final var temp = current;
+                    current = current.nextAtStartIndex();
+                    return temp;
+                }
+            };
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -314,6 +341,10 @@ class RuleIntervalIndex {
         @Override
         public int hashCode() {
             return Objects.hash(ruleId, start, end, depth);
+        }
+
+        public RuleInterval nextAtStartIndex() {
+            return nextAtStartIndex;
         }
     }
 }
