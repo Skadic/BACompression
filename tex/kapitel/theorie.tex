@@ -119,13 +119,20 @@ Eine Predecessor-Datenstruktur ist dann eine Datenstruktur, die das Predecessor-
 In der finalen Version des in dieser Arbeit vorgestellten Algorithmus kommt eine Version der Predecessor-Datenstruktur aus Kapitel 4 in \cite{dinklage_engineering_2021} zum Einsatz.
 
 Diese basiert darauf, ein Universum $U$ der Größe $u := |U|$, in Buckets der Größe $b \ll u$ eingeteilt werden. Dabei ist $b = 2^k$ für ein $k \in \mathbb{N}$. Für ein $i \in \{0, \dots, u \backslash b \}$ erhält dann der Bucket an Index $i$ nur Schlüssel im Interval $[bi, b(i + 1) - 1]$. Ein Bucket heißt \textit{aktiv}, wenn er mindestens einen Schlüssel aus $S$ enthält.
-Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist ein Schlüssel in einem Bucket enthalten, so wird das entsprechende Bit im Bitvektor auf $1$ gesetzt. Ebenso wird ein Bit auf $0$ gesetzt, wenn der zugehörige Schlüssel aus der Datenstruktur gelöscht wird.
+
+Die Datenstruktur setzt sich aus einer aus zwei Ebenen bestehenden Struktur zusammen. Die \textit{Top-Level} Ebene, bestehend aus einem Array von Buckets, $\texttt{buckets}$ und die \textit{Bucket} Ebene, bestehend aus den Buckets selbst.
+
+\subsubsection{Top-Level}
 
 Wir speichern nun aktive Buckets in einem Array $\texttt{buckets}$ der Größe $u \backslash b$. Falls der Bucket mit Index $i$ aktiv ist, so zeigt $\texttt{buckets}[i]$ auf diesen Bucket. Falls der Bucket mit Index $i$ nicht aktiv ist, so zeigt $\texttt{buckets}[i]$ auf den aktiven Bucket mit Index $j < i$, so dass $j$ maximal ist, falls solch ein Bucket existiert.
 
-Dies ergibt also eine aus zwei Ebenen bestehende Struktur. Die \textit{Top-Level} Ebene, bestehend aus dem $\texttt{buckets}$ Array und die \textit{Bucket} Ebene, bestehend aus den Buckets selbst.
+\subsubsection{Bucket-Level}
 
-\begin{figure}[H]
+Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist ein Schlüssel in einem Bucket enthalten, so wird das entsprechende Bit im Bitvektor auf $1$ gesetzt. Ebenso wird ein Bit auf $0$ gesetzt, wenn der zugehörige Schlüssel aus der Datenstruktur gelöscht wird.
+
+\subsubsection{Beispiel}
+
+\begin{figure}
 	\centering
 	\begin{tikzpicture}
 		
@@ -138,7 +145,7 @@ Dies ergibt also eine aus zwei Ebenen bestehende Struktur. Die \textit{Top-Level
 		
 		
 		\matrix (bucketsarr) [matrix of nodes, nodes={draw, minimum width=25mm, minimum height=7mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth] at (7, -1.5) {
-			$10010100$ & $00001000$ & |[draw=none]| & |[draw=none]| \\
+			$10010100$ & $00001100$ & |[draw=none]| & |[draw=none]| \\
 		};
 	
 		\draw[->] (toparr-1-1.south) -- (bucketsarr-1-1.north);
@@ -150,7 +157,8 @@ Dies ergibt also eine aus zwei Ebenen bestehende Struktur. Die \textit{Top-Level
 		\node[draw=none, below=2mm of bucketsarr-1-2] (B1) {$B_1$};
 		
 	\end{tikzpicture}
-	\caption{Ein Beispiel für die Bucket-Predecessor Datenstruktur mit $U := [0, 31],$ $u = 32$ und $b := 2^3$. In Bucket $B_0$ befinden sich die Schlüssel $0, 3, 5$ und in $B_1$ befindet sich der Schlüssel $12$. Die Indizes $2$ und $3$ im Top-Level zeigen ebenfalls auf $B_1$, da keine Schlüssel im Bereich $[16, 31]$ in der Datenstruktur liegen}.
+	\caption{Ein Beispiel für die Bucket-Predecessor Datenstruktur mit $U := [0, 31],$ $u = 32$ und $b := 2^3$. In Bucket $B_0$ befinden sich die Schlüssel $0, 3, 5$ und in $B_1$ befinden sich die Schlüssel $12$ und $13$. Die Indizes $2$ und $3$ im Top-Level zeigen ebenfalls auf $B_1$, da keine Schlüssel im Bereich $[16, 31]$ in der Datenstruktur liegen..}
+	\label{bucketpred}
 \end{figure}
 Die Operationen werden dann folgendermaßen umgesetzt:
 
@@ -173,11 +181,12 @@ Wieder bestimmen wir den Index $i$ bestimmt, in dem sich $x$ befindet. Ist der B
 
 Ist der Bucket aktiv, so bestimme den höchsten Index im Bucket vor oder bei $x \mod b$, dessen Bit $1$ ist. Gibt es solch ein Bit nicht, so ist der Vorgänger stattdessen das höchste $1$-Bit in dem vorhergehenden aktiven Bucket.
 
-\section{Maximale LCP-Intervalle}
+\section{Kind-Array}
 
-In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Maximale LCP-Intervalle bezeichnen um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
+In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Maximale LCP-Intervalle bezeichnen, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
 
 \subsection{Maximale LCP-Intervalle}
+\label{maxlcpint}
 
 Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{maximales LCP-Intervall} mit LCP-Wert $l$, wenn gilt:
 
@@ -205,11 +214,49 @@ Mithilfe dieser Definitionen lassen sich die Beziehungen der Kind-Intervalle mit
 Doch dieser Baum muss nicht explizit gespeichert weden. Hierbei kommt das Kind-Array zum Einsatz. Dieses ist ein $n + 1$ großes Array, dessen Einträge jeweils 3 Werte besitzen.
 
 Diese Einträge sind folgendermaßen definiert:
-
 \begin{align*}
-	up &:= \min\{q \in [0..i-1]\ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [q + 1..i - 1] : LCP[k] \geq LCP[q]\} 
-	down &:= 
+	up[i] &:= \min\{q \in [0..i-1] \ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [q + 1..i - 1] : LCP[k] \geq LCP[q]\}\\
+	down[i] &:= \max\{q \in [i+1..n] \ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\\
+	nextlIndex[i] &:= \min\{q \in [i+1..n] \ |\ LCP[q] = LCP[i] \text{ und } \forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\}
 \end{align*}
 
+Für ein $l-$Intervall $[i..j]$ mit $l-$Indizes $i_1 < i_2 < \dots < i_k$ enthalten $down[i]$ und $up[j+1]$ den ersten $l-$Index von $[i..j]$, also $i_1$. Für die anderen $l-$Indizes gilt $nextlIndex[m] = i_{m+1},\ m=1,\dots,k-1$.
 
+Dieses Array lässt sich mit den Algorithmen aus \cite{abouelhoda_optimal_2002} Kapitel 5 in einer Laufzeit berechnen, die linear in der Länge des Eingabestring ist.
 
+Es ist möglich die Daten des Kind-Arrays in einem Array mit nur einem Eintrag pro Array-Index zu speichern. Die genaue Beschreibung dieser Konstruktion befindet sich ebenfalls in Kapitel 5 von \cite{abouelhoda_optimal_2002}.
+
+\subsubsection{Beispiel}
+
+Zuletzt noch ein Beispiel für das Kind Array für den String $s := abacaba\$$.
+\begin{figure}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|c|c|c|l|} \hline
+		$i$ & $s$ & $SA$ & $LCP$ & $up$ & $down$ & $nextlIndex$ & $s[SA[i]..n]$\\ \hline
+		$0$ & a & $0$ & $0$ & $0$ & $2$ & $4$ & $abacaba\$$ \\\hline
+		$1$ & b & $4$ & $3$ & $0$ & $0$ & $0$ & $aba\$$ \\\hline
+		$2$ & a & $2$ & $1$ & $1$ & $0$ & $3$ & $acaba\$$ \\\hline
+		$3$ & c & $6$ & $1$ & $0$ & $0$ & $0$ & $a\$$ \\\hline
+		$4$ & a & $1$ & $0$ & $2$ & $5$ & $6$ & $bacaba\$$ \\\hline
+		$5$ & b & $5$ & $2$ & $0$ & $0$ & $0$ & $ba\$$ \\\hline
+		$6$ & a & $3$ & $0$ & $5$ & $0$ & $7$ & $caba\$$ \\\hline
+		$7$ &\$ & $7$ & $0$ & $0$ & $0$ & $0$ & $\$$ \\\hline
+	\end{tabular}
+\end{figure}
+Der zugehörige Baum von Kind-Intervallen sieht dann folgendermaßen aus (Intervalle der Länge 1 sind ausgelassen):
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		\node[draw] (root) at (0,0) {$0-[0..7]$};
+		
+		\node[draw] (1) at (-1,-1) {$1-[0..3]$};
+		\node[draw] (2) at (1,-1) {$2-[4..5]$};
+		
+		\node[draw] (1-1) at (-2, -2) {$3-[0..1]$};
+		
+		\draw[->] (root) -- (1);
+		\draw[->] (root) -- (2);
+		
+		\draw[->] (1) -- (1-1);
+	\end{tikzpicture}
+\end{figure}

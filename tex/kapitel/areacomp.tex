@@ -103,11 +103,10 @@ Dies liegt daran, dass das Suffix- und LCP-Array, in dem nach wiederholten Vorko
 
 \section{AreaComp V2}
 
-\subsection{Implementierung}
 
 Gegenüber der ersten Version des Algorithmus gibt es mehrere Verbesserungen:
 
-\subsubsection{Datenstrukturen} Regeln bestehen nun nicht mehr aus der verketteten Struktur wie bei Sequitur. Stattdessen besitzt eine Produktionsregel nun zwei dynamische Arrays. \texttt{symbols} enthält die Symbole und \texttt{cumulativeLength} ist die Präfixsumme über die (voll expandierte) Länge der einzelnen Symbole in der Symbolliste.
+\subsection{Datenstrukturen} Regeln bestehen nun nicht mehr aus der verketteten Struktur wie bei Sequitur. Stattdessen besitzt eine Produktionsregel nun zwei dynamische Arrays. \texttt{symbols} enthält die Symbole und \texttt{cumulativeLength} ist die Präfixsumme über die (voll expandierte) Länge der einzelnen Symbole in der Symbolliste.
 
 Sei zum Beispiel die Grammatik: 
 \begin{align*}
@@ -120,15 +119,15 @@ Dann gilt für die Produktionsregel $A$:
 	\texttt{cumulativeLength} &= [3, 6, 7, 8]
 \end{align*}
 
-\subsubsection{Suffix- und LCP-Array}
+\subsection{Suffix- und LCP-Array}
 Im Gegensatz zu Version 1 wird in Version 2 das Suffix- und LCP-Array, und damit auch die Prioritätswarteschlange, nur einmal zu Anfang des Algorithmus global für den Eingabestring berechnet. Damit wird die wiederholte Berechnung in jedem Durchlauf gespart. 
 Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die nicht in derselben Regel liegen, nicht erfasst.
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R0$ die Startregel ist. \\
+Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist. \\
 
-\subsubsection{Neue Datenstrukturen}
+\subsection{Neue Datenstrukturen}
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
 	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste der IDs derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die IDs in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
@@ -136,23 +135,23 @@ Wir führen nun zwei Datenstrukturen ein:
 	
 	Sei die Grammatik beispielhaft: (Startregel $R0$)
 	\begin{align*}
-		R0 &\rightarrow R2\ c\ R2\\
-		R1 &\rightarrow a\ a\\
-		R2 &\rightarrow R1\ b\ R1
+		R_0 &\rightarrow R_2\ c\ R_2\\
+		R_1 &\rightarrow a\ a\\
+		R_2 &\rightarrow R_1\ b\ R_1
 	\end{align*}
-	Dann ist der vollständig expandierte String $aabaacaabaa$. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 2, 1]$, da wir die Regeln in der Reihenfolge $R0 \rightarrow R2 \rightarrow R1$ durchlaufen müssen, um das $a$ an Index $1$ zu erreichen.
+	Dann ist der vollständig expandierte String $aabaacaabaa$. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 2, 1]$, da wir die Regeln in der Reihenfolge $R_0 \rightarrow R_2 \rightarrow R_1$ durchlaufen müssen, um das $a$ an Index $1$ zu erreichen.
 	
 	\item[\texttt{ruleIntervalStarts}] ist eine Hashtabelle, die von einem Index $i \in \{0, \dots, n - 1\}$ auf eine Menge von Regel-IDs abbildet. Dabei befindet sich eine Regel-ID genau dann in \texttt{ruleIntervalStarts}$[i]$, wenn es ein Ersetzungsintervall für diese Regel-ID gibt, das an diesem Index beginnt.
 	
 	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinander folgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
 \end{itemize}
 
-\subsubsection{Substitution}
+\subsection{Substitution}
 Wird nun $p$ in $s$ am Index $i$ substituiert, so wird nun $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + l - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
 
 Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, werden, wie bei V1, sich überschneidende Vorkommen entfernt. Daraufhin wird geprüft, ob die Substitution an den übrigen Indizes möglich ist. Dies wird mithilfe von \texttt{ruleIntervals} und \texttt{ruleIntervalStarts} bewältigt.
 
-\paragraph{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
+\subsubsection{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
 
 \begin{enumerate}
 	\item Die IDs der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
@@ -166,13 +165,13 @@ Die IDs der tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up
 
 Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die ID $id_T \in \mathbb{N}$ der tiefsten Regel an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $id_T$ enthält.
 
-\paragraph{Unterschiedliche Vorkommen}
+\subsubsection{Unterschiedliche Vorkommen}
 
 Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Grammatik für den String $abcabcde$:
 
 \begin{align*}
-	R0 &\rightarrow R1\ R1\ d\ e\\
-	R1 &\rightarrow a\ b\ c
+	R_0 &\rightarrow R_1\ R_1\ d\ e\\
+	R_1 &\rightarrow a\ b\ c
 \end{align*}
 
 Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
@@ -215,7 +214,7 @@ Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfang
 
 Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel-ID besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
 
-\paragraph{Faktorisieren}
+\subsubsection{Faktorisieren}
 
 Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
@@ -237,7 +236,197 @@ Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des 
 \section{AreaComp V3}
 
 In Version 3 des Algorithmus werden die Wahl der LCP-Intervalle, die in Betracht gezogen werden sollen, eingeschränkt. Ebenfalls wird effizienteres Markieren von Ersetzungsintervallen mithilfe einer neuen Datenstruktur, basierend auf einer Predecessor-Datenstruktur, möglich gemacht. 
-Die Grundlage hierfür bieten die Kind-Intervalle von Abouelhoda et al. \cite{abouelhoda_optimal_2002}.
+
+\subsection{Wahl der LCP-Intervalle}
+
+Die Grundlage hierfür bieten die Maximalen LCP-Intervalle von Abouelhoda et al. \cite{abouelhoda_optimal_2002}.\\
+Sei beispielsweise folgendes Array, das LCP-Array eines Eingabetextes. 
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=5mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth, right=1cm of Symbols]{
+			0 & 1 & 2 & 2 & 3 & 0 & 1 & 0\\
+		};
+	\end{tikzpicture}
+\end{figure}
+Es gilt nun zu entscheiden, welche Intervalle im zugehörigen Suffix-Array einen wiederholt auftretenden Substring bezeichen, dessen Substitution eine möglichst gute Kompression erzielt.
+
+Etwa wäre das Intervall $[1..3]$ keine sinnvolle Wahl. Das längste gemeinsame Präfix auf diesem Intervall ist $2$, da $LCP[2] = 2$ und $LCP[3] = 2$. Allerdings kann das Intervall auch $[1..4]$ gewählt werden, ohne die Länge des längsten gemeinsamen Präfix zu verringern, da auch $LCP[4] \geq 2$ ist. 
+Es folgt also, dass es keinen Nutzen hat, das Intervall $[1..3]$ gegenüber $[1..4]$ zu betrachten.
+
+Wir benötigen also nur die lokal größtmöglichen Intervalle, die für einen bestimmten längsten gemeinsamen Präfix möglich sind. Die maximalen LCP-Intervalle aus \cite{abouelhoda_optimal_2002} dienen diesem Zweck. Durch das Kind-Array können all diese LCP-Arrays bestimmt werden, indem für jedes maximale LCP-Intervall die Kind-Intervalle bestimmen werden, und dies rekursiv fortgesetzt wird.
+
+Für unsere Zwecke sind natürlich nur $l-$Intervalle von Bedeutung, für die $l \geq 2$ gilt, da Substrings mit Länge kleiner als zwei keine mögliche Kompression durch Substitution bieten.
+
+Es werden also nun statt allen möglichen Intervallen, nur die maximalen LCP-Intervalle berechnet, indem rekursiv die Kind-Intervalle des Wurzel-Intervalls ($[0..n]$) berechnet werden. Damit reduziert sich die Anzahl der Intervalle auf $\mathcal{O}(n)$.
+
+\subsection{RuleIntervalIndex}
+
+Ein weiteres Problem sind die Datenstrukturen $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$. Diese sind sowohl im Bezug auf Speicher als auch Laufzeit ineffizient. Die Lösung für dieses Problem bietet die Datenstruktur $\texttt{RuleIntervalIndex}$.
+
+Diese basiert auf einer assoziativen Predecessor-Datenstruktur \cite{dinklage_engineering_2021} und unterstützt auch entsprechende Anfragen. Hier wird zu diesem Zweck eine assoziative Variante von Red-Black-Trees \cite{bayer_symmetric_1972, guibas_dichromatic_1978} verwendet (\texttt{TreeMap} in Java). Diese hat eine Laufzeit von $\mathcal{O}(\log n)$ bei allen Operationen der Predecessor-Datenstruktur. Die Elemente der Datenstruktur sind Teile von Ersetzungsintervallen und die Schlüssel die Startindizes der Intervall-Teile. Diese enthalten folgende Attribute:
+\begin{itemize}[leftmargin=2.5cm]
+	\item[\texttt{ruleId}] Die ID der Regel, die dieses Intervall repräsentiert
+	\item[\texttt{start}] Der Start-Index dieses Intervall-Teils
+	\item[\texttt{end}] Der End-Index dieses Intervall-Teils
+	\item[\texttt{totalStart}] Der Start-Index des gesamten Ersetzungsintervall, dem dieser Teil angehört
+\end{itemize}
 
 
+Es wird immer jeweils das am tiefsten verschachtelte Intervall pro Bereich in der darunterliegenden Predecessor-Datenstruktur gespeichert gespeichert. Betrachte beispielhaft die folgende Grammatik für den String $abcdbcabcde$:
 
+\begin{align*}
+	R_0 &\rightarrow R_1 R_2 R_1 e\\
+	R_1 &\rightarrow a R_2 d\\
+	R_2 &\rightarrow bc
+\end{align*}
+
+Die Datenstrukturen aus V2 wären dann:
+
+\begin{figure}[H]
+	\centering
+	
+	\subfloat[][\texttt{ruleIntervals}]{
+		\scalebox{.9}{
+			\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|} \hline
+				$0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ \\\hline
+				$1$ & $1$ & $1$ & $1$ & $2$ & $2$ & $1$ & $1$ & $1$ & $1$ & \\\hline
+				& $2$ & $2$ &     &     &     &     & $2$ & $2$ &     & \\\hline
+			\end{tabular} 
+		}
+ 	}
+	\quad
+ 	\subfloat[][\texttt{ruleIntervalStarts}]{
+ 		\scalebox{.9}{
+	 		\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|} \hline
+	 			$\{0, 1\}$ & $\{2\}$ & & & $\{2\}$ & & $\{1\}$ & $\{2\}$ & & & \\\hline
+	 		\end{tabular} 
+ 		}
+ 	}
+\end{figure}
+
+Dagegen sieht $\texttt{RuleIntervalIndex}$ folgendermaßen aus (die Baumstruktur wird hier aus Gründen der Leserlichkeit ausgelassen):
+
+\begin{figure}[H]
+	\centering
+	
+	\begin{tikzpicture}
+		
+		\matrix (A) [matrix of nodes, nodes={draw, minimum size=7mm, anchor=center}, column sep=-\pgflinewidth]{
+			$R_1$-$[0..0]$ & $R_2$-$[1..2]$ & $R_1$-$[3..3]$ & $R_2$-$[4..5]$ & $R_1$-$[6..6]$ & $R_2$-$[7..8]$ & $R_1$-$[9..9]$ & $R_0$-$[10..10]$\\
+		};
+		
+	\end{tikzpicture}
+\end{figure}
+
+So kann der Speicherverbrauch gegenüber $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ verringert werden. Allerdings verbessert sich auch die Laufzeit.
+
+\subsubsection{Operationen}
+
+$\texttt{RuleIntervalIndex}$ unterstützt die folgenden Operationen:
+
+\begin{itemize}[leftmargin=5cm]
+	\item[$\texttt{mark(id, start, end)}$] Fügt ein neues Ersetzungsintervall $[start.. end]$ in die Datenstruktur ein für die Regel-ID $\texttt{ruleid}$. Dies ist die aufwendigste Operation dieser Datenstruktur. Einerseits können die Grenzen $\texttt{start}$ und $\texttt{end}$ innerhalb anderer Intervalle liegen können. Diese müssen dann geschrumpft werden und möglicherweise neu eingefügt werden, da sich deren Start-Index verändert. Andererseits muss durch alle sich bereits in der Datenstruktur befindenden Intervall-Teile im Bereich zwischen $\texttt{start}$ und $\texttt{end}$ iteriert werden, um diese zu ersetzen, falls diese weniger tief verschachtelt sind als das neue Intervall.
+	\item[$\texttt{intervalContaining(index)}$] Gibt den Intervall-Teil des am tiefsten verschachtelten Ersetzungsintervalls zurück, in dem $\texttt{index}$ enthalten ist. Dies ist durch einen $\texttt{predecessor(index)}$ Aufruf auf der zugrundeliegenden Predecessor-Struktur möglich.
+\end{itemize}
+
+Mithilfe dieser Operationen ist es nun möglich, effizienter zu bestimmen, welches das am tiefsten verschachtelte Intervall an einem Index ist. Dies ist einerseits für die Vorverarbeitung der Vorkommen eines zu ersetzenden Musters wichtig. Hier muss festgestellt werden, ob ein Vorkommen ersetzt werden darf. Dazu muss unter Anderem geprüft werden, ob die Grenzen des entstehenden Ersetzungsintervalls in demselben bereits bestehenden Ersetzungsintervall liegen. 
+
+Andererseits ist dies auch für das tatsächliche Ersetzen eines Musters wichtig, um festzustellen in welcher Regel das sich das jeweilige Vorkommen befindet und ersetzt werden muss.
+
+\subsection{Kleinere Verbesserungen in der Rule Datenstruktur}
+
+In V2 bestehen die Regeln aus zwei dynamischen Arrays, die einerseits die Symbole selbst (\texttt{symbols}), und andererseits die Präfixsumme über die Länge der einzelnen Symbole speichert (\texttt{cumulativeLength}).
+Die Position eines Terminals in der vollständig expandierten Form von \texttt{symbols} wird durch eine binäre Suche auf \texttt{cumulativeLength} berechnet. Die Suche von Symbolen ist zwar effizient, nur ist das Ersetzen von Bereichen in diesen Arrays ineffizient. Denn hier, muss ein Bereich aus diesen Arrays gelöscht, und durch ein Nichtterminal ersetzt werden. Dies hat eine Laufzeit von $\mathcal{O}(n)$ für eine Regel mit $n$ Symbolen.
+
+In V3 wurden diese durch einen assoziativen Red-Black-Tree ersetzt, wie auch in \texttt{RuleIntervalIndex}. Hier wird der Startindex des Symbols in der vollständig expandierten Form dieser Regel als Schlüssel verwendet. Der assoziierte Wert ist dann das Symbol selbst. Betrachten wir beispielsweise diese Arrays aus V2:
+
+\begin{figure}[H]
+	\centering
+	\subfloat[symbols]{
+		\begin{tabular}{|c|c|c|c|c|c|} \hline
+			$R_1$ & $a$ & $b$ & $R_3$ & $R_2$ & $d$ \\\hline
+		\end{tabular}
+	}
+	\quad
+	\subfloat[symbols]{
+		\begin{tabular}{|c|c|c|c|c|c|} \hline
+			$5$ & $6$ & $7$ & $12$ & $18$ & $19$ \\\hline
+		\end{tabular}
+	}
+\end{figure}
+
+In V3 würden diese stattdessen etwa folgendermaßen dargestellt werden:
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+		
+		\node[draw] (12) at (0,0) {$12: R_3$};
+		\node[draw] (6) at (-2, -1) {$6: a$};
+		\node[draw] (19) at (2, -1) {$19: d$};
+		\node[draw] (18) at (1, -2) {$18: R_2$}; 
+		\node[draw] (5) at (-3, -2) {$5: R_1$};
+		\node[draw] (7) at (-1, -2) {$7: b$};
+		
+		\draw[-] (12) -- (6);
+		\draw[-] (6) -- (5);
+		\draw[-] (6) -- (7);
+		\draw[-] (12) -- (19);
+		\draw[-] (19) -- (18);
+		
+	\end{tikzpicture}
+\end{figure}
+
+Sei also ein Baum mit $n$ Elementen gegeben, so wie ein Intervall $[i..j]$, $i <= j$. Liegen nun $k$ Elemente, im Intervall $[i..j]$, so können alle diese Elemente insgesamt in $\mathcal{O}(k \log n)$ Laufzeit entfernt werden, da immer $\mathcal{O}(\log n)$ Laufzeit benötigt wird, um ein Element zu finden.
+
+\subsection{Probleme}
+
+
+Die Laufzeit ist durch die beschränkte Wahl der LCP-Intervalle, \texttt{RuleIntervalIndex} und die Verbesserte Regel-Datenstruktur, erheblich verbessert, aber es gibt trotzdem noch Probleme mit V3.
+
+\subsubsection{Speicherverbrauch}
+Da V3 als erste Version auch auf Datenmengen größer als 1MB tolerable Laufzeiten erzielt, stellt sich als nächstes das Problem des Speicherverbrauchs. Allein auf einer Datenmenge von 50MB, benötigte V3 schon etwa 6-8GB oder mehr.
+
+\subsubsection{Effizienz von RuleInvervalIndex}
+
+Außerdem ist \texttt{RuleIntervalIndex} nicht optimal. Viele der Operationen benötigen noch mehrere Anfragen an die darunterligende Predecessor-Datenstruktur.\\
+Um etwa für einen Index $i$ den Intervall-Teil des Ersetzungsintervalls zu erhalten in dem $\texttt{i}$ liegt, muss zuerst ein $\texttt{predecessor(i)}$ Aufruf durchgeführt werden, um den Intervall-Teil $\texttt{part}$zu erhalten in dem $\texttt{i}$ liegt. Dann muss eine $\texttt{get(part.totalStart)}$ Anfrage durchgeführt werden, um den ersten Intervall-Teil zu erhalten.\\
+Diese Anfrage kommt oft vor, da sie benötigt wird, um zu entscheiden, ob ein Vorkommen eines Musters ersetzt werden darf.
+
+Dazu ist das markieren, also das einfügen neuer Ersetzungsintervalle noch kostspielig. Dies benötigt ebenfalls mehrere Anfragen an die Predecessor-Struktur. Außerdem müssen für das neu einzufügende Intervall $[start, end]$ alle Intervalle mit Startpositionen im Bereich $[start, end]$ durchlaufen werden, um diese potentiell zu ersetzen, falls diese weniger tief verschachtelt sind, als das neu einzufügende Intervall. Dies kann im Worst-Case lineare Laufzeit in der Länge der Eingabe bedeuten.
+
+\subsubsection{Zu strenge Entscheidung ob Vorkommen ersetzt werden dürfen}
+
+Ein weiteres Problem istbei der Entwicklung dieser Datenstrukturen aufgefallen. Es gibt fälle, in denen die bisher geschriebenen Algorithmen eine Ersetzung verbieten, obwohl diese eigentlich legal wäre.
+
+Sei $p$ ein Muster mit Länge $k := |p|$. Bisher wird entschieden, ob eine Substitution von $p$ bei Index $i$ legal ist, indem geprüft wird, ob $\texttt{intervalContaining(i)}$ und $\texttt{intervalContaining(i + k - 1)}$ dieselben $\texttt{ruleId}$ und $\texttt{totalStart}$ besitzen, also die Start- und Endposition des neu entstehenden Ersetzungsintervalls in demselben Ersetzungsintervall liegen. Falls dies der Fall ist, ist eine Ersetzungs auch tatsächlich immer legal. Allerdings übersieht diese Berechung einen Fall:
+
+Betrachten wir beispielsweise die folgende Grammatik für den String $abcdeabcd$:
+\begin{align*}
+	R_0 &\rightarrow R_1 c d e R_1 c d\\
+	R_1 &\rightarrow a b\\
+\end{align*}
+Angenommen, als nächstes soll das Muster $abcd$ ersetzt werden (beachte, die Muster sind immer bezüglich des Eingabestrings, da das Suffix- und LCP array für diesen berechnet sind).
+\texttt{RuleIntervalIndex} sieht hier folgendermaßen aus:
+\begin{figure}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|} \hline
+		$R_1$-$[0..1]$ & $R_0$-$[2..4]$ & $R_1$-$[5..6]$ & $R_0$-$[7..8]$ \\\hline
+	\end{tabular}
+\end{figure}
+
+Das Muster $abcd$ kommt bei den Indizes $[0, 5]$ vor. Beide Ersetzungen sind offensichtlich legal, indem eine neue Regel $R_2 \rightarrow R_1cd$ eingeführt wird.\\ Versucht man aber nun mit der bisherigen Methode zu prüfen, ob die Ersetzung legal ist, so, erhält man:
+\begin{align*}
+	I_1 &:= \texttt{intervalContaining(0)} = R_1\text{-}[0..1]\\
+	I_2 &:= \texttt{intervalContaining(0 + 4 - 1)} = R_0\text{-}[2..4]
+\end{align*} 
+Dabei ist dann $1 = I_1.ruleId \neq I_2.ruleId = 0$ und $0 = I_1.totalStart \neq I_2.totalStart = 2$. Die Ersetzung wird also verweigert, obwohl diese eigentlich legal wäre.\\
+Diese Fälle treten ein, wenn das erste oder letzte Zeichen des zu ersetzenden Musters ein Nichtterminal ist (das Muster $abcd$ lag in der Grammatik bereits als das ersetzte $R_1 cd$ vor).
+
+\texttt{RuleIntervalIndex} bietet zu diesem Zeitpunkt nicht die Daten um diesen Fall effizient korrekt zu entscheiden.
+
+\section{AreaComp V4}
+
+Dies ist nun die finale Version dieses Algorithmus und wird im größten Detail beschrieben.
