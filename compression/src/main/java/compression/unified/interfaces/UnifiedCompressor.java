@@ -68,6 +68,7 @@ public interface UnifiedCompressor {
 
         // Print the size of the generated grammar
         out.println("Grammar size: " + unified.rulesetSize());
+        out.println("Grammar depth: " + unified.rulesetDepth());
 
         // Verify, whether this grammar can reproduce the original string
         String reconstructed = unified.buildString();

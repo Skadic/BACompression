@@ -2,6 +2,7 @@ package compression.unified;
 
 import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -97,6 +98,26 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
      */
     public int rulesetSize() {
         return rules.values().stream().mapToInt(List::size).sum();
+    }
+
+
+    public int rulesetDepth() {
+        var topLevel = rules.get(topLevelRuleId);
+        int depth = 0;
+        var rule = topLevel.stream().filter(symbol -> symbol instanceof UnifiedNonTerminal)
+                .mapToInt(symbol -> ((UnifiedNonTerminal) symbol).id())
+                .collect(IntOpenHashSet::new, IntOpenHashSet::add, IntOpenHashSet::addAll);
+
+        while (!rule.isEmpty()) {
+            rule = rule.stream()// Get the nonterminals ids
+                    .map(rules::get) // Get the rules according to the ids
+                    .flatMap(List::stream) // Flat map them so that we get a single stream of symbols
+                    .filter(symbol -> symbol instanceof UnifiedNonTerminal) // Retain only NonTerminals
+                    .mapToInt(symbol -> ((UnifiedNonTerminal) symbol).id()) // Cast them to NonTerminals
+                    .collect(IntOpenHashSet::new, IntOpenHashSet::add, IntOpenHashSet::addAll); // Collect them to a set so we only have distinct symbols left
+            depth++;
+        }
+        return depth;
     }
 
     @Override

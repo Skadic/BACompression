@@ -11,4 +11,5 @@ public record UnifiedTerminal(char value) implements UnifiedSymbol {
     public String toString() {
         return String.valueOf(value);
     }
+
 }

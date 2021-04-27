@@ -239,6 +239,7 @@ class RuleIntervalIndex {
             return end - start;
         }
 
+
         public void insertParent(RuleInterval newParent) {
             if(hasParent()) {
                 newParent.parent = this.parent;
@@ -252,16 +253,16 @@ class RuleIntervalIndex {
             this.firstAtStartIndex = firstAtStartIndex;
         }
 
+        /**
+         * Returns the least deeply nested interval that starts at the same start index
+         * @return The interval
+         */
         public RuleInterval firstAtStartIndex() {
             return this.firstAtStartIndex;
         }
 
         public boolean hasParent() {
             return parent != null;
-        }
-
-        public void setParent(RuleInterval parent) {
-            this.parent = parent;
         }
 
         /**
@@ -288,27 +289,12 @@ class RuleIntervalIndex {
             return this.start <= other.start && other.end <= this.end;
         }
 
-        public Iterator<RuleInterval> shallowerIterator() {
-            return new Iterator<>() {
-                RuleInterval current = RuleInterval.this;
-                final int start = RuleInterval.this.start;
-
-                @Override
-                public boolean hasNext() {
-                    return current != null && current.start == start;
-                }
-
-                @Override
-                public RuleInterval next() {
-                    if(!hasNext()) throw new NoSuchElementException();
-
-                    final var temp = current;
-                    current = current.parent();
-                    return temp;
-                }
-            };
-        }
-
+        /**
+         * Returns an iterator that iterates through all Intervals that start at this index
+         * and that are more deeply nested than this one, in order of their nesting.
+         * The iterator's first element is the one on which the method was called.
+         * @return The iterator
+         */
         public Iterator<RuleInterval> deeperIterator() {
             return new Iterator<>() {
                 RuleInterval current = RuleInterval.this;
