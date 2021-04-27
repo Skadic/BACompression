@@ -1,0 +1,76 @@
+\section{AreaComp V4}
+
+Dies ist nun die finale Version dieses Algorithmus. 
+
+\subsection{Bessere Predecessor-Datenstruktur}
+
+Bisher verwendete \texttt{RuleIntervalIndex} Red-Black-Trees als zugrundeliegende Predecessor-Datenstruktur. Zwar ist eine Laufzeit von $\mathcal{O}(\log n)$ für jede Operation der Predecessor-Datenstruktur nicht schlecht. Da aber etwa die $\texttt{get}$ und $\texttt{predecessor}$ Operation sehr oft aufgerufen werden, stellt dies ein Bottleneck für die Laufzeit dar.
+Die Idee ist nun, Red-Black-Trees durch eine für diese Zwecke effizientere Datenstruktur zu ersetzen.
+
+Dazu bietet sich die Predecessor-Datenstruktur aus \cite{dinklage_engineering_2021} an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante, die durch eine Hashtabelle gestützt wird. Diese Hashtabelle ist global. 
+Eine lokale Hashtabelle für jeden Bucket, scheint bei Tests keine Vorteile zu bieten.\\
+Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ amortisierte Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(u \backslash b)$ Laufzeit für $\texttt{insert}$ Operationen. 
+
+Wie in \cite{dinklage_engineering_2021} beschrieben, ist es ebenfalls möglich, das hier verwendete Array von Buckets durch eine Hashtabelle zu ersetzen. Dies würde für $\texttt{insert}$ Operationen eine amortisierte $\mathcal{O}(1)$ Laufzeit bedeuten, da nun nicht mehr im Array die $\mathcal{O}(u \backslash b)$ Pointer verändert werden müssen. Allerdings würde dies auch eine Laufzeit von $\mathcal{O}(u \backslash b)$ für $\texttt{predecessor}$ Operationen bedeuten, da potenziell $\mathcal{O}(u \backslash b)$ Anfragen an die Hashtabelle gestellt werden müssen, um einen aktiven Bucket zu finden. 
+
+Allerdings wird $\texttt{predecessor}$ viel häufiger benötigt als $\texttt{insert}$ Operationen. Daher ist es von größerer Bedeutung, dass $\texttt{predecessor}$ Aufrufe performant sind. Daher eignet sich hier das Bucket-Array besser.
+
+Da $u = |s|$ durch den Eingabestring $s$ gegeben ist, ist also die Wahl von $b = 2^k$, für ein $k \in \mathbb{N}$, interessant. Dieser widmen wir uns bei der Evaluation.
+% TODO DAS AUCH MACHEN 
+
+\subsection{Verbesserung von RuleIntervalIndex}
+
+Wie bereits beschrieben, hat die vorherige Version von \texttt{RuleIntervalIndex} das Problem, dass bestimmte Fälle, in denen eine Substitution legal ist, nicht korrekt erkannt werden. Außerdem ist das Markieren von Bereichen noch ineffizient.  
+
+Zu diesem Zweck verändern wir die Funktionsweise von \texttt{RuleIntervalIndex} etwas.
+Wir speichern nun nicht mehr die am tiefsten verschachtelten Teile von Intervallen. Stattdessen speichern wir alle existierenden Intervalle. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger verschachtelte Intervalle. Betrachten wir wieder die Grammatik von zuvor für den String $abcdeabcd$:
+\begin{align*}
+	R_0 &\rightarrow R_1 c d e R_1 c d\\
+	R_1 &\rightarrow a b\\
+\end{align*}
+
+Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
+
+
+\tikzset{
+    table nodes/.style={
+        rectangle,
+        draw=black,
+        align=center,
+        minimum height=7mm,
+        text depth=0.5ex,
+        text height=2ex,
+        inner xsep=0pt,
+        outer sep=0pt
+    },      
+    table/.style={
+        matrix of nodes,
+        row sep=-\pgflinewidth,
+        column sep=-\pgflinewidth,
+        nodes={
+            table nodes
+        },
+        execute at empty cell={\node[draw=none]{};}
+    }
+}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        
+        \matrix (A) [table, text width=7mm] {
+            $a$ & $b$ & $c$ & $d$ & $e$ & $a$ & $b$ & $c$ & $d$\\
+            \\
+            |[draw=none]| & |[draw=none]|  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
+            |[draw=none]| & |[draw=none]|  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
+        };
+        
+        
+        \node[draw, fit=(A-3-1)(A-3-9), table nodes] {$R_0$-$[0..8]$};
+        \node[draw, fit=(A-4-1)(A-4-2), table nodes] {$R_1$-$[0..1]$};
+        \node[draw, fit=(A-4-6)(A-4-7), table nodes] {$R_1$-$[5..6]$};
+    \end{tikzpicture}
+\end{figure}
+
+% TODO Beschreibung von der neuen RuleIntervalIndex fertig schreiben
+
