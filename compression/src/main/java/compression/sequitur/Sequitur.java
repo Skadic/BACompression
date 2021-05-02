@@ -3,11 +3,13 @@ package compression.sequitur;
 import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedCompressor;
 
+import java.util.HashMap;
+
 public class Sequitur implements UnifiedCompressor {
 
     @Override
     public ToUnifiedRuleset compress(String s) {
-        Rule.resetNumRules();
+        reset();
 
         Rule firstRule = new Rule();
         for(char c : s.toCharArray()) {
@@ -16,6 +18,11 @@ public class Sequitur implements UnifiedCompressor {
         }
 
         return firstRule;
+    }
+
+    private static void reset() {
+        Rule.resetNumRules();
+        Symbol.DIGRAMS = new HashMap<>();
     }
 
     @Override
