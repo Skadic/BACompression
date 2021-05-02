@@ -127,27 +127,6 @@ public class AugmentedString implements CharSequence {
         return inverse;
     }
 
-    private static class ChildTableEntry {
-        int up;
-        int down;
-        int nextLIndex;
-
-        public ChildTableEntry(int up, int down, int nextLIndex) {
-            this.up = up;
-            this.down = down;
-            this.nextLIndex = nextLIndex;
-        }
-
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", "(", ")")
-                    .add(String.valueOf(up))
-                    .add(String.valueOf(down))
-                    .add(String.valueOf(nextLIndex))
-                    .toString();
-        }
-    }
-
     /**
      * Calculates the contents of {@link #childTable} with Abouelhoda et al's Algorithm
      * @param lcp The lcp array for which to compute the child table

@@ -67,13 +67,15 @@ class RuleIntervalIndex {
             return;
         }
 
-        for(; true; current = current.parent()) {
+        while(true) {
             current.depth++;
 
             // If there are no more less-deeply nested intervals at this start index, break
-            if(!current.hasParent() || current.parent().start() != start || interval.parent().contains(interval)) {
+            if(!current.hasParent() || current.parent().start() != start || current.parent().contains(interval)) {
                 break;
             }
+
+            current = current.parent();
         }
 
         interval.depth = current.depth + 1;
