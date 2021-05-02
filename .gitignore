@@ -22,5 +22,6 @@ reference/
 compression/input
 compression/debug
 compression/output
+compression/sql
 *.nps
 *.zip

@@ -18,19 +18,21 @@ Allerdings wird $\texttt{predecessor}$ viel häufiger benötigt als $\texttt{ins
 Da $u = |s|$ durch den Eingabestring $s$ gegeben ist, ist also die Wahl von $b = 2^k$, für ein $k \in \mathbb{N}$, interessant. Dieser widmen wir uns bei der Evaluation.
 % TODO DAS AUCH MACHEN 
 
-\subsection{Verbesserung von RuleIntervalIndex}
+\subsection{Verbesserung von \texttt{RuleIntervalIndex}}
 
 Wie bereits beschrieben, hat die vorherige Version von \texttt{RuleIntervalIndex} das Problem, dass bestimmte Fälle, in denen eine Substitution legal ist, nicht korrekt erkannt werden. Außerdem ist das Markieren von Bereichen noch ineffizient.  
 
 Zu diesem Zweck verändern wir die Funktionsweise von \texttt{RuleIntervalIndex} etwas.
-Wir speichern nun nicht mehr die am tiefsten verschachtelten Teile von Intervallen. Stattdessen speichern wir alle existierenden Intervalle. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger verschachtelte Intervalle. Betrachten wir wieder die Grammatik von zuvor für den String $abcdeabcd$:
+Wir speichern nun nicht mehr die am tiefsten verschachtelten Teile von Intervallen. Stattdessen speichern wir alle existierenden Intervalle. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger verschachtelte Intervalle. 
+
+\subsubsection{Beispiel}
+
+Betrachten wir wieder die Grammatik von zuvor für den String $abcdeabcd$:
 \begin{align*}
 	R_0 &\rightarrow R_1 c d e R_1 c d\\
 	R_1 &\rightarrow a b\\
 \end{align*}
-
 Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
-
 
 \tikzset{
     table nodes/.style={
@@ -70,7 +72,94 @@ Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
         \node[draw, fit=(A-4-1)(A-4-2), table nodes] {$R_1$-$[0..1]$};
         \node[draw, fit=(A-4-6)(A-4-7), table nodes] {$R_1$-$[5..6]$};
     \end{tikzpicture}
+    \caption{Die neue \texttt{RuleIntervalIndex} Struktur}
+    \label{newrii}
 \end{figure}
 
-% TODO Beschreibung von der neuen RuleIntervalIndex fertig schreiben
+\subsubsection{Neue \texttt{RuleInterval} Attribute}
 
+Die Intervalle behalten die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ Attribute. Die anderen Attribute werden durch die Folgenden ersetzt:
+
+\begin{itemize}[leftmargin=3cm]
+    \item[\texttt{depth}] Die Verschachtelungstiefe des Intervalls. Betrachtet man die Datenstruktur als Baum von Intervallen, mit dem $R_0$ Intervall als Wurzel und die enthaltenen Intervalle jeweils als Kindeknoten, so ist $\texttt{depth}$ äquivalent zur Tiefe des Knotens, der dieses Intervall repräsentiert.
+    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. Im obigen Beispiel zeigt der \texttt{parent} Zeiger der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
+    \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \textit{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
+    \item[\texttt{nextAtStartIndex}] Ein Pointer auf das Ersetzungsintervall, das am selben Startindex beginnt und dessen $\texttt{depth}$ genau um eins größer ist als die $\texttt{depth}$ dieses' Intervalls
+\end{itemize}
+
+Die erste Idee war, in der zugrundeliegenden Predecessor-Struktur dynamische Arrays von $\texttt{RuleInterval}$s zu speichern. Dies war allerdings aufgrund des Speicherverbrauchs und des Laufzeit-Overhead von Allokationen und Reallokationen unhaltbar. Als Verbesserung sind die Elemente der Predecessor Struktur nun für jeden Index das jeweils das am tiefsten verschachtelte Intervall, das an diesem Startindex beginnt. Auf die anderen Intervalle, die an demselben Startindex beginnen, kann mithilfe der $\texttt{firstAtStartIndex}$, $\texttt{nextAtStartIndex}$ und $\texttt{parent}$ Pointer zugegriffen werden.
+
+\subsubsection{Bestimmen der umschließenden Intervalle}
+Wir können nun bestimmen, welches das tiefste verschachtelte Ersetzungsintervall ist, das ein Intervall $[i..j]$ umschließt.
+Dies ist mithilfe des folgenden Algorithmus möglich.
+
+\begin{algorithm}
+	\caption{intervalContaining}
+	\begin{algorithmic}
+		\REQUIRE $from, to$ Start- und Endindizes
+		\STATE $current \leftarrow floorInterval(from)$
+		\WHILE {$current \neq \texttt{null}$}
+			\IF {$to \leq current.end$}
+				\RETURN $current$
+			\ENDIF
+            \IF {$to \leq current.firstAtStartIndex.end$}
+                \STATE $current \leftarrow current.parent$
+            \ELSE 
+                \STATE $current \leftarrow current.firstAtStartIndex$
+                \IF {$current.parent \neq \texttt{null}$}
+                    \STATE $current \leftarrow current.parent$
+                \ENDIF
+            \ENDIF
+		\ENDWHILE
+		\RETURN \texttt{null}
+	\end{algorithmic}
+\end{algorithm}
+
+Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$. 
+In der While-Schleife wird nun geprüft, ob das jetzige Intervall auch den Endindex $to$ einschließt. Ist dies der Fall, so haben ist dies das tiefste Intervall, das das Intervall $[from..to]$ einschießt, gefunden.\\
+Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$ Zeiger iteriert, bis ein Intervall gefunden wird, das auch $to$ enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall bestimmen, indem ein Index $i$ liegt, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
+
+In dem Fall, dass selbst das am wenigsten verschachtelte Intervall an diesem Startindex (\texttt{firstAtStartIndex}) nicht die gegebenen Grenzen umschließt, so kann direkt zum Eltern-Intervall von \texttt{firstAtStartIndex} gesprungen werden, da somit keines der übersprungenen Intervalle die Grenzen umschließt. 
+
+\subsubsection{Markieren von Ersetzungsintervallen}
+
+Beim Markieren der Ersetzungsintervalle wird ein neues $\texttt{RuleInterval}$ $R_i$-$[start..end]$ in die Datenstruktur eingefügt. 
+Zunächst, wird geprüft, ob es bereits ein Intervall gibt, das bei Startindex $start$ beginnt.
+Hier muss zwischen verschiedenen Fällen unterschieden werden.
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item[\textbf{Fall 1}] Falls kein solches Intervall existiert, so wird mithilfe von\\
+    $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$ Zeiger entsprechend gesetzt. 
+    Die Tiefe des neuen Intervalls lässt sich dann einfach mit $\texttt{depth + 1}$ berechnen. Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
+    \item[\textbf{Fall 2}] Im Fall, dass ein solches Intervall existiert, kann es nun sein, dass das neue Intervall das nun am tiefsten verschachtelte Intervall ist, das an diesem Startindex beginnt. Ist das der Fall, so werden die Pointer des entsprechenden Index gesetzt und das neue Intervall ersetzt nun das vorherige in der Predecessor Datenstruktur, da es nun das tiefste Intervall an diesem Index ist.\\
+    Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$ Zeiger iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. Dabei muss jeweils die $\texttt{depth}$ jedes besuchten Intervalls um $1$ erhöht werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte Intervall, das an diesem Startindex beginnt. An diese Stelle muss dann das neue Intervall eingefügt werden. 
+\end{itemize}
+
+\subsection{Ruleset}
+
+Die Ruleset-Klasse ist für die Kompression des Strings verantwortlich. Das Ruleset beinhaltet eine Instanz der \texttt{RuleIntervalIndex} Datenstruktur. Sei im Folgenden $s \in \Sigma^*$ ein Eingabestring mit $n := |s|$ Dazu sind folgende Teilschritte erforderlich:
+
+\subsubsection{Berechnen der benötigten Arrays}
+
+Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorithmus \cite{larsson_faster_2007} wird in $\mathcal{O}(n \log n)$ Laufzeit das Suffix-Array berechnet. Für das LCP-Array wird der Linearzeit Algorithmus aus \cite{kasai_linear-time_2001} verwendet. Zuletzt wird für die komprimierte Variante des Kind-Array der von Abouelhoda et al. beschriebene Algorithmus aus \cite{abouelhoda_optimal_2002} verwendet. Dieser berechnet das Kind-Array ebenfalls in $\mathcal{O}(n)$ Laufzeit.
+
+\subsubsection{Berechnen der Prioritätswarteschlange}
+
+Nun, da das Kind-Array berechnet ist, kann für jedes maximale LCP-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ maximale LCP-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle maximalen LCP-Intervalle durch rekursive Aufrufe also in $\mathcal{O}(n)$ berechnet werden.
+
+Diese Intervalle werden nun in eine auf einem Binären Heap \cite{williams_algorithm_1964} basierenden Prioritätswarteschlange eingefügt. Die benötigte Laufzeit um ein Element einzufügen oder das minimale/maximale Element zu entfernen ist $\mathcal{O}(\log n)$ im Worst-Case. Da die Aufrufe der Operationen der Prioritätswarteschlange keinen signifikanten Anteil der Laufzeit des Algorithmus ausmachen, ist es hier nicht nötig nach alternativen möglicherweise effizienteren Heap-Implementationen zu forschen.
+
+Da die LCP-Intervalle anhand ihrer Flächenwerte priorisiert werden, muss die Flächenfunktion für jedes Intervall mindestens einmal aufgerufen werden. Sei $A$ die Flächenfunktion und $I$ ein LCP-Intervall. Sei dann die Laufzeit der Flächenfunktion $A(I)$ gleich $a(k)$, wobei $k = |I|$. Da die Länge jedes Intervalls $\mathcal{O}(n)$ ist, folgt insgesamt als Laufzeit für die Konstruktion der Prioritätswarteschlange: $\mathcal{O}(n \cdot a(n) \cdot \log n)$.
+\\\\
+
+\subsubsection{Kompression}
+
+Die folgenden Operationen werden solange wiederholt, bis die konstruierte Prioritätswarteschlange leer ist. 
+
+
+
+
+
+
+
+\subsubsection{}
