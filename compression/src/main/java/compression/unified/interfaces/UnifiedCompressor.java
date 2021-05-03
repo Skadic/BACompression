@@ -80,7 +80,18 @@ public interface UnifiedCompressor {
         String reconstructed = unified.buildString();
         boolean reconstructable = reconstructed.equals(s);
         out.println("Original String reconstructable? " + (reconstructable ? "Yes" : "No"));
-        if(!reconstructable && PRINT) out.println(reconstructed);
+        if(!reconstructable && PRINT) {
+            var recLines = reconstructed.split("\n");
+            var origLines = s.split("\n");
+            for (int i = 0; i < Math.min(recLines.length, origLines.length); i++) {
+                var rec = recLines[i].replace("\n", "\\n").replace("\r", "\\r");
+                var orig = origLines[i].replace("\n", "\\n").replace("\r", "\\r");
+                if(!rec.equals(orig)) {
+                    out.println("Line " + i + ": " + rec + " /// " + orig);
+                }
+            }
+            //out.println(reconstructed);
+        }
         out.println();
     }
 

@@ -49,38 +49,43 @@ class RuleIntervalIndex {
         // If there was no interval at that index before
         if(current == null) {
             var parent = intervalContaining(start, end);
-            interval.depth = parent.depth + 1;
+            //interval.depth = parent.depth + 1;
             interval.insertParent(parent);
             interval.setFirstAtStartIndex(interval);
             intervalMap.put(start, interval);
-            return;
-        }
-
-        // If this new interval is the new deepest nested interval
-        // Add the new interval into its appropriate place in the list according to its depth
-        if(current.contains(interval)) {
-            interval.depth = current.depth + 1;
+            // If this new interval is the new deepest nested interval
+            // Add the new interval into its appropriate place in the list according to its depth
+        } else if(current.contains(interval)) {
+            //interval.depth = current.depth + 1;
             interval.insertParent(current);
             interval.setFirstAtStartIndex(current.firstAtStartIndex());
             // Since current is now the new deepest interval, it replaces the previous deepest interval
             intervalMap.put(start, interval);
-            return;
-        }
+        } else {
+            // Whether the new Interval will be the least deeply nested at this start index
+            final boolean isNewFirst = interval.contains(current.firstAtStartIndex());
+            while(true) {
+                //current.depth++;
+                if(isNewFirst) current.setFirstAtStartIndex(interval);
+                // If there are no more less-deeply nested intervals at this start index, break
+                if(!current.hasParent() || current.parent().start() != start || current.parent().contains(interval)) {
+                    break;
+                }
 
-        while(true) {
-            current.depth++;
-
-            // If there are no more less-deeply nested intervals at this start index, break
-            if(!current.hasParent() || current.parent().start() != start || current.parent().contains(interval)) {
-                break;
+                current = current.parent();
             }
 
-            current = current.parent();
+            //interval.depth = current.depth + 1;
+            current.insertParent(interval);
+            interval.setFirstAtStartIndex(interval.hasParent() && interval.start() == interval.parent().start() ? interval.parent().firstAtStartIndex() : interval);
         }
 
-        interval.depth = current.depth + 1;
-        current.insertParent(interval);
-        interval.setFirstAtStartIndex(interval.hasParent() ? interval.parent().firstAtStartIndex() : interval);
+        intervalMap.valueRangeIterator(start, false, end, true).forEachRemaining(inter -> {
+            var first  = inter.firstAtStartIndex();
+            if(interval.contains(first) && first.parent() == interval.parent()) {
+                first.insertParent(interval);
+            }
+        });
     }
 
     /**
@@ -95,12 +100,12 @@ class RuleIntervalIndex {
         //int i = 0;
         while (current != null) {
             // If an interval that contains index has been found, return
-            if(to <= current.end) {
+            if(current.start <= from && to <= current.end) {
                 //if(i >= 20) System.out.println("Iterations: " + i);
                 return current;
             }
 
-            if(to <= current.firstAtStartIndex().end()) {
+            if(current.firstAtStartIndex().start() <= from && to <= current.firstAtStartIndex().end()) {
                 current = current.parent();
             } else {
                 current = current.firstAtStartIndex();
@@ -220,7 +225,7 @@ class RuleIntervalIndex {
             this.start = start;
             this.end = end;
             this.ruleId = ruleId;
-            this.depth = depth;
+            //this.depth = depth;
             this.parent = null;
             this.firstAtStartIndex = null;
         }
@@ -245,10 +250,16 @@ class RuleIntervalIndex {
         public void insertParent(RuleInterval newParent) {
             if(hasParent()) {
                 newParent.parent = this.parent;
-                this.parent.nextAtStartIndex = newParent;
+                if(parent.start == newParent.start) {
+                    this.parent.nextAtStartIndex = newParent;
+                    newParent.firstAtStartIndex = this.parent.firstAtStartIndex;
+                }
             }
             this.parent = newParent;
-            newParent.nextAtStartIndex = this;
+            if(newParent.start == this.start) {
+                newParent.nextAtStartIndex = this;
+                this.firstAtStartIndex = newParent.firstAtStartIndex;
+            }
         }
 
         public void setFirstAtStartIndex(RuleInterval firstAtStartIndex) {
@@ -279,7 +290,7 @@ class RuleIntervalIndex {
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", "(", ")").add("R" + ruleId).add(String.valueOf(start)).add(String.valueOf(end)).add(String.valueOf(depth)).toString();
+            return new StringJoiner(", ", "(", ")").add("R" + ruleId).add(String.valueOf(start)).add(String.valueOf(end)).toString();
         }
 
         /**
@@ -323,12 +334,12 @@ class RuleIntervalIndex {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             RuleInterval that = (RuleInterval) o;
-            return start == that.start && end == that.end && ruleId == that.ruleId && depth == that.depth;
+            return start == that.start && end == that.end && ruleId == that.ruleId;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(ruleId, start, end, depth);
+            return Objects.hash(ruleId, start, end);
         }
 
         public RuleInterval nextAtStartIndex() {

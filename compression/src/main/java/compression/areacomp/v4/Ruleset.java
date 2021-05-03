@@ -78,7 +78,6 @@ class Ruleset implements ToUnifiedRuleset {
         }
 
         Benchmark.stopTimer(ALGORITHM_NAME, "queue");
-
         while (!queue.isEmpty()) {
 
             Benchmark.startTimer(ALGORITHM_NAME, "positions");
@@ -100,16 +99,8 @@ class Ruleset implements ToUnifiedRuleset {
 
             Arrays.sort(positions);
 
-            //positions = nonOverlapping(positions, len);
-
-            /*var multipleOccurrences = differingOccurences(positions);
-
-            if(!multipleOccurrences) {
-                continue;
-            }*/
-
             Benchmark.startTimer(ALGORITHM_NAME, "in boundary");
-            int positionCount = inBoundary(positions, len);
+            int positionCount = cleanPositions(positions, len);
             if (positionCount <= 1) {
                 Benchmark.stopTimer(ALGORITHM_NAME, "positions");
                 Benchmark.stopTimer(ALGORITHM_NAME, "in boundary");
@@ -125,7 +116,6 @@ class Ruleset implements ToUnifiedRuleset {
             if(!multipleOccurrences) {
                 continue;
             }
-
             Benchmark.startTimer(ALGORITHM_NAME, "factorize");
             factorize(len, positions);
             Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
@@ -152,7 +142,7 @@ class Ruleset implements ToUnifiedRuleset {
             if(position == -1) continue;
 
             Benchmark.startTimer(ALGORITHM_NAME, "markRange");
-            markRange(nextId, position, position + len - 1);
+            intervalIndex.mark(nextId, position, position + len - 1);
             Benchmark.stopTimer(ALGORITHM_NAME, "markRange");
         }
     }
@@ -164,14 +154,14 @@ class Ruleset implements ToUnifiedRuleset {
      * @param len The length of the pattern
      * @return The amount of valid positions
      *
-     * @see #crossesBoundary(int, int)
+     * @see #substitutionAllowed(int, int)
      */
-    private int inBoundary(int[] positions, int len) {
+    private int cleanPositions(int[] positions, int len) {
         int count = 0;
         int last = Short.MIN_VALUE;
         for (int i = 0; i < positions.length; i++) {
             int position = positions[i];
-            if (position - last >= len && !crossesBoundary(position, position + len - 1)) {
+            if (position - last >= len && substitutionAllowed(position, position + len - 1)) {
                 last = position;
                 count++;
             } else {
@@ -236,40 +226,57 @@ class Ruleset implements ToUnifiedRuleset {
     }
 
     /**
-     * Marks an area as being part of the rule with the given id
+     * Checks whether the given Interval can be substituted without violating other previous substitutions in this area.
+     * In essence, this checks whether there is an already substituted interval in which a start symbol and and end symbol can be found,
+     * which correspond to the indices from and to in the input String.
      *
-     * @param id   The rule id
-     * @param from The start index of the range (inclusive)
-     * @param to   The end index of the range (inclusive)
+     * For example. Take the following grammar for the string "abacaba":
      *
-     */
-    public void markRange(int id, int from, int to) {
-        intervalIndex.mark(id, from, to);
-    }
-
-    /**
-     * Checks, whether an interval starts in one rule range, and ends in another
-     * @param from The lower bound of the range
+     * S -> AcA
+     * A -> aba
+     *
+     * This method returns true for the input [0, 3]
+     * This is because the 0 index here corresponds to either the first "A" in Rule S or the first "a" in Rule A and the 4 index corresponds to the "c", both in Rule S.
+     * Here, a start- and end symbol can be found that are in the same rule interval and correspond to the indices. These being the "A" and "c" in Rule S respectively.
+     *
+     * This method returns false for the input [1, 3], since the only symbol that corresponds to the index 1 is the "b" in rule A, and for index 3 it is only the "c".
+     * So there is no way to find a start- and end symbol which both lie in the same substituted interval.
+     *
+     * This method also returns false for the input [0, 5]. Index 0 corresponds to the first "A" in rule S and the first "a" in rule A, while index 5 corresponds only to the "b" in rule A.
+     * While start- and end symbols can be found, which are of the same rule ("a" and "b" of rule A), they are *not* of the same substituted interval.
+     * While the "a" is of the first substituted instance of rule A, the "b" is of the second substituted instance. As a result this substitution would also be invalid.
+     *
+     * @param from The lower bound of the range (inclusive)
      * @param to The upper bound of the range (inclusive)
      * @return true, if the interval starts in the same rule range as it started. false otherwise
      */
-    public boolean crossesBoundary(int from, int to) {
+    public boolean substitutionAllowed(int from, int to) {
         Benchmark.startTimer(ALGORITHM_NAME, "crossesBoundary");
         RuleInterval fromInterval = intervalIndex.intervalContaining(from);
 
-        if (from == fromInterval.start()){
-            while (from == fromInterval.start() && to > fromInterval.end()){
-                fromInterval = fromInterval.parent();
-            }
+        // If the start index is the start of this interval, it might imply that this is a non-terminal in a less-deeply nested rule.
+        // In that case, we iterate upwards by using the parent pointers in order to find the first interval, which contains the end index also.
+        // Mind, that only intervals that start at the same index, and the parent of the last such interval can be considered here.
+        // This is because while the start index is equal to the current interval's start position, that means that the start index
+        // describes the position of a non-terminal in its parent interval.
+        while (from == fromInterval.start() && to > fromInterval.end() && fromInterval.hasParent()){
+            fromInterval = fromInterval.parent();
         }
 
+
+        // If there is no such interval, that would also contain $$
         if(to > fromInterval.end()) {
-            return true;
+            return false;
         }
 
         RuleInterval toInterval = intervalIndex.intervalContaining(to);
 
-        boolean b = !fromInterval.equals(toInterval);
+        while (!(toInterval.contains(fromInterval)) && to == toInterval.end() && toInterval.hasParent()) {
+            toInterval = toInterval.parent();
+        }
+
+
+        boolean b = fromInterval.equals(toInterval);
         Benchmark.stopTimer(ALGORITHM_NAME, "crossesBoundary");
         return b;
     }
