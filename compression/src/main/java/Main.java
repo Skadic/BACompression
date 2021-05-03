@@ -1,5 +1,6 @@
-import compression.areacomp.areas.ChildArea;
+import compression.areacomp.areas.LengthFirstArea;
 import compression.areacomp.v4.AreaCompV4;
+import compression.sequitur.Sequitur;
 import compression.unified.interfaces.UnifiedCompressor;
 import compression.utils.Benchmark;
 
@@ -22,13 +23,13 @@ public class Main {
         }
 
         final List<UnifiedCompressor> compressors = List.of(
-                //new Sequitur(),
-                //new RePair(),
+                new Sequitur(),
+                new AreaCompV4(new LengthFirstArea())
                 //,new AreaCompV1(area)
                 //new AreaCompV2(new NaiveArea()),
                 //new AreaCompV3(new ChildArea()),
                 //new AreaCompV3(new LengthFirstArea()),
-                new AreaCompV4(new ChildArea())
+                //new RePair()
                 //new AreaCompV3(new DepthWithAddArea()),
         );
 
@@ -50,12 +51,12 @@ public class Main {
 
         try (PrintStream out = new PrintStream(Files.newOutputStream(outputPath))) {
             out.println("On a test string of " + input.length() + " characters.\n");
-            for (UnifiedCompressor compressor : compressors) {
-                System.out.println("Testing " + compressor.name());
-                //for (int i = 0; i < REPETITIONS; i++) {
-                    compressor.benchmark(input, out);
-                //}
-                System.out.println("Done testing " + compressor.name());
+            for (int i = 0; i < REPETITIONS; i++) {
+                for (UnifiedCompressor compressor : compressors) {
+                    System.out.println("Testing " + compressor.name());
+                    compressor.sqlplot(fileName);
+                    System.out.println("Done testing " + compressor.name());
+                }
             }
         }
 

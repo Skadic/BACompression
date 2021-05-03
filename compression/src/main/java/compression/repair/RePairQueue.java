@@ -62,11 +62,11 @@ class RePairQueue {
      * @param element The element to insert
      */
     private void insertInto(int index, PairElement element) {
-        if (queues.get(index) == null) {
-            queues.set(index, element);
-        } else {
-            queues.get(index).append(element);
+        if (queues.get(index) != null) {
+            var oldElem = queues.get(index);
+            element.connectNext(oldElem);
         }
+        queues.set(index, element);
     }
 
     public boolean contains(SymbolPair pair) {
@@ -80,7 +80,6 @@ class RePairQueue {
      */
     public void updateFrequency(SymbolPair pair, int amount) {
         if(!contains(pair)) return;
-
         var element = pairs.get(pair);
 
         if(element.isHead()) {
@@ -288,6 +287,5 @@ class RePairQueue {
                 connectNext(pair);
             }
         }
-
     }
 }
