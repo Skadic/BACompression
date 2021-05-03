@@ -135,7 +135,10 @@ public interface UnifiedCompressor {
 
         result.add("verified=" + unified.verify(s));
 
-        new PrintStream(Files.newOutputStream(outPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE)).println(result);
+        try(var stream = new PrintStream(Files.newOutputStream(outPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE))) {
+            stream.println(result);
+            stream.flush();
+        }
     }
 
     /**

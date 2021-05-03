@@ -29,7 +29,7 @@ class RuleIntervalIndex {
         this.intervalMap = new BucketPred<>(len, 16);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
-        final var interval = new RuleInterval(topLevelRuleId, 0, len - 1, 0);
+        final var interval = new RuleInterval(topLevelRuleId, 0, len - 1);
         interval.setFirstAtStartIndex(interval);
         intervalMap.put(topLevelRuleId, interval);
 
@@ -44,7 +44,7 @@ class RuleIntervalIndex {
     public void mark(int ruleId, int start, int end) {
         checkInterval(start, end);
         RuleInterval current = intervalAtStartIndex(start);
-        var interval = new RuleInterval(ruleId, start, end, -1);
+        var interval = new RuleInterval(ruleId, start, end);
 
         // If there was no interval at that index before
         if(current == null) {
@@ -207,11 +207,6 @@ class RuleIntervalIndex {
         private RuleInterval nextAtStartIndex;
 
         /**
-         * The nesting depth of this interval
-         */
-        private int depth;
-
-        /**
          * Inclusive start index of the interval
          */
         private final int start;
@@ -221,11 +216,10 @@ class RuleIntervalIndex {
          */
         private final int end;
 
-        public RuleInterval(int ruleId, int start, int end, int depth) {
+        public RuleInterval(int ruleId, int start, int end) {
             this.start = start;
             this.end = end;
             this.ruleId = ruleId;
-            //this.depth = depth;
             this.parent = null;
             this.firstAtStartIndex = null;
         }
