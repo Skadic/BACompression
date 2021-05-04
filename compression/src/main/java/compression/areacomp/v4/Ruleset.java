@@ -117,7 +117,7 @@ class Ruleset implements ToUnifiedRuleset {
                 continue;
             }
             Benchmark.startTimer(ALGORITHM_NAME, "factorize");
-            factorize(len, positions);
+            substitute(len, positions);
             Benchmark.stopTimer(ALGORITHM_NAME, "factorize");
         }
         Benchmark.stopTimer(ALGORITHM_NAME, "total time");
@@ -131,7 +131,7 @@ class Ruleset implements ToUnifiedRuleset {
      * @param len The length of the subsequence to replace in terminal characters
      * @param positions The start positions of the occurences in the original string
      */
-    public void factorize(int len, int... positions) {
+    public void substitute(int len, int... positions) {
         // If the occurence is less than one or
         if (len <= 1 || positions.length < 2) return;
 
@@ -158,11 +158,11 @@ class Ruleset implements ToUnifiedRuleset {
      */
     private int cleanPositions(int[] positions, int len) {
         int count = 0;
-        int last = Short.MIN_VALUE;
+        int previous = Short.MIN_VALUE;
         for (int i = 0; i < positions.length; i++) {
-            int position = positions[i];
-            if (position - last >= len && substitutionAllowed(position, position + len - 1)) {
-                last = position;
+            int pos = positions[i];
+            if (previous + len <= pos && substitutionAllowed(pos, pos + len - 1)) {
+                previous = pos;
                 count++;
             } else {
                 positions[i] = -1;
@@ -236,7 +236,7 @@ class Ruleset implements ToUnifiedRuleset {
      * A -> aba
      *
      * This method returns true for the input [0, 3]
-     * This is because the 0 index here corresponds to either the first "A" in Rule S or the first "a" in Rule A and the 4 index corresponds to the "c", both in Rule S.
+     * This is because the 0 index here corresponds to either the first "A" in Rule S or the first "a" in Rule A and the 3 index corresponds to the "c", both in Rule S.
      * Here, a start- and end symbol can be found that are in the same rule interval and correspond to the indices. These being the "A" and "c" in Rule S respectively.
      *
      * This method returns false for the input [1, 3], since the only symbol that corresponds to the index 1 is the "b" in rule A, and for index 3 it is only the "c".
@@ -264,7 +264,7 @@ class Ruleset implements ToUnifiedRuleset {
         }
 
 
-        // If there is no such interval, that would also contain $$
+        // If there is no such interval, that would also contain "to", the substitution can't be allowed
         if(to > fromInterval.end()) {
             return false;
         }

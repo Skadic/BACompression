@@ -1,4 +1,29 @@
 % !TeX root = ../../main.tex
+
+
+\tikzset{
+    table nodes/.style={
+        rectangle,
+        draw=black,
+        align=center,
+        minimum height=7mm,
+        text depth=0.5ex,
+        text height=2ex,
+        inner xsep=0pt,
+        outer sep=0pt
+    },      
+    table/.style={
+        matrix of nodes,
+        row sep=-\pgflinewidth,
+        column sep=-\pgflinewidth,
+        nodes={
+            table nodes
+        },
+        execute at empty cell={\node[draw=none]{};}
+    }
+}
+
+
 \section{AreaComp V4}
 
 Dies ist nun die finale Version dieses Algorithmus. 
@@ -34,28 +59,6 @@ Betrachten wir wieder die Grammatik von zuvor für den String $abcdeabcd$:
 	R_1 &\rightarrow a b\\
 \end{align*}
 Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
-
-\tikzset{
-    table nodes/.style={
-        rectangle,
-        draw=black,
-        align=center,
-        minimum height=7mm,
-        text depth=0.5ex,
-        text height=2ex,
-        inner xsep=0pt,
-        outer sep=0pt
-    },      
-    table/.style={
-        matrix of nodes,
-        row sep=-\pgflinewidth,
-        column sep=-\pgflinewidth,
-        nodes={
-            table nodes
-        },
-        execute at empty cell={\node[draw=none]{};}
-    }
-}
 
 \begin{figure}[H]
     \centering
@@ -227,11 +230,135 @@ Die Substitution ist hier also auch ungültig.
 
 \subparagraph{cleanPositions}
 
-Mit dem vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen.  
+Mithilfe des vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen. Der folgende Algorithmus leistet dies, und gibt zusätzlich die Anzahl der übrigen Positionen zurück. In diesem Algorithmus werden Positionen entfernt, indem sie durch $-1$ ersetzt werden. Beachte, dass dieser Algorithmus erwartet, dass das $positions$ Array aufsteigend sortiert ist.
 
 \begin{algorithm}
     \begin{algorithmic}
         \caption{cleanPositions}
         \REQUIRE $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$
+        \STATE $count \leftarrow 0$
+        \STATE $previous \leftarrow -\infty$
+        \FOR{$i$ \textbf{in} $0$ \textbf{to} $n - 1$}
+            \STATE $pos \leftarrow positions[i]$
+            \IF{$previous + len \leq pos$ \textbf{ and } $substitutionAllowed(pos, pos + len - 1)$}
+                \STATE $previous \leftarrow pos$
+                \STATE $count \leftarrow count + 1$
+            \ELSE
+                \STATE $positions[i] \leftarrow -1$
+            \ENDIF
+        \ENDFOR
+        \RETURN $count$
     \end{algorithmic}
 \end{algorithm}
+
+Der Algorithmus iteriert durch das Array der gegebenen Positionen. Falls dann das jetzige Vorkommen sich nicht mit dem Vorherigen überschneidet und eine Substitution dieses Vorkommens erlaubt ist, so erhöhe den Zähler. Falls dies nicht der Fall ist, so entferne dieses Vorkommen.
+
+\paragraph{Sicherstellen unterschiedlicher Vorkommen}
+
+Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global für den Eingabestring berechnet werden, ist es möglich, dass es zwar mehrere Vorkommen eines Musters im Eingabestring gibt, aber durch vorhergehende Substitutionen dieses Vorkommen nur noch einmal in der Grammatik vorkommt. Betrachten wir wieder das Beispiel von vorher:
+
+\begin{align*}
+    S &\rightarrow AcA\\
+    A &\rightarrow aba
+\end{align*}
+
+Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \textit{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
+
+Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, solst \texttt{false}:
+
+\begin{algorithm}
+    \begin{algorithmic}
+        \caption{differingOccurrences}
+        \REQUIRE $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$
+        \STATE $set \leftarrow \emptyset$
+        \STATE $firstRuleId = -1$
+        \FOR{$pos$ \textbf{in} $positions$}
+            \IF{$pos == -1$} 
+                \STATE \textbf{continue}
+            \ENDIF
+            \STATE $ruleInterval \leftarrow intervalIndex.intervalContaining(pos)$
+            \STATE $ruleId \leftarrow ruleInterval.ruleId$
+            \STATE $startIndex \leftarrow ruleInterval.start$
+
+            \IF{$firstRuleId = -1$}
+                \STATE $firstRuleId \leftarrow ruleId$
+            \ELSIF{$ruleId \neq firstRuleId$ \textbf{ or } $startIndex \in set$}
+                \RETURN \TRUE
+            \ENDIF
+            \STATE $set \leftarrow set \cup \{startIndex\}$
+        \ENDFOR
+        \RETURN \FALSE
+    \end{algorithmic}
+\end{algorithm}
+
+Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel, die in der nun folgenden for-Schleife gefunden wird.
+
+Die for-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positionen und berechnet jeweils das tiefste Intervall an dem gegebenen Index, sowie dessen ID und Startindex. Ist die $firstRuleId$ noch nicht gesetzt, so wird diese auf die ID des berechneten Intervalls gesetzt. Andernfalls wird geprüft, ob die ID des soeben berechneten Intervalls mit der als erstes berechneten Intervalls übereinstimmt. Stimmen diese nicht überein, so sind bereits zwei Vorkommen in unterschiedlichen Regeln gefunden worden. Diese müssen zwangsweise unterschiedlich sein. Also gibt der Algorithmus dann \texttt{true} zurück.
+
+Ist dies nicht der Fall, so wird geprüft ob der Startindex des jetzigen Intervalls bereits in der Menge zu finden ist, also schon ein Vorkommen in einem Intervall mit diesem Startindex gefunden wurde. Wenn ja, dann muss das aktuell betrachtete Vorkommen zwangsweise unterschiedlich mit dem bereits gefundenen sein. Denn es gibt hier zwei Fälle:
+\begin{itemize}
+    \item[\textbf{Fall 1}] \textit{Das jetzige Intervall ist dasselbe Intervall, indem bereits ein Vorkommen gefunden wurde.}\\
+    In diesem Fall existiert also in demselben Intervall ein Vorkommen an einem kleineren Index. Dies gilt, da die Indizes aufsteigend sortiert sind (ausgenommen der entfernten Indizes) und an jedem Index nur maximal \textit{ein} Intervall mit einer gegebenen Regel ID existieren kann. 
+    \item[\textbf{Fall 2}] \textit{Das jetzige Intervall ist ein anderes Intervall, das an demselben Startindex beginnt.}\\
+    Wie in Fall 1 schon beschrieben, muss also das jetzige Intervall einer anderen Regel angehlören. Da nun ein Vorkommen in einer anderen Regel gefunden wurde, als das vorherige Vorkommen, so folgt sofort, dass das jetzige Vorkommen unterschiedlich sein muss. 
+\end{itemize}   
+Also wird \texttt{true} zurückgegeben, wenn ein Startindex zweimal gefunden wird.
+
+Tritt keine dieser Bedingungen je ein, so existieren keine unterschiedlichen Vorkommen und der Algorithmus gibt $\texttt{false}$ zurück.\\\\
+Gibt dieser Algorithmus \texttt{false} zurück, so wird keine Substitution durchgeführt, da insgesamt nur ein Vorkommen des Musters in der Grammatik existiert.
+
+\newpage
+\paragraph{Faktorisierung}
+
+Der letzte Schritt der Kompression ist die tatsächliche Substitution der Vorkommen des Musters.
+\begin{algorithm}
+    \begin{algorithmic}
+        \REQUIRE $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur\\
+        \STATE $ $
+        \STATE $nextId \leftarrow$ nächste unbenutzte Regel ID
+        \FOR{$pos \leftarrow positions$}
+            \IF{$pos = -1$}
+                \STATE \textbf{continue}
+            \ENDIF
+            \STATE $intervalIndex.mark(nextId, pos, pos + len - 1)$
+        \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+
+Der Algorithmus iteriert nur durch das Array der Startindizes der Vorkommen des Musters und markiert die jeweiligen Intervalle, die das Vorkommen des Musters einnimmt, in der Datenstruktur. 
+
+\paragraph{Abschluss des Algorithmus}
+
+Wenn der Algorithmus terminiert, so sind alle Ersetzungsintervalle in der \texttt{RuleIntervalIndex} Datenstruktur gespeichert.
+Diese lässt sich mithilfe des Originalstrings die Grammatik in eine Darstellung überführen, in der die Produktionsregeln der Grammatik explizit gespeichert werden.
+Es kann für jedes Zeichen im Eingabetext die tiefste Regel bestimmt werden, in der das jeweilige Zeichen liegt, und in eine entsprechende Liste von Zeichen eingefügt werden.
+
+Hierzu werden 2 Stacks angewendet.
+\begin{itemize}[leftmargin=2cm]
+    \item[\texttt{nestingStack}] Ein Stack von Ersetzungsintervallen. Ist die Iteration bei Index $i$, so enthält \texttt{nestingStack} alle Ersetzungsintervalle in denen $i$ liegt, in der Reihenfolge ihrer Verschachtelung. Dabei liegt das am tiefsten verschachtelte Intervall oben auf dem Stack.
+    \item[\texttt{symbolStack}] Ein Stack von Listen von Symbolen. Für jedes Ersetzungsintervall enthält \texttt{symbolStack} jeweils eine korrespondierende Liste von Symbolen. 
+    Ist die Iteration bei Index $i$, so enthalten die Listen jeweils Symbole der rechten Seite der Produktionsregel, die durch das korrespondierende Ersetzungsintervall repräsentiert wird. Sie enthalten Symbole, die in dem Ersetzungsintervall bis zum Index $i$ im Eingabestring vorkommen. 
+\end{itemize} 
+
+Ein Beispiel dafür. Betrachten wir die folgende Grammatik für $abcdabeabcd$
+
+\begin{align*}
+    S &\rightarrow ABeA\\
+    A &\rightarrow Bcd\\
+    B &\rightarrow ab\\
+\end{align*}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \matrix (A) [table, text width=7mm] {
+            $a$ & $b$ & $c$ & $d$ & $a$ & $b$ & $e$ & $a$ & $b$ & $c$ & $d$\\
+            \\
+            |[draw=none]| & |[draw=none]|  &  &  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
+            |[draw=none]| & |[draw=none]|  &  &  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
+        };
+        
+        \node[draw, fit=(A-3-1)(A-3-9), table nodes] {$R_0$-$[0..10]$};
+
+    \end{tikzpicture}
+\end{figure}

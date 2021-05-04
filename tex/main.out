@@ -41,4 +41,8 @@
 \BOOKMARK [2][-]{subsection.4.4.3}{Kleinere Verbesserungen in der Rule Datenstruktur}{section.4.4}% 41
 \BOOKMARK [2][-]{subsection.4.4.4}{Probleme}{section.4.4}% 42
 \BOOKMARK [1][-]{section.4.5}{AreaComp V4}{chapter.4}% 43
-\BOOKMARK [0][-]{chapter*.52}{Literaturverzeichnis}{}% 44
+\BOOKMARK [2][-]{subsection.4.5.1}{Bessere Predecessor-Datenstruktur}{section.4.5}% 44
+\BOOKMARK [2][-]{subsection.4.5.2}{Verbesserung von RuleIntervalIndex}{section.4.5}% 45
+\BOOKMARK [2][-]{subsection.4.5.3}{Ruleset}{section.4.5}% 46
+\BOOKMARK [0][-]{chapter.5}{Evaluation}{}% 47
+\BOOKMARK [0][-]{chapter*.69}{Literaturverzeichnis}{}% 48

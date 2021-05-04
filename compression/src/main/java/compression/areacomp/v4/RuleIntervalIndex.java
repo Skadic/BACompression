@@ -49,14 +49,11 @@ class RuleIntervalIndex {
         // If there was no interval at that index before
         if(current == null) {
             var parent = intervalContaining(start, end);
-            //interval.depth = parent.depth + 1;
             interval.insertParent(parent);
             interval.setFirstAtStartIndex(interval);
             intervalMap.put(start, interval);
             // If this new interval is the new deepest nested interval
-            // Add the new interval into its appropriate place in the list according to its depth
         } else if(current.contains(interval)) {
-            //interval.depth = current.depth + 1;
             interval.insertParent(current);
             interval.setFirstAtStartIndex(current.firstAtStartIndex());
             // Since current is now the new deepest interval, it replaces the previous deepest interval
@@ -65,7 +62,6 @@ class RuleIntervalIndex {
             // Whether the new Interval will be the least deeply nested at this start index
             final boolean isNewFirst = interval.contains(current.firstAtStartIndex());
             while(true) {
-                //current.depth++;
                 if(isNewFirst) current.setFirstAtStartIndex(interval);
                 // If there are no more less-deeply nested intervals at this start index, break
                 if(!current.hasParent() || current.parent().start() != start || current.parent().contains(interval)) {
@@ -75,7 +71,6 @@ class RuleIntervalIndex {
                 current = current.parent();
             }
 
-            //interval.depth = current.depth + 1;
             current.insertParent(interval);
             interval.setFirstAtStartIndex(interval.hasParent() && interval.start() == interval.parent().start() ? interval.parent().firstAtStartIndex() : interval);
         }
