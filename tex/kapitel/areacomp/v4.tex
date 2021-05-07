@@ -85,8 +85,8 @@ Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
 Die Intervalle behalten die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ Attribute. Die anderen Attribute werden durch die Folgenden ersetzt:
 
 \begin{itemize}[leftmargin=3cm]
-    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. Im obigen Beispiel zeigt der \texttt{parent} Zeiger der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
-    \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \textit{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
+    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. Im obigen Beispiel zeigt der \texttt{parent} Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
+    \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \emph{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
     \item[\texttt{nextAtStartIndex}] Ein Pointer auf das Ersetzungsintervall, das am selben Startindex beginnt und das nächst-tiefer verschachtelt ist
 \end{itemize}
 
@@ -120,7 +120,7 @@ Dies ist mithilfe des folgenden Algorithmus möglich.
 
 Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$. 
 In der While-Schleife wird nun geprüft, ob das jetzige Intervall auch beide Grenzen einschließt. Ist dies der Fall, so haben ist dies das tiefste Intervall, das das Intervall $[from..to]$ einschießt, gefunden.\\
-Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$ Zeiger iteriert, bis ein Intervall gefunden wird, das beide Grenzen enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall bestimmen, indem ein Index $i$ liegt, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
+Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$ Pointer iteriert, bis ein Intervall gefunden wird, das beide Grenzen enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall bestimmen, indem ein Index $i$ liegt, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
 
 In dem Fall, dass selbst das am wenigsten verschachtelte Intervall an diesem Startindex (\texttt{firstAtStartIndex}) nicht die gegebenen Grenzen umschließt, so kann direkt zum Eltern-Intervall von \texttt{firstAtStartIndex} gesprungen werden, da somit keines der übersprungenen Intervalle die Grenzen umschließt. 
 
@@ -132,13 +132,13 @@ Hier muss zwischen verschiedenen Fällen unterschieden werden.
 
 \begin{itemize}[leftmargin=1.5cm]
     \item[\textbf{Fall 1}] Falls kein solches Intervall existiert, so wird mithilfe von\\
-    $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$ Zeiger entsprechend gesetzt.  Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
+    $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$ Pointer entsprechend gesetzt.  Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
     \item[\textbf{Fall 2}] Im Fall, dass ein solches Intervall existiert, kann es nun sein, dass das neue Intervall das nun am tiefsten verschachtelte Intervall ist, das an diesem Startindex beginnt. Ist das der Fall, so werden die Pointer des entsprechenden Index gesetzt und das neue Intervall ersetzt nun das vorherige in der Predecessor Datenstruktur, da es nun das tiefste Intervall an diesem Index ist.\\
-    Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$ Zeiger iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. An diese Stelle muss dann das neue Intervall eingefügt werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte und damit das am wenigsten verschachtelte Intervall, das an diesem Startindex beginnt. Ist das der Fall, so muss der $\texttt{firstAtStartIndex}$ aller Intervalle an diesem Startindex, auf das neue Intervall gesetzt werden. Dies kann während der ohnehin schon stattfindenden Iteration geschehen. 
+    Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$ Pointer iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. An diese Stelle muss dann das neue Intervall eingefügt werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte und damit das am wenigsten verschachtelte Intervall, das an diesem Startindex beginnt. Ist das der Fall, so muss der $\texttt{firstAtStartIndex}$ aller Intervalle an diesem Startindex, auf das neue Intervall gesetzt werden. Dies kann während der ohnehin schon stattfindenden Iteration geschehen. 
 \end{itemize} 
 
-Es kann nun sein, dass durch das einfügen eines neuen Intervalls die $\texttt{parent}$ Zeiger anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
-Kindintervall schieben. Dies wird nun dadurch behoben, dass über alle Intervalle der Datenstruktur, die im Intervall $[start+1..end]$ liegen, iteriert wird. In dieser Iteration wird der \texttt{parent} Zeiger auf das neue Intervall gesetzt. 
+Es kann nun sein, dass durch das einfügen eines neuen Intervalls die $\texttt{parent}$ Pointer anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
+Kindintervall schieben. Dies wird nun dadurch behoben, dass über alle Intervalle der Datenstruktur, die im Intervall $[start+1..end]$ liegen, iteriert wird. In dieser Iteration wird der \texttt{parent} Pointer auf das neue Intervall gesetzt. 
 
 
 \subsection{Ruleset}
@@ -201,11 +201,11 @@ Der erste Algorithmus bestimmt für ein Intervall, ob eine Substitution dieses I
         \RETURN $toInterval = fromInterval$
     \end{algorithmic}
 \end{algorithm}
-Dieser Algorithmus prüft, ob das Intervall $[from..to]$ substituiert werden darf. Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Symbole (Terminale oder Nichtterminale) finden lassen, dessen vollständig expandierte Form genau bei $from$ im Originalstring beginnt, beziehungsweise genau bei $to$ endet (inklusive des Zeichens).
+Dieser Algorithmus prüft, ob das Intervall $[from..to]$ substituiert werden darf. Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Symbole (Terminale oder Nichtterminale) finden lassen, dessen vollständig expandierte Form genau bei $from$ im Eingabestring beginnt, beziehungsweise genau bei $to$ endet (inklusive des Zeichens).
 In der Regel ist das Intervall das tiefste verschachtelte Intervall jeweils bei $from$ und $to$. 
 
 Liegen $from$ oder $to$ innerhalb des tiefsten Intervalls an dem jeweiligen Index, so dürfen für den jeweiligen Index keine weniger verschachtelten Intervalle berücksichtigt werden, da sonst die Grenzen der tieferen Intervalle verletzt würden.\\ 
-Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mit zu berücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \textit{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnen.
+Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mit zu berücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \emph{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnen.
 
 In diesen beiden Fällen gilt auch dasselbe wieder, falls $from$ auch im Elternintervall genau auf den Anfang fällt, beziehungsweise $to$ auch dort auf das Ende fällt.
 
@@ -223,7 +223,7 @@ Für $from=1$ und $to=3$ liefert die Methode allerdings \texttt{false}. Der Inde
 Index $1$ allerdings, liefert nur das $b$ aus dem ersten Ersetzungsintervall der Regel $A$. Hier dürfen keine weniger tiefen Ersetzungsintervalle (in diesem Fall nur das Eine der Regel $S$) berücksichtigt werden, da der Index $1$ nicht der Anfangsindex des Ersetzungsintervalls ist, in dem dieser Index liegt.
 Wir haben als Wahl für das Startsymbol nur $b$ aus Regel $A$ und als Endsymbol nur das $c$ aus Regel $S$. Hier lassen sich also kein Paar von Start- und Endsymbolen finden, die in demselben Ersetzungsintervall liegen. Die Substitution ist als ungültig.
 
-Für $from=0$ und $to=5$ liefert die Methode ebenfalls \texttt{false}. Hier liefert der Index $0$ wie im ersten Fall wieder $a$ aus dem ersten Ersetzungsintervall der Regel $A$ und das erste $A$ in der Regel $S$. Index $5$ liefert hier nur das $b$ aus dem \textit{zweiten} Ersetzungsintervall der Regel $A$. 
+Für $from=0$ und $to=5$ liefert die Methode ebenfalls \texttt{false}. Hier liefert der Index $0$ wie im ersten Fall wieder $a$ aus dem ersten Ersetzungsintervall der Regel $A$ und das erste $A$ in der Regel $S$. Index $5$ liefert hier nur das $b$ aus dem \emph{zweiten} Ersetzungsintervall der Regel $A$. 
 Da wir als Wahl für das Endsymbol nur das $b$ aus einem Ersetzungsintervall der Regel $A$ zur Verfügung haben, kommt für das Startsymbol nur das $a$ infrage, da das $A$ aus einem Ersetzungsintervall der Regel $S$ stammt.
 Allerdings ist die Kombination von $a$ als Startsymbol und $b$ als Endsymbol ebenfalls ungültig, da diese jeweils aus unterschiedlichen Ersetzungsintervallen stammen.
 Die Substitution ist hier also auch ungültig.
@@ -262,7 +262,7 @@ Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global fü
     A &\rightarrow aba
 \end{align*}
 
-Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \textit{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
+Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \emph{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
 
 Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, solst \texttt{false}:
 
@@ -297,9 +297,9 @@ Die for-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positio
 
 Ist dies nicht der Fall, so wird geprüft ob der Startindex des jetzigen Intervalls bereits in der Menge zu finden ist, also schon ein Vorkommen in einem Intervall mit diesem Startindex gefunden wurde. Wenn ja, dann muss das aktuell betrachtete Vorkommen zwangsweise unterschiedlich mit dem bereits gefundenen sein. Denn es gibt hier zwei Fälle:
 \begin{itemize}
-    \item[\textbf{Fall 1}] \textit{Das jetzige Intervall ist dasselbe Intervall, indem bereits ein Vorkommen gefunden wurde.}\\
-    In diesem Fall existiert also in demselben Intervall ein Vorkommen an einem kleineren Index. Dies gilt, da die Indizes aufsteigend sortiert sind (ausgenommen der entfernten Indizes) und an jedem Index nur maximal \textit{ein} Intervall mit einer gegebenen Regel ID existieren kann. 
-    \item[\textbf{Fall 2}] \textit{Das jetzige Intervall ist ein anderes Intervall, das an demselben Startindex beginnt.}\\
+    \item[\textbf{Fall 1}] \emph{Das jetzige Intervall ist dasselbe Intervall, indem bereits ein Vorkommen gefunden wurde.}\\
+    In diesem Fall existiert also in demselben Intervall ein Vorkommen an einem kleineren Index. Dies gilt, da die Indizes aufsteigend sortiert sind (ausgenommen der entfernten Indizes) und an jedem Index nur maximal \emph{ein} Intervall mit einer gegebenen Regel ID existieren kann. 
+    \item[\textbf{Fall 2}] \emph{Das jetzige Intervall ist ein anderes Intervall, das an demselben Startindex beginnt.}\\
     Wie in Fall 1 schon beschrieben, muss also das jetzige Intervall einer anderen Regel angehlören. Da nun ein Vorkommen in einer anderen Regel gefunden wurde, als das vorherige Vorkommen, so folgt sofort, dass das jetzige Vorkommen unterschiedlich sein muss. 
 \end{itemize}   
 Also wird \texttt{true} zurückgegeben, wenn ein Startindex zweimal gefunden wird.
@@ -330,8 +330,8 @@ Der Algorithmus iteriert nur durch das Array der Startindizes der Vorkommen des 
 \paragraph{Abschluss des Algorithmus}
 
 Wenn der Algorithmus terminiert, so sind alle Ersetzungsintervalle in der \texttt{RuleIntervalIndex} Datenstruktur gespeichert.
-Diese lässt sich mithilfe des Originalstrings die Grammatik in eine Darstellung überführen, in der die Produktionsregeln der Grammatik explizit gespeichert werden.
-Es kann für jedes Zeichen im Eingabetext die tiefste Regel bestimmt werden, in der das jeweilige Zeichen liegt, und in eine entsprechende Liste von Zeichen eingefügt werden.
+Diese lässt sich mithilfe des Eingabestrings die Grammatik in eine Darstellung überführen, in der die Produktionsregeln der Grammatik explizit gespeichert werden.
+Es kann für jedes Zeichen im Eingabestring die tiefste Regel bestimmt werden, in der das jeweilige Zeichen liegt, und in eine entsprechende Liste von Zeichen eingefügt werden.
 
 Hierzu werden 2 Stacks angewendet.
 \begin{itemize}[leftmargin=2cm]

@@ -55,7 +55,7 @@ Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, w
 	\item Die Startindizes der Ersetzungsintervalle der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen. 
 \end{enumerate}
 
-Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Ansonsten, müssten Teile unterschiedlicher Produktionsregeln durch \textit{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.\\\\
+Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Ansonsten, müssten Teile unterschiedlicher Produktionsregeln durch \emph{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.\\\\
 Ob ein Vorkommen diese Bedingungen erfüllt, wird folgendermaßen geprüft:
 
 Die IDs der tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + l - 1$ bestimmen. Die IDs sind dann jeweils die letzten Elemente in den abgerufenen Listen.
@@ -73,7 +73,7 @@ Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Gr
 
 Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
 Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurde. Demnach, darf $ab$ nicht nochmals ersetzt werden. 
-Es muss nun möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \textit{in der Grammatik} mehrmals vorkommen.
+Es muss nun möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \emph{in der Grammatik} mehrmals vorkommen.
 Dies kann mit dem folgenden Algorithmus festgestellt werden:
 
 \begin{algorithm}
@@ -115,7 +115,7 @@ Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen
 
 Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
-Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabetext beschreiben. Es muss dieser Index also so vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
+Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabestring beschreiben. Es muss dieser Index also so vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
 
 Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, 
 lässt sich also derjenige lokale Index $j$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.

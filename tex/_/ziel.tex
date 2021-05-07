@@ -1,13 +1,13 @@
 \chapter{Ziel der Arbeit}
 
 Das Ziel dieser Arbeit soll die Umsetzung und Evaluierung des AreaComp-Algorithmus sein. Dieser Algorithmus hat Ähnlichkeit mit dem lcpcomp-Algorithmus aus Sektion 3.1 in \cite{dinklage_compression_2017}.
-lcpcomp sucht nach den zwei längsten wiederholten Teilstrings und ersetzt eines der Vorkommen durch eine Referenz auf das jeweils andere Vorkommen.
-Hierbei bedient er sich des Suffix-Arrays, des inversen Suffix-Arrays und des LCP-Arrays \cite{manber_suffix_1993} um diese Teilstrings zu bestimmen, da große Werte im LCP-Array lange wiederholte Teilstrings bedeuten. Dies ähnelt der LZ77-Faktorisierung \cite{ziv_universal_1977}, allerdings sind bei dem lcpcomp-Algorithmus auch Vorwärtsverweise erlaubt.
+lcpcomp sucht nach den zwei längsten wiederholten Substrings und ersetzt eines der Vorkommen durch eine Referenz auf das jeweils andere Vorkommen.
+Hierbei bedient er sich des Suffix-Arrays, des inversen Suffix-Arrays und des LCP-Arrays \cite{manber_suffix_1993} um diese Substrings zu bestimmen, da große Werte im LCP-Array lange wiederholte Substrings bedeuten. Dies ähnelt der LZ77-Faktorisierung \cite{ziv_universal_1977}, allerdings sind bei dem lcpcomp-Algorithmus auch Vorwärtsverweise erlaubt.
 
 Der AreaComp-Algorithmus erzeugt eine Straight Line Grammatik und beginnt mit nur einer Produktionsregel, die ein Startsymbol auf den gesamten String abbildet.
 Nun werden Intervalle im LCP-Array gesucht, die eine Kostenfunktion maximieren. 
 
-Das gemeinsame Präfix der Suffixe in solch einem Intervall soll bei jedem Vorkommen durch ein neues Symbol ersetzt werden. Für dieses wird eine Produktionsregel erstellt, die das neue Symbol auf den ursprünglichen Teilstring abbildet. Die Kostenfunktion soll dabei als Heuristik dazu dienen, zu entscheiden, welche Teilstrings am günstigsten zu ersetzen sind.
+Das gemeinsame Präfix der Suffixe in solch einem Intervall soll bei jedem Vorkommen durch ein neues Symbol ersetzt werden. Für dieses wird eine Produktionsregel erstellt, die das neue Symbol auf den ursprünglichen Substring abbildet. Die Kostenfunktion soll dabei als Heuristik dazu dienen, zu entscheiden, welche Substrings am günstigsten zu ersetzen sind.
 
 Es könnte dann eine Prioritätswarteschlange genutzt werden um die einzelnen Intervalle nach ihren Kosten geordnet zu speichern und sie in dieser Reihenfolge zu verarbeiten. 
 Diese wird zum Beispiel als Heap implementiert. Es wurden bereits zahlreiche Modelle vorgestellt, wie ein Heap umgesetzt werden kann. Zum Beispiel etwa der weit bekannte binäre Heap \cite{williams_algorithm_1964} oder der Pairing Heap \cite{fredman_pairing_1986}. Hier gibt es optional die Möglichkeit, die Nutzung verschiedener Heap-Implementationen \cite{larkin_back--basics_2013} zu erforschen.
@@ -40,7 +40,7 @@ Eine grobe vorläufige Skizze des Algorithmus könnte also folgendermaßen ausse
     \STATE Gib $G$ aus
 \end{algorithmic}
 
-Hierbei muss natürlich darauf geachtet werden, dass etwa überlappende Vorkommen eines Teilstrings entsprechend behandelt werden und zum Beispiel das LCP-Array angepasst wird, wie im lcpcomp-Algorithmus \cite{dinklage_compression_2017}, um Mehrfachersetzungen zu vermeiden.
+Hierbei muss natürlich darauf geachtet werden, dass etwa überlappende Vorkommen eines Substrings entsprechend behandelt werden und zum Beispiel das LCP-Array angepasst wird, wie im lcpcomp-Algorithmus \cite{dinklage_compression_2017}, um Mehrfachersetzungen zu vermeiden.
 
 Außerdem stellt sich die Frage, welche Teilintervalle $I \subset [1..n]$ überhaupt in Betracht gezogen werden sollen. Alle Teilintervalle zu betrachten wäre unsinnig, da zum Beispiel Teilintervalle mit $h(I) \leq 1$ (längster gemeinsamer Präfix hat 1 oder 0 Zeichen) nicht zur Kompression beitragen würden.
 

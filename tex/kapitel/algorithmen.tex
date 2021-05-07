@@ -3,6 +3,7 @@
 Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, stelle ich hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und Re-Pair \cite{larsson_offline_1999} vor.
 
 \section{Sequitur}
+\label{sequitur}
 
 Sequitur\cite{nevill-manning_identifying_1997} ist ein Grammatikkompressions-Algorithmus, der On-line arbeitet. Das heißt, dass der Eingabestring nicht vollständig zu Anfang des Algorithmus im Speicher vorhanden sein muss, sondern auch stückweise eingelesen werden kann. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
 
@@ -540,6 +541,7 @@ Damit sind alle Verletzungen behoben. Alle Zeichen aus dem Eingabestring sind ei
 }
 
 \section{Re-Pair}
+\label{repair}
 
 Im Gegensatz zu Sequitur ist Re-Pair \cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
 
