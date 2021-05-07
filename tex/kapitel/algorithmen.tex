@@ -1,18 +1,18 @@
-\chapter{Andere Algorithmen}
+\chapter{Bekannte Grammatikkompressionsalgorithmen}
 
-Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, stelle ich hier die Algorithmen Sequitur\cite{nevill-manning_identifying_1997} und Re-Pair\cite{larsson_offline_1999} vor.
+Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, stelle ich hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und Re-Pair \cite{larsson_offline_1999} vor.
 
 \section{Sequitur}
 
-Sequitur\cite{nevill-manning_identifying_1997} ist ein On-line Grammatikkompressions-Algorithmus. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
+Sequitur\cite{nevill-manning_identifying_1997} ist ein Grammatikkompressions-Algorithmus, der On-line arbeitet. Das heißt, dass der Eingabestring nicht vollständig zu Anfang des Algorithmus im Speicher vorhanden sein muss, sondern auch stückweise eingelesen werden kann. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
 
 \subsection{Eigenschaften der erzeugten Grammatik}
 
 Der Algorithmus berechnet eine Grammatik, dessen Produktionsregeln folgende zwei Eigenschaften besitzen:
 \begin{enumerate}
-	\item[$p_1$] Digram-Uniqueness\\
+	\item[$p_1$] \emph{Digram-Uniqueness}:\\
 	Kein Paar von aufeinanderfolgenden Zeichen kommt in der Grammatik öfter als einmal vor.
-	\item[$p_2$] Rule-Utility\\
+	\item[$p_2$] \emph{Rule-Utility}:\\
 	Jede Produktionsregel der Grammatik wird mehr als einmal verwendet.
 \end{enumerate}
 
@@ -24,7 +24,7 @@ Falls nicht, erzeuge eine neue Regel mit einem neuen Nichtterminal, die dieses D
 
 \subsubsection{Rule-Utility}
 
-Es kann vorkommen, dass durch Substitutionen ein Nichtterminal nur einmal in der Grammatik vorkommt. In diesem Fall ist Rule-Utility verletzt. Ersetze nun dieses eine Vorkommen des Nichtterminals durch die rechte Seite der zugehörigen Produktionsregel, und lösche diese. So können auch längere Produktionsregeln entstehen.
+Es kann vorkommen, dass durch Substitutionen ein Nichtterminal nur einmal in der Grammatik vorkommt. In diesem Fall ist Rule-Utility verletzt. Ersetze nun dieses eine Vorkommen des Nichtterminals durch die rechte Seite der zugehörigen Produktionsregel, und lösche diese. So können auch Produktionsregeln mit rechten Seiten länger als 2 entstehen.
 
 \subsection{Implementation}
 
@@ -34,7 +34,7 @@ Die Optimale Datenstruktur für zu diesem Zweck muss folgende Operationen effizi
 
 \begin{itemize}
 	\item Ein Symbol an $S$ anhängen
-	\item Eine existierende Regel verwenden
+	\item Ein Vorkommen der rechten Seite einer bereits existierenden Regel mit dem zugehörigen Nichtterminal substituieren
 	\item Eine neue Regel erzeugen
 	\item Eine Regel löschen
 \end{itemize}
@@ -42,59 +42,68 @@ Die Optimale Datenstruktur für zu diesem Zweck muss folgende Operationen effizi
 \subsubsection{Datenstruktur für Regeln und Index}
 
 Sequitur nutzt eine Art doppelt verkettete Ringstruktur zur Implementation von Produktionsregeln. 
-Jede Regel besitzt ein sogenanntes "Guard" Symbol, das den Startpunkt, beziehungsweise den Endpunkt, der Ringstruktur darstellt. Der Nachfolger, des Guard-Symbols ist also das erste Symbol der rechten Seite einer Regel und der Vorgänger ist dem entsprechend das letzte Symbol.
+Jede Regel besitzt ein sogenanntes \emph{Guard}-Symbol, das den Startpunkt, beziehungsweise den Endpunkt, der Ringstruktur darstellt. Der Nachfolger, des Guard-Symbols ist also das erste Symbol der rechten Seite einer Regel und der Vorgänger ist dem entsprechend das letzte Symbol.
 Zudem besitzt jedes Vorkommen eines Nichtterminal eine Referenz auf das Guard Symbol der Produktionsregel, die das Nichtterminal repräsentiert. 
 
-Abbildung \ref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur für die Grammatik:
-\begin{align*}
-	S &\rightarrow aAcdAe\\
-	A &\rightarrow ab
-\end{align*}
+\autoref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur für die Grammatik:
+
 
 \begin{figure}[H]
 	\centering
-	\begin{tikzpicture}[
-		scale=.9, transform shape,
-		normalnode/.style={rectangle, draw=black!60, fill=red!5, thick, minimum size=5mm},
-		guardnode/.style={diamond, draw=black!60, fill=red!5, thick, minimum size=3mm},
-		]
-		\tikzstyle{every node} = [circle, minimum size=7mm]
-		\node[normalnode] (S) at (0, 0) {S};
-		\node[guardnode] (G1) at (1, 0) {};
-		\node[normalnode] (a1) at (2, 0) {a};
-		\node[normalnode] (A1) at (3, 0) {A};
-		\node[normalnode] (c) at (4, 0) {c};
-		\node[normalnode] (d) at (5, 0) {d};
-		\node[normalnode] (A2) at (6, 0) {A};
-		\node[normalnode] (e) at (7, 0) {e};
-		
-		\node[normalnode] (A) at (3, -2) {A};
-		\node[guardnode] (G2) at (4, -2) {};
-		\node[normalnode] (a2) at (5, -2) {a};
-		\node[normalnode] (b1) at (6, -2) {b};
-		
-		\foreach \from/\to in {G1/a1, a1/A1, A1/c, c/d, d/A2, A2/e, G2/a2, a2/b1}
-			\draw [ <-> ] (\from) -- (\to);
 
-			
-		\draw [ -> ] (S) -- (G1);
-		\draw [ <-> ] (G1) to[out=90, in=90, looseness=0.5] (e);
-		
-		\draw [ -> ] (A) -- (G2);
-		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
-		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
-		\draw [ <-> ] (G2) to[out=45, in=90] (b1);
-	\end{tikzpicture}
-	\caption{Jedes Nichtterminal hat Referenzen zu einer gemeinsamen Instanz der Regel, die das Nichtterminal repräsentiert}
+    \subfloat[6cm][Eine Grammatik für den String $aabcdabe$]{%
+        \makebox[4cm]{\raisebox{1cm} {
+            $\begin{aligned}
+                S &\rightarrow aAcdAe\\
+                A &\rightarrow ab
+            \end{aligned}$
+        }}
+    }
+    \quad
+	\subfloat[][Die zugehörige Sequitur-Datenstruktur]{
+        \begin{tikzpicture}[
+            scale=.9, transform shape,
+            normalnode/.style={rectangle, draw=black!60, fill=red!5, thick, minimum size=5mm},
+            guardnode/.style={diamond, draw=black!60, fill=red!5, thick, minimum size=3mm},
+            ]
+            \tikzstyle{every node} = [circle, minimum size=7mm]
+            \node[normalnode] (S) at (0, 0) {S};
+            \node[guardnode] (G1) at (1, 0) {};
+            \node[normalnode] (a1) at (2, 0) {a};
+            \node[normalnode] (A1) at (3, 0) {A};
+            \node[normalnode] (c) at (4, 0) {c};
+            \node[normalnode] (d) at (5, 0) {d};
+            \node[normalnode] (A2) at (6, 0) {A};
+            \node[normalnode] (e) at (7, 0) {e};
+            
+            \node[normalnode] (A) at (3, -2) {A};
+            \node[guardnode] (G2) at (4, -2) {};
+            \node[normalnode] (a2) at (5, -2) {a};
+            \node[normalnode] (b1) at (6, -2) {b};
+            
+            \foreach \from/\to in {G1/a1, a1/A1, A1/c, c/d, d/A2, A2/e, G2/a2, a2/b1}
+                \draw [ <-> ] (\from) -- (\to);
+    
+                
+            \draw [ -> ] (S) -- (G1);
+            \draw [ <-> ] (G1) to[out=90, in=90, looseness=0.5] (e);
+            
+            \draw [ -> ] (A) -- (G2);
+            \draw [ -> ] (A1) to[out=-90, in=90] (G2);
+            \draw [ -> ] (A2) to[out=-90, in=90] (G2);
+            \draw [ <-> ] (G2) to[out=45, in=90] (b1);
+        \end{tikzpicture}
+    }
+	\caption{Hier sehen wir die Sequitur-Datenstruktur für die beiden Regeln der dargestellten Grammatik. Rautenförmig dargestellt sind dabei die \emph{Guard}-Knoten der jeweiligen Produktionsregeln. Rechts daran angehängt sind die Symbole der Regel in der doppelt verketteten Ringstruktur. Die Nichtterminale besitzen einen Pointer auf den Guard-Knoten der zugehörigen Regel.}
 	\label{seqLinkedDataStructure}
 \end{figure}
 
-Für Digram-Uniqueness wird eine Index-Struktur angewandt, um zu überprüfen, ob ein Digramm bereits in der Grammatik existiert. Diese wird als Hashtabelle Implementiert, um solche Anfragen in konstanter Laufzeit zu bewältigen. Zudem können ebenfalls in konstanter Laufzeit Einträge hinzugefügt und auch entfernt werden. Diese Hashtabelle enthält eine Referenz zu dem Vorkommen jedes Digramms in der Grammatik. 
+Für Digram-Uniqueness wird eine Index-Struktur angewandt, um zu überprüfen, ob ein Digramm bereits in der Grammatik existiert. Diese wird als Hashtabelle implementiert, um solche Anfragen in erwarteter konstanter Laufzeit zu bewältigen. Zudem können ebenfalls in erwarteter konstanter Laufzeit Einträge hinzugefügt und auch entfernt werden. Diese Hashtabelle enthält eine Referenz zu dem einzigen Vorkommen jedes Digramms in der Grammatik. 
 
 
 \subsection{Beispiel}
 
-Wir wenden den Algorithmus beispielhaft auf den String \enquote{$abacababa$} an.\\\\
+Wir wenden den Algorithmus beispielhaft auf den String \enquote{$abacababa$} an.\\
 Zuerst generiere eine leere Startregel $S$.
 \begin{figure}[H]
 	\centering
@@ -137,9 +146,8 @@ Lese nacheinander die Zeichen $a$, $b$, $a$, $c$ und $a$.
 		\draw [ <-> ] (c1) -- (a3);
 		\draw [ <-> ] (a3) to[out=90, in=90, looseness=0.5] (G1);
 	\end{tikzpicture}
-	\caption*{Die Zeichen $abaca$ wurden gelesen. Währenddessen wirden weder Digram Uniqueness, noch Rule Utility verletzt, also sind keine besonderen Schritte nötig gewesen. In jedem Schritt (außer im Ersten) wird das neu entstandene Digramm in die Hashtabelle eingefügt.}
 \end{figure}
-
+Die Zeichen $abaca$ wurden gelesen. Währenddessen wirden weder Digram Uniqueness, noch Rule Utility verletzt, also sind keine besonderen Schritte nötig gewesen. In jedem Schritt (außer im Ersten) wird das neu entstandene Digramm in die Hashtabelle eingefügt.\\
 Nun lese das nächste Zeichen $b$.
 
 \begin{figure}[H]
@@ -166,10 +174,10 @@ Nun lese das nächste Zeichen $b$.
 			
 		\draw [ <-> ] (b2) to[out=90, in=90, looseness=0.5] (G1);
 	\end{tikzpicture}
-	\caption*{Digram-Uniqueness ist verletzt, weil nun das Digramm $ab$ doppelt in der Grammatik vorkommt. Dies kann durch einen Lookup in der Hashtabelle festgestellt werden.}
+	
 \end{figure}
-
-Wir erzeugen nun ein neues Nichtterminal $A$ und eine zugehörige Produktionsregel $A \rightarrow ab$  und ersetzen beide Vorkommen in der Grammatik durch das Nichtterminal. Die Nichtterminale enthalten eine Referenz auf die gemeinsam genutzte  Instanz der Produktionsregel. An jeder Stelle, an der $ab$ durch $A$ ersetzt wurde, werden nun die nun nicht mehr existierenden Digramme  aus der Hashtabelle entfernt, und die, durch das einsetzen von $A$, neu entstandenen Digramme in die Hashtabelle eingefügt
+Digram-Uniqueness ist verletzt, weil nun das Digramm $ab$ doppelt in der Grammatik vorkommt. Dies kann durch einen Lookup in der Hashtabelle festgestellt werden.\\
+Wir erzeugen nun ein neues Nichtterminal $A$ und eine zugehörige Produktionsregel $A \rightarrow ab$  und ersetzen beide Vorkommen in der Grammatik durch das Nichtterminal. Die Nichtterminale enthalten eine Referenz auf die gemeinsam genutzte Instanz der Produktionsregel. An jeder Stelle, an der $ab$ durch $A$ ersetzt wurde, werden die nun nicht mehr existierenden Digramme aus der Hashtabelle entfernt, und die durch das Rinsetzen von $A$ neu entstandenen Digramme in die Hashtabelle eingefügt.
 Das alte Vorkommen des Digramms kann mit der Hashtabelle gefunden werden. 
 
 \begin{figure}[H]
@@ -216,9 +224,8 @@ Das alte Vorkommen des Digramms kann mit der Hashtabelle gefunden werden.
 		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
 		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
 	\end{tikzpicture}
-	\caption*{Hier wurde jedes Vorkommen von $ab$ durch $A$ ersetzt und die Produktionsregel $A \rightarrow ab$ angelegt. Nun ist keine Eigenschaft mehr verletzt.}
 \end{figure}
-
+Wir haben nun jedes Vorkommen von $ab$ durch $A$ ersetzt und die Produktionsregel $A \rightarrow ab$ angelegt. Nun ist keine Eigenschaft mehr verletzt.\\
 Wir lesen nun das Zeichen $a$.
 
 \begin{figure}[H]
@@ -266,9 +273,8 @@ Wir lesen nun das Zeichen $a$.
 		\draw [ -> ] (A1) to[out=-90, in=90] (G2);
 		\draw [ -> ] (A2) to[out=-90, in=90] (G2);
 	\end{tikzpicture}
-	\caption*{Digram-Uniqueness ist verletzt, da $Aa$ mehrmals vorkommt.}
 \end{figure}
-
+Nun ist Digram-Uniqueness verletzt, da $Aa$ mehrmals vorkommt.
 Wir verfahren wieder wie vorher um die Verletzung dieser Eigenschaft zu beheben und fügen die Regel $B \rightarrow Aa$ ein.
 
 \begin{figure}[H]
@@ -333,9 +339,8 @@ Wir verfahren wieder wie vorher um die Verletzung dieser Eigenschaft zu beheben 
 		
 		\draw [ ->, draw=red!60] (A3) to[out=-90, in=90] (G2);
 	\end{tikzpicture}
-	\caption*{Die Verletzung von Digram-Uniqueness ist behoben, aber nun ist Rule-Utility verletzt, da die Produktionsregel von $A$ nur einmal verwendet wird.}
 \end{figure}
-
+Die Verletzung von Digram-Uniqueness ist behoben, aber nun ist Rule-Utility verletzt, da die Produktionsregel von $A$ nur einmal verwendet wird.
 Um dies zu beheben, wird das eine Vorkommen von $A$ gelöscht, und die zugehörige Produktionsregel entfernt.
 
 \begin{figure}[H]
@@ -384,10 +389,9 @@ Um dies zu beheben, wird das eine Vorkommen von $A$ gelöscht, und die zugehöri
 		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
 		
 	\end{tikzpicture}
-	\caption*{Damit sind alle Verletzungen behoben.}
 \end{figure}
 
-Wir lesen nun nacheinander die Zeichen $a$ und $b$.
+Damit sind alle Verletzungen behoben und wir lesen nacheinander die Zeichen $a$ und $b$.
 
 \begin{figure}[H]
 	\centering
@@ -437,11 +441,10 @@ Wir lesen nun nacheinander die Zeichen $a$ und $b$.
 		\draw [ -> ] (B12) to[out=-90, in=90] (G3);
 		
 	\end{tikzpicture}
-	\caption*{Durch das Lesen von $b$ ist wieder Digram-Uniqueness verletzt.}
+
 \end{figure}
-
+Durch das Lesen von $b$ ist wieder Digram-Uniqueness verletzt.
 Wir beheben diese Verletzung durch Einfügen der Regel $C \rightarrow ab$
-
 
 \begin{figure}[H]
 	\centering
@@ -509,10 +512,9 @@ Wir beheben diese Verletzung durch Einfügen der Regel $C \rightarrow ab$
 		\draw [ -> ] (C11) to[out=-90, in=90] (G2);
 		
 	\end{tikzpicture}
-	\caption*{Damit sind alle Verletzungen behoben.}
 \end{figure}
 
-Alle Zeichen aus dem Eingabestring sind eingefügt und der Algorithmus terminiert. Die resultierende Grammatik ist also:
+Damit sind alle Verletzungen behoben. Alle Zeichen aus dem Eingabestring sind eingefügt und der Algorithmus terminiert. Die resultierende Grammatik ist also:
 
 \begin{align*}
 	S &\rightarrow BcBC\\
@@ -521,30 +523,45 @@ Alle Zeichen aus dem Eingabestring sind eingefügt und der Algorithmus terminier
 \end{align*}
 
 
+\tikzset{   
+    arr/.style={
+        matrix of nodes, 
+        nodes={draw, minimum size=6mm, anchor=center}, 
+        column sep=-\pgflinewidth,
+        nodes in empty cells
+    },
+    queue/.style={
+        matrix of nodes, 
+        nodes={minimum size=6mm, anchor=center}, 
+        row sep=3mm, 
+        column sep=1cm, 
+        nodes in empty cells
+    }
+}
+
 \section{Re-Pair}
 
-Im Gegensatz zu Sequitur ist Re-Pair\cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
+Im Gegensatz zu Sequitur ist Re-Pair \cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
 
-Ähnlich wie Sequitur, ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt es durch eine neue Regel.
+Ähnlich wie Sequitur ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln, um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt es durch eine neue Regel.
 
 \subsection{Implementation}
 
-Re-Pair nutzt 3 Datenstrukturen:
+Re-Pair nutzt drei Datenstrukturen:
 
 \subsubsection{Symbolarray}
 
-Dies ist ein Array, dass alle Symbole speichert. Zu Anfang sind das genau die Zeichen des Eingabestrings. Jeder Eintrag im Array hat drei Teile. Einer ist das Symbol selbst, die anderen zwei sind Pointer auf die jeweils vorherige und folgende nicht-leere Position im Array. Diese dienen dazu die einzelnen Symbole doppelt zu verketten, wenn Lücken im Array entstehen.
-
-\begin{figure}[H]
+Das \emph{Symbolarray} speichert alle Symbole der Startregel. Zu Anfang sind das genau die Zeichen des Eingabestrings. Jeder Eintrag im Array hat drei Teile. Einer ist das Symbol selbst, die anderen zwei sind Pointer auf die jeweils vorherige und folgende nicht-leere Position im Array. Diese dienen dazu, die einzelnen Symbole doppelt zu verketten, wenn Lücken im Array entstehen.
+\begin{figure}
 	\centering
 	\begin{tikzpicture}
 		
-		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth]{
+		\matrix (A) [arr]{
 			a & b & c & a & b & c & d\\
 		};
 		
-		\begin{scope}[yshift=-2cm]
-			\matrix (B) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth]{
+		\begin{scope}[yshift=-1.5cm]
+			\matrix (B) [arr]{
 				a & A &  & a & A & & d\\
 			};
 			
@@ -552,31 +569,32 @@ Dies ist ein Array, dass alle Symbole speichert. Zu Anfang sind das genau die Ze
 			\draw [<->] (B-1-5) to[out=90, in=90] (B-1-7);
 		\end{scope}
 	\end{tikzpicture}
-	\caption{Das Array, bevor und nachdem $bc$ durch $A$ ersetzt wurde. Die leeren Einträge werden durch Pointer überbrückt. Es existieren auch Pointer zwischen Einträgen, falls keine leeren Einträge dazwischen liegen. Diese sind hier aber nicht abgebildet.}
+	\caption{Ein Beispiel für das Symbolarray für den String $abcabcd$ und die Ersetzung des Digramms $bc$. Abgebildet ist das Symbolarrays, bevor und nachdem $bc$ durch $A$ ersetzt wurde. Die leeren Einträge werden durch Pointer überbrückt. Es existieren auch Pointer zwischen Einträgen, falls keine leeren Einträge dazwischen liegen. Diese sind hier aber nicht abgebildet.}
+    \label{symbarr}
 \end{figure}
+\autoref{symbarr} zeigt ein Beispiel für den String $abcabcd$ und die Ersetzung des Paars $bc$.
 
 \subsubsection{Prioritätswarteschlange}
 
-Re-Pair benutzt eine spezialisierte Prioritätswarteschlange, um die Wahl des günstigsten zu ersetzenden Paars zu ermöglichen. Diese besteht aus einem Array von etwa $\sqrt{n}$ verketteten Listen, wobei $n$ die Länge der Eingabe ist. In der Liste an Index $i$, befinden sich alle Paare, die $i$ mal im String vorkommen. Zusätlich enthalten die Einträge auch  einen Pointer auf das erste Vorkommen des Paares im String.
+Re-Pair benutzt eine spezialisierte Prioritätswarteschlange, um die Wahl des günstigsten zu ersetzenden Paars effizient zu ermöglichen. Diese besteht aus einem Array von etwa $\sqrt{n}$ verketteten Listen, wobei $n$ die Länge der Eingabe ist. In der Liste an Index $i$ befinden sich alle Paare, die $i$-mal im String vorkommen. Zusätzlich enthalten die Einträge auch  einen Pointer auf das erste Vorkommen des Paares im String.
 
-Eine Besonderheit ist dabei die Liste bei Index $0$. Diese enthält alle Paare, die öfter als $\sqrt{n}$ vorkommen. Außerdem werden keine Elemente in der Liste mit Index $1$ gespeichert, da diese nie zum Ersetzen in Betracht bezogen werden können.
+Eine Besonderheit ist dabei die Liste bei Index $0$. Diese enthält alle Paare, die öfter als $\sqrt{n}$-mal vorkommen. Außerdem werden keine Elemente in der Liste mit Index $1$ gespeichert, da diese nie zum Ersetzen in Betracht bezogen werden können.
  
 \subsubsection{Symbolpaar-Hashtabelle}
 
 Dies ist eine Hashtabelle, die einen Eintrag für jedes aktive Symbolpaar besitzt. Ein Symbolpaar heißt aktiv, wenn dieses Paar noch potenziell ersetzt werden kann, es also öfter als nur einmal vorkommt. Jeder Eintrag enthält einen Pointer auf den entsprechenden Eintrag in der Prioritätswarteschlange für dieses Symbolpaar.
-
-\begin{figure}[H]
+\begin{figure}
 	\centering
 	\begin{tikzpicture}
 		
 		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
-		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		\node[draw=none, below=1.5cm of Symbols] (Queue) {Warteschlange};
 		
-		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of Symbols]{
+		\matrix (A) [arr, right=1cm of Symbols]{
 			a & b & c & a & b & c & d\\
 		};
 		
-		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+		\matrix (lists) [queue, right=1cm of Queue]{
 			& |[draw]| bc & \\
 			& |[draw]| ab & \\
 			$>3$ & $2$ & $3$ \\
@@ -587,7 +605,7 @@ Dies ist eine Hashtabelle, die einen Eintrag für jedes aktive Symbolpaar besitz
 		\draw [<->] (lists-1-2) -- (lists-2-2);
 		
 		
-		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+		\matrix (hash) [arr, right=1cm of lists-1-3]{
 			bc\\
 			ab\\
 		};
@@ -598,59 +616,23 @@ Dies ist eine Hashtabelle, die einen Eintrag für jedes aktive Symbolpaar besitz
 		\draw [->] (hash-2-1) to[out=180, in=0] (lists-2-2);
 		
 	\end{tikzpicture}
-	\caption{Die Datenstrukturen von RePair}
+	\caption{Die Datenstrukturen von RePair für den String $abcabcd$.}
+    \label{repairdatastructureexample}
 \end{figure}
+\autoref{repairdatastructureexample} zeigt die Datenstruktur zur Zeit der Initialisierung für den String $abcabcd$. 
 
 \subsection{Beispiel}
 
-Als Beispiel wenden wir nun den Re-Pair Algorithmus auf $abcabcd$ an.
-
-\begin{figure}[H]
-	\centering
-	\begin{tikzpicture}
-		
-		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
-		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
-		
-		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of Symbols]{
-			a & b & c & a & b & c & d\\
-		};
-		
-		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
-			& |[draw]| bc & \\
-			& |[draw]| ab & \\
-			$>3$ & $2$ & $3$ \\
-		};
-		
-		\draw [->] (lists-1-2) to[out=180, in=-90] (A-1-2);
-		\draw [->] (lists-2-2) to[out=180, in=-90] (A-1-1);
-		\draw [<->] (lists-1-2) -- (lists-2-2);
-		
-		
-		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
-			bc\\
-			ab\\
-		};
-		
-		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
-		
-		\draw [->] (hash-1-1) to[out=180, in=0] (lists-1-2);
-		\draw [->] (hash-2-1) to[out=180, in=0] (lists-2-2);
-		
-	\end{tikzpicture}
-	\caption*{Die Datenstrukturen von RePair zu Anfang}
-\end{figure}
-
+Als Beispiel wenden wir nun den Re-Pair Algorithmus auf $abcabcd$ an. Die Datenstrukturen zu Anfang, sind in \autoref{repairdatastructureexample} abgebildet.
 Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigsten vorkommt und ersetzen es im Text. In unserem Fall zum Beispiel $ab$.
-
 \begin{figure}[H]
 	\centering
 	\begin{tikzpicture}
 		
 		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
-		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		\node[draw=none, below=1cm of Symbols] (Queue) {Warteschlange};
 		
-		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth, right=1cm of Symbols]{
+		\matrix (A) [arr, right=1cm of Symbols]{
 			A & & c & A & & c & d\\
 		};
 	
@@ -658,7 +640,7 @@ Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigste
 		\draw[<->] (A-1-4) to[in=90, out=90] (A-1-6);
 	
 		
-		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+		\matrix (lists) [queue, right=1cm of Queue]{
 			& |[draw]| Ac & \\
 			$>3$ & $2$ & $3$ \\
 		};
@@ -666,7 +648,7 @@ Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigste
 		\draw [->] (lists-1-2) to[out=180, in=-90] (A-1-1);
 		
 		
-		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
+		\matrix (hash) [arr, right=1cm of lists-1-3]{
 			Ac\\
 		};
 		
@@ -675,19 +657,16 @@ Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigste
 		\draw [->] (hash-1-1) to[out=180, in=0] (lists-1-2);
 		
 	\end{tikzpicture}
-	\caption*{Die Datenstrukturen nach Ersetzung von $ab$ durch $A$}
 \end{figure}
-
-Nun ist das einzige übrige Symbolpaar, das neu entstandene $Ac$. Dies entnehmen wir aus der Prioritätswarteschlange und ersetzen es ebenfalls.
-
+Dies sind die Datenstrukturen nach Ersetzung von $ab$ durch $A$. Nun ist das einzige übrige Symbolpaar, das neu entstandene $Ac$. Dies entnehmen wir aus der Prioritätswarteschlange und ersetzen es ebenfalls.
 \begin{figure}[H]
 	\centering
 	\begin{tikzpicture}
 		
 		\node[draw=none] (Symbols) at (0,0) {Symbolarray};
-		\node[draw=none, below=3cm of Symbols] (Queue) {Warteschlange};
+		\node[draw=none, below=0.5cm of Symbols] (Queue) {Warteschlange};
 		
-		\matrix (A) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth, right=1cm of Symbols]{
+		\matrix (A) [arr, right=1cm of Symbols]{
 			B & & & B & & & d\\
 		};
 		
@@ -695,24 +674,16 @@ Nun ist das einzige übrige Symbolpaar, das neu entstandene $Ac$. Dies entnehmen
 		\draw[<->] (A-1-4) to[in=90, out=70] (A-1-7);
 		
 		
-		\matrix (lists) [matrix of nodes, nodes={minimum size=10mm, anchor=center}, row sep=5mm, column sep=1cm, right=1cm of Queue, nodes in empty cells]{
+		\matrix (lists) [queue, right=1cm of Queue]{
 			& & \\
 			$>3$ & $2$ & $3$ \\
 		};
 		
 		
-		\matrix (hash) [matrix of nodes, nodes={draw, minimum size=10mm, anchor=center}, column sep=-\pgflinewidth, right=1cm of lists-2-3]{
-			\\
-		};
-		
-		\node[draw=none, rotate=90, right=5mm of hash, anchor=center] (Hashtabelle) {Hashtabelle};
-		
 	\end{tikzpicture}
-	\caption*{Die Datenstrukturen nach Ersetzung von $Ac$ durch $B$}
+	\caption*{}
 \end{figure}
-
-Die Prioritätswarteschlange ist nun leer und damit terminiert der Algorithmus. Die resultierende Grammatik ist:
-
+Nach der Ersetzung von $Ac$ durch $B$ ist die Prioritätswarteschlange nun leer und damit terminiert der Algorithmus. Die resultierende Grammatik ist:
 \begin{align*}
 	S &\rightarrow BBa\\
 	A &\rightarrow ab\\
