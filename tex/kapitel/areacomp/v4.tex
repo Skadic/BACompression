@@ -97,8 +97,8 @@ Wir können nun bestimmen, welches das tiefste verschachtelte Ersetzungsinterval
 Dies ist mithilfe des folgenden Algorithmus möglich.
 
 \begin{algorithm}
-    \KwData {$from, to$ Start- und Endindizes}
-    \KwResult{ $current \leftarrow floorInterval(from)$}
+    \KwIn {$from, to$ Start- und Endindizes}
+    \KwOut{ $current \leftarrow floorInterval(from)$}
     \While {$current \neq \texttt{null}$} {
         \If {$current.start \leq from \textbf{ and } to \leq current.end$} {
             \KwRet{$current$}
@@ -179,7 +179,7 @@ Nun ist es möglich, dass einige der Vorkommen sich nicht (mehr) für eine Erset
 Der erste Algorithmus bestimmt für ein Intervall, ob eine Substitution dieses Intervalls erlaubt ist. 
 
 \begin{algorithm}
-    \KwData{$from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+    \KwIn{$from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
     $fromInterval \leftarrow intervalIndex.intervalContaining(from)$\;
     \While{$from = fromInterval.start \textbf{ and } to > fromInterval.end \textbf{ and }$\\$fromInterval.parent \neq \texttt{null}$} {
         $fromInterval \leftarrow fromInterval.parent$\;
@@ -229,7 +229,7 @@ Die Substitution ist hier also auch ungültig.
 Mithilfe des vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen. Der folgende Algorithmus leistet dies, und gibt zusätzlich die Anzahl der übrigen Positionen zurück. In diesem Algorithmus werden Positionen entfernt, indem sie durch $-1$ ersetzt werden. Beachte, dass dieser Algorithmus erwartet, dass das $positions$ Array aufsteigend sortiert ist.
 
 \begin{algorithm}
-    \KwData{ $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$}
+    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$}
     $count \leftarrow 0$\;
     $previous \leftarrow -\infty$\;
     \For{$i$ \textbf{in} $0$ \textbf{to} $n - 1$} {
@@ -261,7 +261,7 @@ Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies s
 Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, solst \texttt{false}:
 
 \begin{algorithm}
-    \KwData{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
+    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
     $set \leftarrow \emptyset$\;
     $firstRuleId = -1$\;
     \For{$pos$ \textbf{in} $positions$} {
@@ -306,7 +306,7 @@ Gibt dieser Algorithmus \texttt{false} zurück, so wird keine Substitution durch
 
 Der letzte Schritt der Kompression ist die tatsächliche Substitution der Vorkommen des Musters.
 \begin{algorithm}
-        \KwData{ $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+        \KwIn{ $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
         $nextId \leftarrow$ nächste unbenutzte Regel ID\;
         \For{$pos \leftarrow positions$} {
             \If{$pos = -1$} {
