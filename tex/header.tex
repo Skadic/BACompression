@@ -8,6 +8,7 @@
 \usepackage{amsmath,amssymb}
 
 \usepackage{hyperref}
+\usepackage{float}
 
 % Theorem-Umgebungen
 \usepackage[amsmath,thmmarks]{ntheorem}
@@ -17,8 +18,9 @@
 \usepackage[T1]{fontenc}
 
 % Algorithmen
-\usepackage[ruled,chapter]{algorithm}
-\usepackage{algorithmic}
+%\usepackage[ruled,chapter]{algorithm}
+%\usepackage{algorithmicx}
+\usepackage[]{algorithm2e}
 
 \usepackage{enumerate}
 \usepackage{enumitem}
@@ -93,11 +95,11 @@
 \renewtheorem{problem*}{Problem}
 
 % Algorithmen anpassen %
-\renewcommand{\algorithmicrequire}{\textit{Eingabe:}}
-\renewcommand{\algorithmicensure}{\textit{Ausgabe:}}
+%\renewcommand{\algorithmicrequire}{\textit{Eingabe:}}
+%\renewcommand{\algorithmicensure}{\textit{Ausgabe:}}
 \floatname{algorithm}{Algorithmus}
-\renewcommand{\listalgorithmname}{Algorithmenverzeichnis}
-\renewcommand{\algorithmiccomment}[1]{\color{grau}{// #1}}
+%\renewcommand{\listalgorithmname}{Algorithmenverzeichnis}
+%\renewcommand{\algorithmiccomment}[1]{\color{grau}{// #1}}
 
 % Zeilenabstand einstellen %
 \renewcommand{\baselinestretch}{1.25}

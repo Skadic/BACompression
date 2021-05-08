@@ -1,29 +1,31 @@
 \section{AreaComp V1}
 
-Die erste Version ist eine naive Implementierung. Der Algorithmus verwaltet eine Menge von Regeln. In jedem Durchlauf wird nacheinander jede Regel $(X \rightarrow w) \in P$ aus der Menge entnommen und das Suffix- und LCP-Array für die rechte Seite dieser Regel berechnet. Es wird nun eine Prioritätswarteschlange erzeugt, die alle möglichen LCP-Intervalle enthält. Das beste LCP-Intervall wird daraus entnommen. Sei $p \in (N \cup \Sigma)^*$ das, durch das LCP-Intervall bestimmte, zu ersetzende Muster. Die Indizes, an denen ein Vorkommen von $p$ in $w$ existiert, kann einfach mithilfe des Suffix- und LCP-Array berechnet werden.
+Die erste Version ist eine naive Implementierung. Der Algorithmus verwaltet eine Menge von Regeln. Jede Regel besitzt eine einzigartige natürliche Zahl als ID. Der Begriff \emph{Regel} wird synonym mit dessen Regel-ID verwendet. 
+
+In jedem Durchlauf wird nacheinander jede Regel $(X \rightarrow w) \in P$ aus der Menge entnommen und das Suffix- und LCP-Array für die rechte Seite dieser Regel berechnet. Es wird nun eine Prioritätswarteschlange erzeugt, die alle möglichen LCP-Intervalle enthält. Das beste LCP-Intervall wird daraus entnommen. Sei $p \in (N \cup \Sigma)^*$ das, durch das LCP-Intervall bestimmte, zu ersetzende Muster. Die Indizes, an denen ein Vorkommen von $p$ in $w$ existiert, kann einfach mithilfe des Suffix- und LCP-Array berechnet werden.
 
 Es werden nun alle bestimmten Vorkommen darauf untersucht, ob sich diese mit Anderen überschneiden. Hierzu werden die Indizes, an denen $p$ vorkommt, aufsteigend sortiert und durchlaufen. Dabei werden alle Indizes gelöscht, die einen Abstand von weniger als $|p|$ zum letzten Index haben, gelöscht. Damit bleiben nur Vorkommen übrig, die sich nicht überschneiden. Sind nun nur noch weniger als zwei Positionen übrig, so wird das nächst-beste LCP-Intervall aus der Warteschlange entnommen und der Vorgang wiederholt. Sind keine Intervalle mehr übrig, so fahre zur nächsten Produktionsregel fort.
 
 Der von diesem Intervall bestimmte Substring wird dann durch ein neues Nichtterminal und eine zugehörige Produktionsregel ersetzt. Zu diesem Zweck wird die gesamte Grammatik nach Vorkommen durchsucht und diese durch das Nichtterminal ersetzt.
 
-Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden, ist gleich der Datenstruktur, die Sequitur benutzt. Allerdings verwendet der Algorithmus zusätzlich eine Hashtabelle, die eine ID auf ihre zugehörige Regel abbildet.
+Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden, ist gleich der Datenstruktur, die Sequitur benutzt. Allerdings verwendet der Algorithmus zusätzlich eine Hashtabelle, die eine Regel-ID auf das zugehörige Regel-Objekt abbildet.
 
-Diese Implementierung hat nicht das Problem, dass sich überschneidende Substitutionen entstehen können, da Suffix- und LCP-Array für jede Regel symbolweise neu erzeugt werden. 
+Diese Implementierung hat nicht das Problem, dass sich Substitutionen entstehen können, die sich mit vorherigen Substitutionen überschneiden, da Suffix- und LCP-Array für jede Regel symbolweise neu erzeugt werden. 
 
 \subsection{Probleme}
 
 \subsubsection{Laufzeit}
-Das größte Problem dieser Implementierung ist die Laufzeit. Sei $s \in \Sigma^*$ mit $n := |s|$ $\mathcal{O}(n)$ der Eingabestring.
+Das größte Problem dieser Implementierung ist die Laufzeit. Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring.
 
 In jedem Durchlauf wird für jede Regel $X \rightarrow w \in P, X \in N, w \in (N \cup \Sigma)^*$ das im Bezug auf die Flächenfunktion beste LCP-Intervall berechnet. Dessen Berechnung dominiert die Laufzeit dieser Version des Algorithmus. 
 Es existieren $|w|^2$ solche Intervalle.
-Für jedes dieser Intervalle muss die Flächenfunktion berechnet werden. Eine Flächenfunktion, die alle Werte in ihrem gegebenen Intervall $I$ in Betracht zieht, muss mindestens eine Laufzeit von $\mathcal{O}(|I|)$ haben. Betrachten wir die Länge aller möglichen LCP-Intervalle, so ist deren Gesamtlänge $\mathcal{O}(|w|^3)$. Folglich ist die Gesamtlaufzeit der Flächenfunktionsaufrufe pro Produktionsregel und Durchlauf $\mathcal{O}(|w|^3)$. 
+Für jedes dieser Intervalle muss die Flächenfunktion berechnet werden. Eine Flächenfunktion, die alle Werte in ihrem gegebenen Intervall $I$ in Betracht zieht, muss mindestens eine Laufzeit von $\mathcal{O}(|I|)$ haben, da das Minimum im Intervall linear gesucht werden muss. Betrachten wir die Länge aller möglichen LCP-Intervalle, so ist deren Gesamtlänge $\mathcal{O}(|w|^3)$. Folglich ist die Gesamtlaufzeit der Flächenfunktionsaufrufe pro Produktionsregel und Durchlauf $\mathcal{O}(|w|^3)$. 
 
 Da die Gesamtlänge der Grammatik $n$ nicht überschreiten kann, ist die Laufzeit der Flächenfunktionsaufrufe pro Durchlauf $\mathcal{O}(n^3)$. 
 
-In jedem Durchlauf, in dem eine Substitution möglich ist, wird mindestens eine Substitution durchgeführt. Da durch jede Substitution die Grammatik um mindestens $1$ Zeichen kleiner wird (entweder mindestens $2$ Vorkommen der Länge mindestens $3$ oder mindestens $2$ Vorkommen der Länge mindestens $2$), können im Worst-Case insgesamt $\mathcal{O}(n)$ Durchläufe stattfinden.
+In jedem Durchlauf, in dem eine Substitution möglich ist, wird mindestens eine Substitution durchgeführt. Da durch jede Substitution die Grammatik um mindestens $1$ Zeichen kleiner wird (entweder mindestens $2$ Vorkommen der Länge mindestens $3$ oder mindestens $3$ Vorkommen der Länge mindestens $2$), können im Worst-Case insgesamt $\mathcal{O}(n)$ Durchläufe stattfinden.
 
-Insgesamt resultiert also eine sehr hohe Laufzeit von etwa $\mathcal{O}(n^4)$.
+Insgesamt resultiert also eine sehr hohe Laufzeit von $\mathcal{O}(n^4)$.
 
 \subsubsection{Erkennung von Wiederholungen}
 

@@ -4,17 +4,19 @@
 
 Sei $S = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |S|$ ein String über ein Alphabet $\Sigma$.
 
-Ein Intervall $LCP[i..j]$ mit $0 \leq i \leq j < n$ im LCP-Array beschreibt wiederholte Vorkommen von Substrings. Aus diesem Intervall lässt sich schließen, wie oft dieser Substring vorkommt, wie lang dieser ist, und mithilfe des Suffix-Arrays lässt sich feststellen, wo dieser vorkommt. Jeder Eintrag $LCP[k], k = 1,\dots,n-1$ im LCP-Array ist die Länge des längsten gemeinsamen Präfixes der beiden Suffixe ist, die bei $SA[k-1]$ und $SA[k]$ beginnen. Daher gilt dann folgendes:
+Ein Intervall $LCP[i..j]$ mit $0 \leq i \leq j < n$ im LCP-Array beschreibt wiederholte Vorkommen von Substrings. (siehe \autoref{lcpintervals}) Aus diesem Intervall lässt sich schließen, wie oft dieser Substring vorkommt, wie lang dieser ist, und mithilfe des Suffix-Arrays lässt sich feststellen, wo dieser vorkommt. Jeder Eintrag $LCP[k], k = 1,\dots,n-1$ im LCP-Array ist die Länge des längsten gemeinsamen Präfixes der beiden Suffixe, die bei $SA[k-1]$ und $SA[k]$ beginnen. Daher gilt dann folgendes:
 
-An den Indizes $I = \{SA[i]\ |\ i \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die Breite von $LCP[i..j]$ und $H(i, j) := l$ die Höhe von $LCP[i..j]$.\\\\
+An den Indizes $I = \{SA[i]\ |\ i \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die Breite von $LCP[i..j]$ und $H(i, j) := l$ die Höhe von $LCP[i..j]$.
+
 Intervalle mit großer Breite (viele Vorkommen) bzw. Höhe (langer Substring) bieten also eine besonders große Kompression, wenn diese Vorkommen durch ein Nichtterminal und eine entsprechende Produktionsregel ersetzt werden.
 
-Es ist hier also eine Art Gütefunktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \rightarrow \mathbb{N}_0$ nötig, die Intervalle je nach potentieller Kompression bewertet. Diese Funktion nennen wir Flächenfunktion. Je größer der von der Funktion gelieferte Wert, desto nützlicher ist das Intervall.\\\\
-Die Idee ist also, inkrementell eine Straight Line Grammatik zu erzeugen. Dies geschieht durch die wiederholte Wahl eines vielversprechenden Intervall im LCP-Array anhand der Flächenfunktion. Jedes Vorkommen des von dem Intervall bestimmten Substring wird durch ein neues Nichtterminal und eine entsprechende neue Produktionsregel der Grammatik ersetzt.\\
+Es ist hier also eine Art Gütefunktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \rightarrow \mathbb{N}_0$ denkbar, die Intervalle je nach potentieller Kompression bewertet. Diese Funktion nennen wir Flächenfunktion. Je größer der von der Funktion gelieferte Wert, desto nützlicher ist das Intervall.
 
-Dies wird solange wiederholt bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächefunktion liefern. Etwa müssen Intervalle der Fläche $0$, bei der oben vorgeschlagenen Flächenfunktion nicht betrachtet werden.\\
+Die Idee von AreaComp ist, inkrementell eine Straight-Line-Grammatik zu erzeugen. Dies geschieht durch die wiederholte Wahl eines vielversprechenden Intervall im LCP-Array anhand der Flächenfunktion. Jedes Vorkommen des von dem Intervall bestimmten Substring wird durch ein neues Nichtterminal und eine entsprechende neue Produktionsregel der Grammatik ersetzt.
 
-Die Priorisierung von Intervallen anhand der Flächenfunktion kann mithilfe einer Prioritätswarteschlange umgesetzt werden. Die Intervalle werden mit dem Gewicht $A(i, j)$ eingefügt. So kann in jedem Durchlauf ein Element in der richtigen Reihenfolge entnommen werden.\\\\
+Dies wird solange wiederholt, bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächefunktion liefern. Etwa müssen Intervalle der Fläche $0$ bei der oben vorgeschlagenen Flächenfunktion nicht betrachtet werden.
+
+Die Priorisierung von Intervallen anhand der Flächenfunktion kann mithilfe einer Prioritätswarteschlange umgesetzt werden. Die Intervalle werden mit dem Gewicht $A(i, j)$ eingefügt. So kann in jedem Durchlauf ein Element in der richtigen Reihenfolge entnommen werden.
 
 \subsection{Beispiel}
 
@@ -40,10 +42,10 @@ und betrachten den String $S =$ \enquote{ababcaba\$}. Dann gilt:
 	\end{tabular}
 \end{figure}
 
-Wir beginnen mit der leeren Grammatik $S \rightarrow ababcaba\$$. Die Intervalle mit maximalem $A$ sind $LCP[2..3]$ und $LCP[3..3]$. $A(2, 3) = A(3, 3) = 6$.\\
-Wählt man nun das Intervall $LCP[3..4]$ so gilt entsprechend $W(3, 4) = 3$ und $H(3, 4) = 2$. Der zu ersetzende Substring ($ab$) ist also zwei Zeichen lang und kommt dreimal im String vor.\\
+Wir beginnen mit der leeren Grammatik $S \rightarrow ababcaba\$$. Die Intervalle mit maximalem $A$ sind $LCP[2..3]$ und $LCP[3..3]$: $A(2, 3) = A(3, 3) = 6$.\\
+Wählt man nun das Intervall $LCP[3..4]$, so gilt entsprechend $W(3, 4) = 3$ und $H(3, 4) = 2$. Der zu ersetzende Substring ($ab$) ist also zwei Zeichen lang und kommt dreimal im String vor.\\
 Wir erzeugen nun eine neue Produktionsregel $A \rightarrow ab$ und ersetzen jedes Vorkommen von $ab$ in der Grammatik durch $A$.
-Die resultierende Grammatik ist dann also:
+Die resultierende Grammatik ist dann:
 \begin{align*}
 	S &\rightarrow AAcAa\\
 	A &\rightarrow ab
@@ -59,7 +61,19 @@ Es kann vorkommen, dass ein zu ersetzendes Muster überlappend vorkommt, wie etw
 
 \subsubsection{Überschneidende Substitutionen}
 
-Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall $I_1 := LCP[i_1..j_1]$ durchgeführt worden sein, die sich mit einer späteren Substitution durch ein LCP-Intervall $I_2 := LCP[i_2..j_2]$ überschneiden. In diesem Fall, kann der tatsächliche Nutzen der Substitution sinken. Es muss also dafür gesorgt werden, dass bereits ersetzte Teile des Strings nicht nochmals ersetzt werden.
+Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall $I_1 := LCP[i_1..j_1]$ durchgeführt worden sein, die sich mit einer späteren Substitution durch ein LCP-Intervall $I_2 := LCP[i_2..j_2]$ überschneiden. In diesem Fall kann der tatsächliche Nutzen der Substitution sinken. Es muss auch dafür gesorgt werden, dass bereits ersetzte Teile des Strings nicht nochmals ersetzt werden.
+
+\subsection{Übersicht}
+
+Im Laufe der Entwicklung von AreaComp sind vier Versionen des Algorithmus entstanden. Jede der Versionen verbessert Aspekte der vorhergehenden Version. Daraus resultiert die finale vierte Version des Algorithmus.
+
+% TODO AreaComp Zusammenfassung
+\begin{itemize}
+    \item[\emph{V1}] \emph{Naive Implementierung}\\
+    In V1 werden keine laufzeitverbessernden Datenstrukturen oder Algorithmen angewendet.
+    Diese Version nutzt dieselbe Datenstruktur für Regeln wie Sequitur. (siehe \autoref{sequitur}) Diese Version hat eine $\mathcal{O}(n^4)$ Laufzeit.
+    \item[\emph{V2}] \emph{}
+\end{itemize}
 
 \newpage
 \input{kapitel/areacomp/v1}

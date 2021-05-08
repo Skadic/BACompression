@@ -22,26 +22,63 @@ Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die n
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $l := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die ID der Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - l$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{ID_p, i} := [i, i + l - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist. \\
+Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{id_p, i} := [i, i + \ell - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist.
 
 \subsection{Neue Datenstrukturen}
+
+\begin{figure}
+	\centering
+	
+    \subfloat[Eine Grammatik für den String $abcdbcabcde$.]{
+        \makebox[8cm] {
+            $\begin{aligned}
+                R_0 &\rightarrow R_1 R_2 R_1 e\\
+                R_1 &\rightarrow a R_2 d\\
+                R_2 &\rightarrow bc
+            \end{aligned}$
+        }
+    }
+
+	\subfloat[][\texttt{ruleIntervals}]{
+		\scalebox{.85}{
+			\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+                \multicolumn{1}{c}{$a$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$d$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$a$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$d$} & \multicolumn{1}{c}{$e$} \\\hline
+				$0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ \\\hline
+				$1$ & $1$ & $1$ & $1$ & $2$ & $2$ & $1$ & $1$ & $1$ & $1$ & \\\hline
+				& $2$ & $2$ &     &     &     &     & $2$ & $2$ &     & \\\hline
+			\end{tabular} 
+		}
+ 	}
+	\quad
+ 	\subfloat[][\texttt{ruleIntervalStarts}]{
+ 		\scalebox{.85}{
+	 		\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+                \multicolumn{1}{c}{$a$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$d$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$a$} & \multicolumn{1}{c}{$b$} & \multicolumn{1}{c}{$c$} & \multicolumn{1}{c}{$d$} & \multicolumn{1}{c}{$e$} \\\hline
+	 			$\{0, 1\}$ & $\{2\}$ & & & $\{2\}$ & & $\{1\}$ & $\{2\}$ & & & \\\hline
+	 		\end{tabular} 
+ 		}
+ 	}
+    \caption{Die Datenstrukturen von V2 für eine Grammatik für den String $abcdbcabcde$.}
+    \label{v2datastructures}
+\end{figure}
+
+
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
-	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste der IDs derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die IDs in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
-	Anders formuliert, beinhaltet die Liste die Indizes aller Regeln, die von der Startregel ausgehend in der Grammatik durchlaufen werden müssen, um das Zeichen an Index $i$ im Eingabestring zu erreichen, genau in der Reihenfolge in der sie durchalufen wurden. Es ist also der letzte Index immer die Regel-ID, der dem am tiefsten verschachtelten Ersetzungsintervall zugehörigen Regel. 
+	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die Regeln in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
+	Anders formuliert, beinhaltet die Liste die Indizes aller Regeln, die von der Startregel ausgehend in der Grammatik durchlaufen werden müssen, um das Zeichen an Index $i$ im Eingabestring zu erreichen, genau in der Reihenfolge in der sie durchlaufen wurden. Es ist also der letzte Index immer die Regel, die dem am tiefsten verschachtelten Ersetzungsintervall angehört. 
 	
-	Sei die Grammatik beispielhaft: (Startregel $R0$)
-	\begin{align*}
-		R_0 &\rightarrow R_2\ c\ R_2\\
-		R_1 &\rightarrow a\ a\\
-		R_2 &\rightarrow R_1\ b\ R_1
-	\end{align*}
-	Dann ist der vollständig expandierte String $aabaacaabaa$. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 2, 1]$, da wir die Regeln in der Reihenfolge $R_0 \rightarrow R_2 \rightarrow R_1$ durchlaufen müssen, um das $a$ an Index $1$ zu erreichen.
+	Betrachte \autoref{v2datastructures}. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 1, 2]$, da wir die Regeln in der Reihenfolge $R_0 \rightarrow R_1 \rightarrow R_2$ durchlaufen müssen, um das $b$ an Index $1$ im Eingabestring zu erreichen.
 	
-	\item[\texttt{ruleIntervalStarts}] ist eine Hashtabelle, die von einem Index $i \in \{0, \dots, n - 1\}$ auf eine Menge von Regel-IDs abbildet. Dabei befindet sich eine Regel-ID genau dann in \texttt{ruleIntervalStarts}$[i]$, wenn es ein Ersetzungsintervall für diese Regel-ID gibt, das an diesem Index beginnt.
+	\item[\texttt{ruleIntervalStarts}] ist eine Hashtabelle, die von einem Index $i \in \{0, \dots, n - 1\}$ auf eine Menge von Regeln abbildet. Dabei befindet sich eine Regel $r$ genau dann in \texttt{ruleIntervalStarts}$[i]$, wenn ein Ersetzungsintervall der Regel $r$ existiert, das an Index $i$ beginnt.
 	
 	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinander folgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
+
+    Betrachte wieder \autoref{v2datastructures}. Der Inhalt von\\
+    $\texttt{ruleIntervalStarts}$ bei Index $0$ ist $\{0, 1\}$, da sowohl das Ersetzungsintervall $[0..10]$ der Regel $0$ als auch das Ersetzungsintervall $[0..3]$ der Regel $1$ an diesem Index beginnen. 
 \end{itemize}
+
+
 
 \subsection{Substitution}
 Wird nun $p$ in $s$ am Index $i$ substituiert, so wird nun $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + l - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
@@ -51,16 +88,16 @@ Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, w
 \subsubsection{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
 
 \begin{enumerate}
-	\item Die IDs der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
+	\item Die tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
 	\item Die Startindizes der Ersetzungsintervalle der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen. 
 \end{enumerate}
 
 Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Ansonsten, müssten Teile unterschiedlicher Produktionsregeln durch \emph{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.\\\\
 Ob ein Vorkommen diese Bedingungen erfüllt, wird folgendermaßen geprüft:
 
-Die IDs der tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + l - 1$ bestimmen. Die IDs sind dann jeweils die letzten Elemente in den abgerufenen Listen.
+Die tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + l - 1$ bestimmen. Die Regeln sind dann jeweils die letzten Elemente in den abgerufenen Listen.
 
-Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die ID $id_T \in \mathbb{N}$ der tiefsten Regel an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $id_T$ enthält.
+Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die tiefste Regel $r$ an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $r$ enthält.
 
 \subsubsection{Unterschiedliche Vorkommen}
 
@@ -77,39 +114,40 @@ Es muss nun möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlic
 Dies kann mit dem folgenden Algorithmus festgestellt werden:
 
 \begin{algorithm}
-	\caption{differingOccurrences}
-	\begin{algorithmic}
-		\REQUIRE $positions:$ Liste von Startindizes
-		\STATE $firstRuleId \leftarrow -1$
-		\STATE $set \leftarrow \emptyset$
-		\FOR {$i$ \textbf{in} $positions$}
-			\STATE $ruleId \leftarrow \text{Regel-ID des Ersetzungsintervall bei } i$
-			\STATE $startIndex \leftarrow \text{Startindex des Ersetzungsintervall bei } i$
-			
-			\IF {$firstRuleId = -1$}
-				\STATE $firstRuleId \leftarrow ruleId$
-			\ELSIF {$ruleId \neq firstRuleId$ \OR $startIndex \in set$}
-				\RETURN \TRUE
-			\ENDIF
-			\STATE $set \leftarrow set \cup \{startIndex\}$
-		\ENDFOR
-		\RETURN \FALSE
-	\end{algorithmic}
+    \KwData{$positions:$ Liste von Startindizes}
+    \KwResult{$a$}
+    $firstRuleId \leftarrow -1$\;
+    $set \leftarrow \emptyset$\;
+    \For {$i$ \textbf{in} $positions$} {
+        $ruleId \leftarrow \text{Regel-ID des Ersetzungsintervall bei } i$\;
+        $startIndex \leftarrow \text{Startindex des Ersetzungsintervall bei } i$\;
+        
+        \If {$firstRuleId = -1$} {
+            $firstRuleId \leftarrow ruleId$\;
+        }
+        \ElseIf {$ruleId \neq firstRuleId$ \textbf{or} $startIndex \in set$} {
+            \KwRet{$true$}\;
+        }
+            
+        $set \leftarrow set \cup \{startIndex\}$\;
+    }
+    \KwRet{$false$}\;
+    \caption{differingOccurrences}
 \end{algorithm}
 
-Wir speichern die erste Regel-ID, der wir begegnen. Kommt später eine andere Regel-ID vor, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
+Wir speichern die erste Regel, der wir begegnen. Kommt später eine andere Regel vor, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
 Wir iterieren durch die Indizes, an denen $p$ vorkommt.Für jeden dieser Indizes $j \in \mathbb{N}$ bestimmen wir den Anfangsindex des tiefsten Ersetzungsintervalls bei $j$. 
 Falls wir diesen Anfangsindex noch nicht gesehen haben, speichern wir diesen. Falls doch, brechen wir ab und geben $\texttt{true}$. 
 Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, so dass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
 
 \begin{enumerate}
-	\item[\textbf{Fall 1}] Die Regel-IDs der beiden Intervalle sind gleich.\\
+	\item[\textbf{Fall 1}] Die Regeln der beiden Intervalle sind gleich.\\
 	In diesem Fall sind die Intervalle gleich. Da $k < j$ gilt, gibt es also in derselben Regel mindestens zwei Vorkommen von dem Muster $p$. Damit kann der Algorithmus also terminieren und $\texttt{true}$ zurückgeben.
-	\item[\textbf{Fall 2}] Die Regel-IDs sind unterschiedlich.\\
+	\item[\textbf{Fall 2}] Die Regeln sind unterschiedlich.\\
 	Dieser Fall wird durch die Bedingung $ruleId \neq firstRuleId$ bemerkt und der Algorithmus gibt korrekterweise $\texttt{true}$ zurück.
 \end{enumerate}
 
-Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel-ID besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
+Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
 
 \subsubsection{Faktorisieren}
 
@@ -120,7 +158,7 @@ Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist 
 Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, 
 lässt sich also derjenige lokale Index $j$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
 Von dort an kann dann durch Iterieren durch $\texttt{symbols}$ die erforderliche Anzahl an Symbolen durch das neue Nichtterminal ersetzt werden.
-Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, in dem die ID der neuen Regel an die entsprechenden Stellen eingefügt wird.
+Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, in dem die neue Regel an die entsprechenden Stellen eingefügt wird.
 
 \subsection{Probleme}
 

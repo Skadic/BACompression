@@ -97,25 +97,23 @@ Wir können nun bestimmen, welches das tiefste verschachtelte Ersetzungsinterval
 Dies ist mithilfe des folgenden Algorithmus möglich.
 
 \begin{algorithm}
-	\caption{intervalContaining}
-	\begin{algorithmic}
-		\REQUIRE $from, to$ Start- und Endindizes
-		\STATE $current \leftarrow floorInterval(from)$
-		\WHILE {$current \neq \texttt{null}$}
-			\IF {$current.start \leq from \textbf{ and } to \leq current.end$}
-				\RETURN $current$
-			\ENDIF
-            \IF {$current.firstAtStartIndex \leq from \textbf{ and } to \leq current.firstAtStartIndex.end$}
-                \STATE $current \leftarrow current.parent$
-            \ELSE 
-                \STATE $current \leftarrow current.firstAtStartIndex$
-                \IF {$current.parent \neq \texttt{null}$}
-                    \STATE $current \leftarrow current.parent$
-                \ENDIF
-            \ENDIF
-		\ENDWHILE
-		\RETURN \texttt{null}
-	\end{algorithmic}
+    \KwData {$from, to$ Start- und Endindizes}
+    \KwResult{ $current \leftarrow floorInterval(from)$}
+    \While {$current \neq \texttt{null}$} {
+        \If {$current.start \leq from \textbf{ and } to \leq current.end$} {
+            \KwRet{$current$}
+        }
+        \eIf {$current.firstAtStartIndex \leq from \textbf{ and } to \leq current.firstAtStartIndex.end$} {
+            $current \leftarrow current.parent$\;
+        }{
+            $current \leftarrow current.firstAtStartIndex$\;
+            \If {$current.parent \neq \texttt{null}$} {
+                $current \leftarrow current.parent$ \;
+            }
+        }
+    }
+    \KwRet{\texttt{null}}
+    \caption{intervalContaining}
 \end{algorithm}
 
 Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$. 
@@ -181,25 +179,23 @@ Nun ist es möglich, dass einige der Vorkommen sich nicht (mehr) für eine Erset
 Der erste Algorithmus bestimmt für ein Intervall, ob eine Substitution dieses Intervalls erlaubt ist. 
 
 \begin{algorithm}
-    \begin{algorithmic}
-        \caption{substitutionAllowed}
-        \REQUIRE $from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur
-        \STATE $ $
-        \STATE $fromInterval \leftarrow intervalIndex.intervalContaining(from)$
-        \WHILE{$from = fromInterval.start \textbf{ and } to > fromInterval.end \textbf{ and }$\\$fromInterval.parent \neq \texttt{null}$}
-            \STATE $fromInterval \leftarrow fromInterval.parent$
-        \ENDWHILE
+    \KwData{$from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+    $fromInterval \leftarrow intervalIndex.intervalContaining(from)$\;
+    \While{$from = fromInterval.start \textbf{ and } to > fromInterval.end \textbf{ and }$\\$fromInterval.parent \neq \texttt{null}$} {
+        $fromInterval \leftarrow fromInterval.parent$\;
+    }
 
-        \IF{$to > fromInterval.end$}
-            \RETURN \FALSE
-        \ENDIF
+    \If{$to > fromInterval.end$} {
+        \KwRet{$false$}
+    }
 
-        \STATE $toInterval \leftarrow intervalIndex.intervalContaining(to)$
-        \WHILE{$toInterval$ does not contain $fromInterval \textbf{ and }$\\$to = toInterval.end \textbf{ and } toInterval.parent \neq null$}
-            \STATE $toInterval \leftarrow toInterval.parent$
-        \ENDWHILE
-        \RETURN $toInterval = fromInterval$
-    \end{algorithmic}
+    $toInterval \leftarrow intervalIndex.intervalContaining(to)$\;
+    \While{$toInterval$ does not contain $fromInterval \textbf{ and }$\\$to = toInterval.end \textbf{ and } toInterval.parent \neq null$}{
+        $toInterval \leftarrow toInterval.parent$\;
+    }
+    \KwRet{$toInterval = fromInterval$}
+    
+    \caption{substitutionAllowed}
 \end{algorithm}
 Dieser Algorithmus prüft, ob das Intervall $[from..to]$ substituiert werden darf. Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Symbole (Terminale oder Nichtterminale) finden lassen, dessen vollständig expandierte Form genau bei $from$ im Eingabestring beginnt, beziehungsweise genau bei $to$ endet (inklusive des Zeichens).
 In der Regel ist das Intervall das tiefste verschachtelte Intervall jeweils bei $from$ und $to$. 
@@ -233,22 +229,20 @@ Die Substitution ist hier also auch ungültig.
 Mithilfe des vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen. Der folgende Algorithmus leistet dies, und gibt zusätzlich die Anzahl der übrigen Positionen zurück. In diesem Algorithmus werden Positionen entfernt, indem sie durch $-1$ ersetzt werden. Beachte, dass dieser Algorithmus erwartet, dass das $positions$ Array aufsteigend sortiert ist.
 
 \begin{algorithm}
-    \begin{algorithmic}
-        \caption{cleanPositions}
-        \REQUIRE $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$
-        \STATE $count \leftarrow 0$
-        \STATE $previous \leftarrow -\infty$
-        \FOR{$i$ \textbf{in} $0$ \textbf{to} $n - 1$}
-            \STATE $pos \leftarrow positions[i]$
-            \IF{$previous + len \leq pos$ \textbf{ and } $substitutionAllowed(pos, pos + len - 1)$}
-                \STATE $previous \leftarrow pos$
-                \STATE $count \leftarrow count + 1$
-            \ELSE
-                \STATE $positions[i] \leftarrow -1$
-            \ENDIF
-        \ENDFOR
-        \RETURN $count$
-    \end{algorithmic}
+    \KwData{ $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$}
+    $count \leftarrow 0$\;
+    $previous \leftarrow -\infty$\;
+    \For{$i$ \textbf{in} $0$ \textbf{to} $n - 1$} {
+        $pos \leftarrow positions[i]$\;
+        \eIf{$previous + len \leq pos$ \textbf{ and } $substitutionAllowed(pos, pos + len - 1)$}{
+            $previous \leftarrow pos$\;
+            $count \leftarrow count + 1$\;
+        }{
+            $positions[i] \leftarrow -1$\;
+        }
+    }
+    \KwRet{$count$}
+    \caption{cleanPositions}
 \end{algorithm}
 
 Der Algorithmus iteriert durch das Array der gegebenen Positionen. Falls dann das jetzige Vorkommen sich nicht mit dem Vorherigen überschneidet und eine Substitution dieses Vorkommens erlaubt ist, so erhöhe den Zähler. Falls dies nicht der Fall ist, so entferne dieses Vorkommen.
@@ -267,28 +261,28 @@ Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies s
 Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, solst \texttt{false}:
 
 \begin{algorithm}
-    \begin{algorithmic}
-        \caption{differingOccurrences}
-        \REQUIRE $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$
-        \STATE $set \leftarrow \emptyset$
-        \STATE $firstRuleId = -1$
-        \FOR{$pos$ \textbf{in} $positions$}
-            \IF{$pos == -1$} 
-                \STATE \textbf{continue}
-            \ENDIF
-            \STATE $ruleInterval \leftarrow intervalIndex.intervalContaining(pos)$
-            \STATE $ruleId \leftarrow ruleInterval.ruleId$
-            \STATE $startIndex \leftarrow ruleInterval.start$
+    \KwData{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
+    $set \leftarrow \emptyset$\;
+    $firstRuleId = -1$\;
+    \For{$pos$ \textbf{in} $positions$} {
+        \If{$pos == -1$} { 
+            \textbf{continue}\;
+        }
+        $ruleInterval \leftarrow intervalIndex.intervalContaining(pos)$\;
+        $ruleId \leftarrow ruleInterval.ruleId$\;
+        $startIndex \leftarrow ruleInterval.start$\;
 
-            \IF{$firstRuleId = -1$}
-                \STATE $firstRuleId \leftarrow ruleId$
-            \ELSIF{$ruleId \neq firstRuleId$ \textbf{ or } $startIndex \in set$}
-                \RETURN \TRUE
-            \ENDIF
-            \STATE $set \leftarrow set \cup \{startIndex\}$
-        \ENDFOR
-        \RETURN \FALSE
-    \end{algorithmic}
+        \If{$firstRuleId = -1$} {
+            $firstRuleId \leftarrow ruleId$\;
+        }
+        \ElseIf{$ruleId \neq firstRuleId$ \textbf{ or } $startIndex \in set$} {
+            \KwRet{$true$}
+        }
+        $set \leftarrow set \cup \{startIndex\}$\;
+    }
+    \KwRet{$false$}
+    
+    \caption{differingOccurrences}
 \end{algorithm}
 
 Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel, die in der nun folgenden for-Schleife gefunden wird.
@@ -312,17 +306,14 @@ Gibt dieser Algorithmus \texttt{false} zurück, so wird keine Substitution durch
 
 Der letzte Schritt der Kompression ist die tatsächliche Substitution der Vorkommen des Musters.
 \begin{algorithm}
-    \begin{algorithmic}
-        \REQUIRE $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur\\
-        \STATE $ $
-        \STATE $nextId \leftarrow$ nächste unbenutzte Regel ID
-        \FOR{$pos \leftarrow positions$}
-            \IF{$pos = -1$}
-                \STATE \textbf{continue}
-            \ENDIF
-            \STATE $intervalIndex.mark(nextId, pos, pos + len - 1)$
-        \ENDFOR
-    \end{algorithmic}
+        \KwData{ $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+        $nextId \leftarrow$ nächste unbenutzte Regel ID\;
+        \For{$pos \leftarrow positions$} {
+            \If{$pos = -1$} {
+                \textbf{continue}\;
+            }
+            $intervalIndex.mark(nextId, pos, pos + len - 1)$\;
+        }
 \end{algorithm}
 
 Der Algorithmus iteriert nur durch das Array der Startindizes der Vorkommen des Musters und markiert die jeweiligen Intervalle, die das Vorkommen des Musters einnimmt, in der Datenstruktur. 

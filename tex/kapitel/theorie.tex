@@ -158,8 +158,6 @@ Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist
 
 \subsubsection{Operationen}
 
-% TODO LAUFZEITEN
-
 Die Operationen werden folgendermaßen umgesetzt:
 
 \paragraph{\texttt{insert(x)}}
@@ -192,7 +190,7 @@ Da der Bucket, in dem das gesuchte Bit liegt, in $\mathcal{O}(1)$ Laufzeit besti
 
 In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Maximale LCP-Intervalle bezeichnen, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
 
-Die vorgestellten Intervalle erlauben es alle Suffixe mit einem gemeinsamen Präfix einer Länge von mindestens $\ell$ in einem String zu gruppieren.
+Die vorgestellten Intervalle erlauben es \emph{alle} Suffixe mit einem bestimmten gemeinsamen Präfix einer Länge von mindestens $\ell \in \mathbb{N}$ in einem String zu gruppieren.
 
 \subsection{Maximale LCP-Intervalle}
 \label{maxlcpint}
@@ -209,7 +207,7 @@ Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{maximales LCP-Interva
 Wir bezeichnen $[i..j]$ dann auch als $\ell$-Intervall oder als $\ell-[i..j]$. Zudem bezeichnen wir jeden Index $k$ mit $i < k \leq j$ und $LCP[k] = \ell$ als $\ell$-Index.
 
 \subsection{Eingebettete und umschließende maximale LCP-Intervalle}
-\ref{embeddedlcpintervals}
+\label{embeddedlcpintervals}
 
 Ein $m$-Intervall $[a..b]$ heißt \textit{eingebettet} in ein $\ell$-Intervall $[i..j]$ mit $i \leq a < b \leq j$, falls $m > \ell$. $[i..j]$ heißt dann auch $[a..b]$ \textit{umschließendes} Intervall.
 
