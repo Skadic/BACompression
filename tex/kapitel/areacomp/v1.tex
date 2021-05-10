@@ -12,20 +12,46 @@ Die Datenstruktur, mit der Regeln, Terminale und Nichtterminale verwaltet werden
 
 Diese Implementierung hat nicht das Problem, dass sich Substitutionen entstehen können, die sich mit vorherigen Substitutionen überschneiden, da Suffix- und LCP-Array für jede Regel symbolweise neu erzeugt werden. 
 
+\begin{algorithm}[t]
+    \KwIn{$s:$ String}
+    \KwOut{Straight-Line-Grammatik für $s$}
+    \While{ Eine neue Regel kann erzeugt werden }{
+        \For{Regel \texttt{rule} in der Regelmenge}{
+            $SA, LCP \leftarrow$ Suffix- und LCP-Array für rechte Seite von $rule$\;
+            $queue \leftarrow$ Prioritätswarteschlange aller LCP-Intervalle der rechten Seite von $rule$, geordnet mithilfe der Flächenfunktion\;
+            \Do{$queue \neq \emptyset$ \And $positions.length \leq 1$}{
+                $[l..r] \leftarrow queue.poll()$\;
+                $positions \leftarrow$ Array der Indizes der Vorkommen des durch $[l..r]$ beschriebenen Musters (mithilfe von $SA$)\;
+                $len \leftarrow \min_{i \in [l..r]} LCP[i]$\;
+                Sortiere $positions$ aufsteigend\;
+                Entferne überlappende Vorkommen aus $positions$\;
+            }
+            \If{$positions.length \leq 1$}{
+                \KwBreak \;
+            }
+            Substituiere alle Vorkommen in $positions$ mit der Länge $len$\;
+        }
+    }
+    \KwRet{Regelmenge}
+    \caption{AreaCompV1}
+    \label{v1algo}
+\end{algorithm}
+
 \subsection{Probleme}
 
 \subsubsection{Laufzeit}
+\label{v1problemruntime}
+
 Das größte Problem dieser Implementierung ist die Laufzeit. Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring.
 
-In jedem Durchlauf wird für jede Regel $X \rightarrow w \in P, X \in N, w \in (N \cup \Sigma)^*$ das im Bezug auf die Flächenfunktion beste LCP-Intervall berechnet. Dessen Berechnung dominiert die Laufzeit dieser Version des Algorithmus. 
-Es existieren $|w|^2$ solche Intervalle.
-Für jedes dieser Intervalle muss die Flächenfunktion berechnet werden. Eine Flächenfunktion, die alle Werte in ihrem gegebenen Intervall $I$ in Betracht zieht, muss mindestens eine Laufzeit von $\mathcal{O}(|I|)$ haben, da das Minimum im Intervall linear gesucht werden muss. Betrachten wir die Länge aller möglichen LCP-Intervalle, so ist deren Gesamtlänge $\mathcal{O}(|w|^3)$. Folglich ist die Gesamtlaufzeit der Flächenfunktionsaufrufe pro Produktionsregel und Durchlauf $\mathcal{O}(|w|^3)$. 
+Wie in \autoref{v1algo} dargestellt, wird in jedem Durchlauf der While-Schleife jeweils durch die Menge der zu diesem Zeitpunkt existierenden Regeln iteriert. 
+In jedem Durchlauf wird für jede Regel $rule := X \rightarrow w \in P, X \in N, w \in (N \cup \Sigma)^*$ das im Bezug auf die Flächenfunktion beste LCP-Intervall im LCP-Array von $w$ berechnet. Dessen Berechnung dominiert die Laufzeit dieser Version des Algorithmus. 
+Es existieren $|w|^2$ solche Intervalle. Für jedes dieser LCP-Intervalle muss die Flächenfunktion berechnet werden, da diese in die Prioritätswarteschlange eingefügt werden müssen (Zeile 4). Eine Flächenfunktion, die alle Werte in ihrem gegebenen Intervall $I$ in Betracht zieht, muss mindestens eine Laufzeit von $\mathcal{O}(|I|)$ haben, da das Minimum im Intervall linear gesucht werden muss.
 
-Da die Gesamtlänge der Grammatik $n$ nicht überschreiten kann, ist die Laufzeit der Flächenfunktionsaufrufe pro Durchlauf $\mathcal{O}(n^3)$. 
+Im Worst-Case kann in $w$ keine Substitution mehr durchgeführt werden kann. In diesem Fall muss die Do-While-Schleife alle $|w|^2$ Intervalle verarbeiten. Jeder Durchlauf der Do-While-Schleife benötigt $\mathcal{O}(|w| \log |w|)$ Laufzeit, dominiert durch das Sortieren des $positions$ Array. Also folgt eine Worst-Case Laufzeit von $\mathcal{O}(|w|^3 \log |w|)$ für die For-Schleife. Da $|w|$ in $\mathcal{O}(n)$ liegt, resultiert eine Laufzeit von $\mathcal{O}(n^3 \log n)$ für einen Durchlauf der While-Schleife.
 
-In jedem Durchlauf, in dem eine Substitution möglich ist, wird mindestens eine Substitution durchgeführt. Da durch jede Substitution die Grammatik um mindestens $1$ Zeichen kleiner wird (entweder mindestens $2$ Vorkommen der Länge mindestens $3$ oder mindestens $3$ Vorkommen der Länge mindestens $2$), können im Worst-Case insgesamt $\mathcal{O}(n)$ Durchläufe stattfinden.
+Da die Gesamtlänge der Grammatik $n$ nicht überschreiten kann und die Größe der Grammatik in jedem Durchlauf der While-Schleife um mindestens $1$ sinken muss, können im Worst-Case $\mathcal{O}(n)$ Iterationen der While-Schleife stattfinden. Insgesamt folgt im Worst-Case also eine Laufzeit von $\mathcal{O}(n^4 \log n)$.
 
-Insgesamt resultiert also eine sehr hohe Laufzeit von $\mathcal{O}(n^4)$.
 
 \subsubsection{Erkennung von Wiederholungen}
 

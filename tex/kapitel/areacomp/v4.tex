@@ -98,8 +98,9 @@ Dies ist mithilfe des folgenden Algorithmus möglich.
 
 \begin{algorithm}
     \KwIn {$from, to$ Start- und Endindizes}
-    \KwOut{ $current \leftarrow floorInterval(from)$}
-    \While {$current \neq \texttt{null}$} {
+    \KwOut{Das tiefste Ersetzungsintervall, das sowohl $from$ als auch $to$ umschließt}
+    $current \leftarrow floorInterval(from)$\;
+    \While {$current \neq$ \KwNull} {
         \If {$current.start \leq from \textbf{ and } to \leq current.end$} {
             \KwRet{$current$}
         }
@@ -107,12 +108,12 @@ Dies ist mithilfe des folgenden Algorithmus möglich.
             $current \leftarrow current.parent$\;
         }{
             $current \leftarrow current.firstAtStartIndex$\;
-            \If {$current.parent \neq \texttt{null}$} {
-                $current \leftarrow current.parent$ \;
+            \If {$current.parent \neq$ \KwNull} {
+                $current \leftarrow current.parent$ 
             }
         }
     }
-    \KwRet{\texttt{null}}
+    \KwRet{\KwNull}
     \caption{intervalContaining}
 \end{algorithm}
 
@@ -248,6 +249,7 @@ Mithilfe des vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vo
 Der Algorithmus iteriert durch das Array der gegebenen Positionen. Falls dann das jetzige Vorkommen sich nicht mit dem Vorherigen überschneidet und eine Substitution dieses Vorkommens erlaubt ist, so erhöhe den Zähler. Falls dies nicht der Fall ist, so entferne dieses Vorkommen.
 
 \paragraph{Sicherstellen unterschiedlicher Vorkommen}
+\label{differingV4}
 
 Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global für den Eingabestring berechnet werden, ist es möglich, dass es zwar mehrere Vorkommen eines Musters im Eingabestring gibt, aber durch vorhergehende Substitutionen dieses Vorkommen nur noch einmal in der Grammatik vorkommt. Betrachten wir wieder das Beispiel von vorher:
 
@@ -258,10 +260,11 @@ Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global fü
 
 Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \emph{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
 
-Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, solst \texttt{false}:
+Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, sonst \texttt{false}:
 
 \begin{algorithm}
     \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
+    \KwOut{ \KwTrue, falls mehrere tatsächlich unterschiedliche Vorkommen in der Grammatik existieren, \KwFalse sonst }
     $set \leftarrow \emptyset$\;
     $firstRuleId = -1$\;
     \For{$pos$ \textbf{in} $positions$} {

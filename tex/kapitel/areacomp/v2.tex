@@ -22,7 +22,7 @@ Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die n
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{id_p, i} := [i, i + \ell - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist.
+Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{id_p, i} := [i.. i + \ell - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist.
 
 \subsection{Neue Datenstrukturen}
 
@@ -81,27 +81,32 @@ Wir führen nun zwei Datenstrukturen ein:
 
 
 \subsection{Substitution}
-Wird nun $p$ in $s$ am Index $i$ substituiert, so wird nun $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + l - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
+Wird $p$ in $s$ am Index $i$ substituiert, so wird $id_p$ in \texttt{ruleIntervals} in die Listen der Indizes $i$ bis $i + \ell - 1$ an die richtige Stelle eingefügt, sowie auch in \texttt{ruleIntervalStarts}$[i]$.
 
 Nachdem alle Positionen festgestellt wurden, an denen das Muster $p$ vorkommt, werden, wie bei V1, sich überschneidende Vorkommen entfernt. Daraufhin wird geprüft, ob die Substitution an den übrigen Indizes möglich ist. Dies wird mithilfe von \texttt{ruleIntervals} und \texttt{ruleIntervalStarts} bewältigt.
 
-\subsubsection{Bedingungen für Substitution} Eine Substitution von $p$ an Index $i$ ist genau dann möglich, wenn folgende Bedingungen gelten:
+\subsubsection{Bedingungen für Substitution}
+\label{v2substitutionconditions}
+
+In V2 sind die Bedingungen dafür, dass eine Substitution von $p$ an Index $i$ möglich ist, folgendermaßen festgelegt:
 
 \begin{enumerate}
-	\item Die tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen.
-	\item Die Startindizes der Ersetzungsintervalle der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + l - 1$ müssen übereinstimmen. 
+	\item Die tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + \ell - 1$ müssen übereinstimmen.
+	\item Die Startindizes der Ersetzungsintervalle der tiefsten verschachtelten Regeln bei jeweils den Indizes $i$ und $i + \ell - 1$ müssen übereinstimmen. 
 \end{enumerate}
 
-Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Ansonsten, müssten Teile unterschiedlicher Produktionsregeln durch \emph{ein} Nichtterminal ersetzt werden. Dies ist nicht möglich.\\\\
-Ob ein Vorkommen diese Bedingungen erfüllt, wird folgendermaßen geprüft:
+Diese Bedingungen zusammen garantieren, dass das Vorkommen von $p$ in demselben Ersetzungsintervall beginnt, in dem es auch endet. Nur in diesem Fall darf dieses Vorkommen substituiert werden. Wie sich im Laufe der Entwicklung des Algorithmus herausstellte, sind diese Bedingungen zu streng und verbieten Substitutionen, die eigentlich legal sind. Dies wird in V4 behoben. (siehe \autoref{differingV4})
 
-Die tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + l - 1$ bestimmen. Die Regeln sind dann jeweils die letzten Elemente in den abgerufenen Listen.
+Ob ein Vorkommen diese Bedingungen erfüllt, wird folgendermaßen geprüft:\\
+Die tiefsten verschachtelten Regeln lassen sich leicht mit einem Look-Up in \texttt{ruleIntervals} an den Indizes $i$ und $i + \ell - 1$ bestimmen. Die Regeln sind dann jeweils die letzten Elemente in den abgerufenen Listen. Diese Operation ist in $\mathcal{O}(1)$ Laufzeit möglich.
 
-Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die tiefste Regel $r$ an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $r$ enthält.
+Die Startindizes der Ersetzungsintervalle werden bestimmt, indem für die beiden Indizes jeweils die tiefste Regel $r$ an diesem Index bestimmt wird. Von diesem Index wird solange zurückgelaufen, bis ein Eintrag in \texttt{ruleIntervalStarts} existiert, der $r$ enthält. Diese Operation benötigt erwartete $\mathcal{O}(n)$ Laufzeit, da potenziell die $\texttt{ruleIntervalStarts}$ Struktur für den gesamten Eingabestring durchlaufen werden muss.
+
+Um nun ein Array $positions$ mit $k := |positions|$ von Startindizes von Vorkommen eines Musters auf diese Eigenschaften zu prüfen, ist nun insgesamt eine erwartete Laufzeit von $\mathcal{O}(k \cdot n)$ nötig.
 
 \subsubsection{Unterschiedliche Vorkommen}
 
-Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Grammatik für den String $abcabcde$:
+Es existiert aber ein weiteres Problem. Betrachten wir beispielsweise die Grammatik für den String $abcabcde$:
 
 \begin{align*}
 	R_0 &\rightarrow R_1\ R_1\ d\ e\\
@@ -109,12 +114,11 @@ Es existiert aber nun ein weiteres Problem. Betrachten wir beispielsweise die Gr
 \end{align*}
 
 Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
-Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurde. Demnach, darf $ab$ nicht nochmals ersetzt werden. 
-Es muss nun möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \emph{in der Grammatik} mehrmals vorkommen.
-Dies kann mit dem folgenden Algorithmus festgestellt werden:
-
-\begin{algorithm}
-    \KwIn{$positions:$ Liste von Startindizes}
+Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R_1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurde. Demnach darf $ab$ nicht nochmals ersetzt werden. 
+Es muss also möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \emph{in der Grammatik} mehrmals vorkommen.
+\begin{algorithm}[t]
+    \KwIn{$positions:$ Liste von Startindizes der Vorkommen eines Musters}
+    \KwOut{ \KwTrue, falls mehrere tatsächlich unterschiedliche Vorkommen in der Grammatik existieren, \KwFalse sonst }
     $firstRuleId \leftarrow -1$\;
     $set \leftarrow \emptyset$\;
     \For {$i$ \textbf{in} $positions$} {
@@ -132,11 +136,13 @@ Dies kann mit dem folgenden Algorithmus festgestellt werden:
     }
     \KwRet{$false$}\;
     \caption{differingOccurrences}
+    \label{diffOccAlgoV2}
 \end{algorithm}
 
-Wir speichern die erste Regel, der wir begegnen. Kommt später eine andere Regel vor, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
-Wir iterieren durch die Indizes, an denen $p$ vorkommt.Für jeden dieser Indizes $j \in \mathbb{N}$ bestimmen wir den Anfangsindex des tiefsten Ersetzungsintervalls bei $j$. 
-Falls wir diesen Anfangsindex noch nicht gesehen haben, speichern wir diesen. Falls doch, brechen wir ab und geben $\texttt{true}$. 
+Dies kann mit \autoref{diffOccAlgoV2} festgestellt werden.
+Wir iterieren durch die Indizes, an denen $p$ vorkommt bestimmen die tiefste Regel an diesem Index. Wir speichern die erste solche Regel. Kommt in einer späteren Iteration eine andere Regel vor als die Gespeicherte, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
+Andererseits bestimmen wir den Anfangsindex des Ersetzungsintervalls. Wir verwalten eine Menge aller solcher Anfangsindizes, die bisher bestimmt wurden. 
+Falls dieser Anfangsindex noch nicht in der Menge gespeichert ist, speichern wir diesen in der Menge und springen zum nächsten Schritt der Iteration. Falls doch, brechen wir die Iteration ab und geben $\texttt{true}$ zurück. 
 Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, so dass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
 
 \begin{enumerate}
@@ -148,7 +154,9 @@ Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfang
 
 Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
 
-\subsubsection{Faktorisieren}
+Ist $k := |positions|$, so läuft \autoref{diffOccAlgoV2} in $\mathcal{O}(k)$ Laufzeit. Die Menge $set$ kann als Hashtabelle implementiert werden, sodass die benötigten $\texttt{insert}$ und $\texttt{contains}$ Operationen eine erwartete Laufzeit von $\mathcal{O}(1)$ besitzen. $ruleId$ und $startIndex$ können zusammen mit einer Anfrage an die $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ Datenstrukturen berechnet werden. Dieser Aufruf hat allerdings eine erwartete $\mathcal{O}(n)$ Laufzeit. Insgesamt folgt also eine erwartete $\mathcal{O}(n \cdot k)$ Laufzeit für den Algorithmus.
+
+\subsubsection{Substitution}
 
 Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
@@ -159,10 +167,51 @@ lässt sich also derjenige lokale Index $j$ in der Regel bestimmen, so dass in d
 Von dort an kann dann durch Iterieren durch $\texttt{symbols}$ die erforderliche Anzahl an Symbolen durch das neue Nichtterminal ersetzt werden.
 Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, in dem die neue Regel an die entsprechenden Stellen eingefügt wird.
 
+\begin{algorithm}[t]
+    \KwIn{$s:$ String}
+    \KwOut{Straight-Line-Grammatik für $s$}
+    $n \leftarrow |s|$\;
+    $ruleIntervals, ruleIntervalStarts \leftarrow$ Konstruiere Datenstrukturen\;
+    Füge Intervall $[0..n-1]$ in die Datenstrukturen ein\;
+    $SA, LCP \leftarrow$ Suffix- und LCP-Array für $s$\;
+    $queue \leftarrow$ Prioritätswarteschlange aller LCP-Intervalle von $s$, geordnet mithilfe der Flächenfunktion\;
+
+    \While{ $queue \neq \emptyset$ }{
+
+        $[\ell..r] \leftarrow queue.poll()$\;
+        $positions \leftarrow$ Array der Indizes der Vorkommen des durch $[\ell..r]$ beschriebenen Musters (mithilfe von $SA$)\;
+        $len \leftarrow \min_{i \in [\ell..r]} LCP[i]$\;
+        \If{$len \leq 1$}{
+            \KwBreak\;
+        }
+
+        Sortiere $positions$ aufsteigend\;
+        Entferne überlappende Vorkommen aus $positions$\;
+        Entferne Positionen aus $positions$, an denen Substitution verboten ist. (siehe \autoref{v2substitutionconditions})\;
+        \If{$positions.length \leq 1$ \Or \Not $differingOccurrences(positions)$}{
+            \KwContinue \;
+        }
+        Substituiere alle Vorkommen in $positions$ mit der Länge $len$\;
+    }
+    \KwRet{Regelmenge}
+    \caption{AreaCompV2}
+    \label{v2algo}
+\end{algorithm}
+
+
 \subsection{Probleme}
 
 \subsubsection{Laufzeit}
 
-Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Zwar entfallen durch die neuen Datenstrukturen etwa das wiederholte Neuberechnen des Suffix- und LCP-Arrays und die Scans durch die gesamte Grammatik.
+Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Auf einem Beispieltext von 887 Zeichen benötigte V1 1684ms und die Größe der resultierenden Grammatik war $232$. V2 hingegen benötigte 381ms aber die Größe der Grammatik war $383$. 
 
-Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des LCP-Arrays in betracht. Von diesen Intervallen sind bei weitem nicht alle von Nutzen. Dadurch ergibt sich immer noch eine sehr schlechte Laufzeit.
+Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring.
+
+Durch die neuen Datenstrukturen entfallen etwa das wiederholte Neuberechnen des Suffix- und LCP-Arrays und die Scans durch die gesamte Grammatik.
+Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des LCP-Arrays in betracht. Diese werden zwar nur noch einmal am Anfang des Algorithmus global für den Eingabestring berechnet, allerdings ergibt dies wieder eine Gesamtlänge von $\mathcal{O}(n^3)$ für die LCP-Intervalle. Wie in \autoref{v1problemruntime} folgt für die Konstruktion der Prioritätswarteschlange durch die Aufrufe der Flächenfunktion wieder eine Laufzeit von $\mathcal{O}(n^3)$.
+
+In der While-Schleife wird nun ähnlich wie in V1 das LCP-Intervall mit dem höchsten LCP-Wert aus der Prioritätswarteschlange entnommen, das Array $positions$ der Startindizes der Vorkommen des Musters, sowie dessen Länge $len$ berechnet. 
+Wie in V1 wird $positions$ bereinigt und die Vorkommen substituiert. Bei der Substitution muss für jedes Vorkommen bei einem Index $i$, unter anderem, das tiefste Ersetzungsintervall bei $i$, sowie dessen Startindex bestimmt werden. 
+Dies benötigt mit den Datenstrukturen von V2 $\mathcal{O}(n)$ Laufzeit. Sehr grob abgeschätzt ist die Länge des $positions$ Array ebenfalls $\mathcal{O}(n)$. Insgesamt folgt für die Substitution also eine Laufzeit von $\mathcal{O}(n^2)$. Die While-Schleife wiederholt solange, bis $queue$ leer ist, oder keine LCP-Intervalle mehr existieren, dessen Minimalwert mindestens $2$ ist. (Zeilen 10-11) Im Worst-Case folgen daraus $\mathcal{O}(n^2)$ Iterationen, allerdings ist in der Praxis davon auszugehen, dass die Schleife schon viel früher terminiert, da bei weitem nicht alle LCP-Intervalle nutzen haben.
+
+Durch diese grobe Abschätzung folgt eine Laufzeit von $\mathcal{O}(n^4)$, also nur leicht besser als V1.
