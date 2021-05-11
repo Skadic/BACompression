@@ -172,8 +172,11 @@ class Ruleset implements ToUnifiedRuleset {
         return count;
     }
 
-    // Map from rule area start -> rule id -> occurrence count
-    IntSet DIFFERING_OCCURRENCES_SET = new IntOpenHashSet();
+    /**
+     * Set that contains all previously found rule interval start indices. Only used in {@link #differingOccurences(int[])}
+     * @see #differingOccurences(int[])
+     */
+    private final IntSet DIFFERING_OCCURRENCES_SET = new IntOpenHashSet();
 
 
     /**
