@@ -22,7 +22,7 @@ Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die n
 
 Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
-Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $R_{id_p, i} := [i.. i + \ell - 1]$ Ersetzungsintervall der Regel $id_p$ bei Index $i$. Dabei wird $R_{0, 0} = [0, n-1]$ zu Beginn des Algorithmus erzeugt, wobei $R_0$ die Startregel ist.
+Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $[i.. i + \ell - 1]$ \emph{Ersetzungsintervall} der Regel $id_p$ bei Index $i$. Dabei wird das Intervall $[0, n-1]$ zu Beginn des Algorithmus als Ersetzungsintervall der Regel $R_0$ erzeugt, wobei $R_0$ die Startregel ist.
 
 \subsection{Neue Datenstrukturen}
 
@@ -208,10 +208,10 @@ Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Auf einem Beispieltex
 Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring.
 
 Durch die neuen Datenstrukturen entfallen etwa das wiederholte Neuberechnen des Suffix- und LCP-Arrays und die Scans durch die gesamte Grammatik.
-Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des LCP-Arrays in betracht. Diese werden zwar nur noch einmal am Anfang des Algorithmus global für den Eingabestring berechnet, allerdings ergibt dies wieder eine Gesamtlänge von $\mathcal{O}(n^3)$ für die LCP-Intervalle. Wie in \autoref{v1problemruntime} folgt für die Konstruktion der Prioritätswarteschlange durch die Aufrufe der Flächenfunktion wieder eine Laufzeit von $\mathcal{O}(n^3)$.
+Allerdings zieht V2 immer noch die $\mathcal{O}(n^2)$ vielen Teilintervalle des LCP-Arrays in Betracht. Diese werden zwar nur noch einmal am Anfang des Algorithmus global für den Eingabestring berechnet, allerdings ergibt dies wieder eine Gesamtlänge von $\mathcal{O}(n^3)$ für die LCP-Intervalle. Wie in \autoref{v1problemruntime} folgt für die Konstruktion der Prioritätswarteschlange durch die Aufrufe der Flächenfunktion wieder eine Laufzeit von $\mathcal{O}(n^3)$.
 
 In der While-Schleife wird nun ähnlich wie in V1 das LCP-Intervall mit dem höchsten LCP-Wert aus der Prioritätswarteschlange entnommen, das Array $positions$ der Startindizes der Vorkommen des Musters, sowie dessen Länge $len$ berechnet. 
 Wie in V1 wird $positions$ bereinigt und die Vorkommen substituiert. Bei der Substitution muss für jedes Vorkommen bei einem Index $i$, unter anderem, das tiefste Ersetzungsintervall bei $i$, sowie dessen Startindex bestimmt werden. 
 Dies benötigt mit den Datenstrukturen von V2 $\mathcal{O}(n)$ Laufzeit. Sehr grob abgeschätzt ist die Länge des $positions$ Array ebenfalls $\mathcal{O}(n)$. Insgesamt folgt für die Substitution also eine Laufzeit von $\mathcal{O}(n^2)$. Die While-Schleife wiederholt solange, bis $queue$ leer ist, oder keine LCP-Intervalle mehr existieren, dessen Minimalwert mindestens $2$ ist. (Zeilen 10-11) Im Worst-Case folgen daraus $\mathcal{O}(n^2)$ Iterationen, allerdings ist in der Praxis davon auszugehen, dass die Schleife schon viel früher terminiert, da bei weitem nicht alle LCP-Intervalle nutzen haben.
 
-Durch diese grobe Abschätzung folgt eine Laufzeit von $\mathcal{O}(n^4)$, also nur leicht besser als V1.
+Durch diese grobe Abschätzung folgt eine Laufzeit von $\mathcal{O}(n^4)$.

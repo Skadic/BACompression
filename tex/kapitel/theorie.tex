@@ -188,14 +188,14 @@ Da der Bucket, in dem das gesuchte Bit liegt, in $\mathcal{O}(1)$ Laufzeit besti
 \section{LCP-Intervallbaum}
 \label{lcpintervals}
 
-In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Maximale LCP-Intervalle bezeichnen, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
+In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Abouelhoda-Intervalle bezeichnen, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
 
 Die vorgestellten Intervalle erlauben es \emph{alle} Suffixe mit einem bestimmten gemeinsamen Präfix einer Länge von mindestens $\ell \in \mathbb{N}$ in einem String zu gruppieren.
 
-\subsection{Maximale LCP-Intervalle}
-\label{maxlcpint}
+\subsection{Abouelhoda-Intervalle}
+\label{abouelhodaintervals}
 
-Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{maximales LCP-Intervall} mit LCP-Wert $\ell$ (im Paper \textit{l-value} genannt), wenn gilt:
+Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{Abouelhoda-Intervall} mit LCP-Wert $\ell$ (im Paper \textit{l-value} genannt), wenn gilt:
 
 \begin{enumerate}
 	\item $LCP[i] < \ell$
@@ -206,7 +206,7 @@ Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{maximales LCP-Interva
 
 Wir bezeichnen $[i..j]$ dann auch als $\ell$-Intervall oder als $\ell-[i..j]$. Zudem bezeichnen wir jeden Index $k$ mit $i < k \leq j$ und $LCP[k] = \ell$ als $\ell$-Index.
 
-\subsection{Eingebettete und umschließende maximale LCP-Intervalle}
+\subsection{Eingebettete und umschließende Abouelhoda-Intervalle}
 \label{embeddedlcpintervals}
 
 Ein $m$-Intervall $[a..b]$ heißt \textit{eingebettet} in ein $\ell$-Intervall $[i..j]$ mit $i \leq a < b \leq j$, falls $m > \ell$. $[i..j]$ heißt dann auch $[a..b]$ \textit{umschließendes} Intervall.
@@ -217,6 +217,7 @@ Die Kind-Intervalle von $[i..j]$ lassen sich durch die $l$-Indizes bestimmen. Se
 Kind-Intervalle gerade $[i.. i_1 - 1], [i_1.. i_2 - 1], \dots [i_k..j]$.
 
 \subsection{Kind-Intervallbaum und Kind-Array}
+\label{childtree}
 
 Mithilfe dieser Definitionen lassen sich die Beziehungen der Kind-Intervalle mit ihren jeweiligen Eltern-Intervallen als Baum beschreiben.
 Doch dieser Baum muss nicht explizit gespeichert weden. Hierbei kommt das Kind-Array zum Einsatz. Dieses ist ein $n + 1$ großes Array, dessen Einträge jeweils 3 Werte besitzen.

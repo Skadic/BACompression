@@ -150,7 +150,7 @@ Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorit
 
 \subsubsection{Berechnen der Prioritätswarteschlange}
 
-Nun, da das Kind-Array berechnet ist, kann für jedes maximale LCP-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ maximale LCP-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle maximalen LCP-Intervalle durch rekursive Aufrufe also in $\mathcal{O}(n)$ berechnet werden.
+Nun, da das Kind-Array berechnet ist, kann für jedes Abouelhoda-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ Abouelhoda-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle Abouelhoda-Intervalle durch rekursive Aufrufe also in $\mathcal{O}(n)$ berechnet werden.
 
 Diese Intervalle werden nun in eine auf einem Binären Heap \cite{williams_algorithm_1964} basierenden Prioritätswarteschlange eingefügt. Die benötigte Laufzeit um ein Element einzufügen oder das minimale/maximale Element zu entfernen ist $\mathcal{O}(\log n)$ im Worst-Case. Da die Aufrufe der Operationen der Prioritätswarteschlange keinen signifikanten Anteil der Laufzeit des Algorithmus ausmachen, ist es hier nicht nötig nach alternativen möglicherweise effizienteren Heap-Implementationen zu forschen.
 
@@ -166,8 +166,8 @@ Die folgenden Operationen werden solange wiederholt, bis die konstruierte Priori
 Zuerst wird das Intervall $[i..j]$, $0 < i \leq j < n$ mit dem größten Flächenwert aus der Prioritätswarteschlange entnommen. Dann können die Indizes aller Vorkommen des Substrings in $SA[i-1..j]$ gefunden werden. Diese speichern wir in einem neuen Array $\texttt{positions}$, da diese Indizes noch nachbearbeitet werden müssen.
 
 Die Länge des zu ersetzenden Substring $p \in \Sigma^*$ von $s$ ist dann gleich $k := |p| = \min_{i \leq a \leq j} LCP[a]$.
-Dies kann in linearer Laufzeit berechnet werden, doch wir können uns hier die Eigenschaften der maximalen LCP-Intervalle und des Kind-Arrays zunutze machen. 
-Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der LCP-Wert eines maximalen LCP-Intervalls in $\mathcal{O}(1)$ Zeit bestimmen. Dies geschieht, indem mithilfe des $up$, beziehungsweise des $down$ Eintrages im Kind-Array, der erste $l$-Index des Intervalls bestimmt werden kann. Da an jedem $l$-Index im LCP-Array das Minimum über diesem Intervall enthält, ist damit die Länge des Substrings gefunden.
+Dies kann in linearer Laufzeit berechnet werden, doch wir können uns hier die Eigenschaften der Abouelhoda-Intervalle und des Kind-Arrays zunutze machen. 
+Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der LCP-Wert eines Abouelhoda-Intervalls in $\mathcal{O}(1)$ Zeit bestimmen. Dies geschieht, indem mithilfe des $up$, beziehungsweise des $down$ Eintrages im Kind-Array, der erste $l$-Index des Intervalls bestimmt werden kann. Da an jedem $l$-Index im LCP-Array das Minimum über diesem Intervall enthält, ist damit die Länge des Substrings gefunden.
 
 Somit sind sowohl die Vorkommen des Substrings, als auch dessen Länge berechnet. Ist $occ_p := j - i + 2$, die Anzahl an Vorkommen von $p$ in $s$. So benötigt diese Berechnung $\mathcal{O}(occ_p)$ Laufzeit, begrenzt durch die Berechnung der Indizes, an denen $p$ vorkommt.
 
