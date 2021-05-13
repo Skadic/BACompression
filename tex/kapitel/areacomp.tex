@@ -1,12 +1,13 @@
 \chapter{AreaComp}
 
 \section{Konzept}
+\label{areacompconcept}
 
 Sei $S = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |S|$ ein String über ein Alphabet $\Sigma$.
 
 Ein Intervall $LCP[i..j]$ mit $0 \leq i \leq j < n$ im LCP-Array beschreibt wiederholte Vorkommen von Substrings. (siehe \autoref{lcpintervals}) Aus diesem Intervall lässt sich schließen, wie oft dieser Substring vorkommt, wie lang dieser ist, und mithilfe des Suffix-Arrays lässt sich feststellen, wo dieser vorkommt. Jeder Eintrag $LCP[k], k = 1,\dots,n-1$ im LCP-Array ist die Länge des längsten gemeinsamen Präfixes der beiden Suffixe, die bei $SA[k-1]$ und $SA[k]$ beginnen. Daher gilt dann folgendes:
 
-An den Indizes $I = \{SA[i]\ |\ i \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die Breite von $LCP[i..j]$ und $H(i, j) := l$ die Höhe von $LCP[i..j]$.
+An den Indizes $I = \{SA[i]\ |\ i \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die \emph{Breite} von $LCP[i..j]$ und $H(i, j) := l$ die \emph{Höhe} von $LCP[i..j]$.
 
 Intervalle mit großer Breite (viele Vorkommen) bzw. Höhe (langer Substring) bieten also eine besonders große Kompression, wenn diese Vorkommen durch ein Nichtterminal und eine entsprechende Produktionsregel ersetzt werden.
 

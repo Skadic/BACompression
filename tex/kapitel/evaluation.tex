@@ -1,48 +1,183 @@
+\tikzset{      
+    algorithmxticks/.style={
+        xtick={1,2,3,4,5,6},
+        xticklabels={AreaCompV4/\\$h \cdot w$,AreaCompV4/\\$h$, AreaCompV4/\\$h \cdot w$ Naive, AreaCompV4/\\$h^2 + w$,RePair,Sequitur},
+        xticklabel style={align=center},
+    }
+}
+
 \chapter{Evaluation}
 
-% IMPORT-DATA algos book1.txt
+\section{Methodik}
 
-\begin{figure}[H]
+Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewendet. 
+
+Nach der Berechnung der Algorithmus-spezifischen Repräsentation der Grammatik, wird diese in eine einheitliche Repräsentation überführt. Diese besteht lediglich aus einer Hashtabelle, die Regel-IDs auf eine Liste abbildet, die die Symbole der rechten Seite der Regel enthält. Die dafür benötigte Zeit wird ebenfalls in den Diagrammen aufgeführt. Die Zeit für den Algorithmus selbst ist in der Legende als \emph{Compute} bezeichnet, das überführen in die einheitliche Repräsentation als \emph{Unify}.
+
+Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz) und 16GB RAM.
+
+\subsection{Implementationen}
+
+Die hier gewählte Implementation von Sequitur ist die Java-Implementation von Professor Eibe Frank\footnote{\url{http://www.sequitur.info/java}}. 
+
+Für RePair wird eine eigene Implementation benutzt. Die meisten Implementationen waren in nicht JVM-Kompatiblen Programmiersprachen geschrieben. 
+Die einzige auffindbare JVM-kompatible Implementation, war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $\mathtt{0x110000}$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar.
+
+AreaCompV4 ist in Java 16 programmiert.
+
+\subsection{Datensätze}
+
+Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf 10MB und 50MB Präfixe folgender Datensätze:
+
+\begin{itemize}
+    \item[\emph{sources}] C/Java Quellcode aus linux-2.6.11.6\footnote{\url{ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.11.6.tar.gz}} und gcc-4.0.0\footnote{\url{ftp://ftp.gnu.org/gnu/gcc/gcc-4.0.0/gcc-4.0.0.tar.bz2}}. Das Alphabet besteht aus 230 Zeichen.
+    \item[\emph{english}] Englischer Text von Project Gutenberg\footnote{\url{	www.gutenberg.org}}. Das Alphabet besteht aus 239 Zeichen.
+    \item[\emph{proteins}] Proteinsequenzen aus der Swissprot Datenbank\footnote{\url{ftp://ftp.ebi.ac.uk/pub/databases/swissprot/release_compressed/uniprot_sprot.dat.gz}}. Jede Aminosäure ist mit jeweils einem Buchstaben kodiert. Das Alphabet besteht aus 27 Zeichen.
+\end{itemize}
+
+\subsection{Flächenfunktion}
+
+Wir betrachten fünf Flächenfunktionen. Diese machen sich die Eigenschaften der Abouelhoda-Intervalle zunutze. 
+Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der minimale LCP-Wert eines Abouelhoda-Intervalls $[i..j]$ durch $down[i]$ oder $up[j+1]$ im Kind-Array bestimmen. 
+So muss nicht in Linearzeit durch das Intervall iteriert werden, um das Minimum zu bestimmen. Es kann stattdessen durch eine Konstantzeit-Anfrage an das Kind-Array bestimmt werden. Dies ist erst ab V3 möglich, da V1 und V2 beliebige LCP-Intervalle benutzen, da diese Operationen nur für Abouelhoda-Intervalle funktionieren.
+
+Für alle folgenden Flächenfunktionen gilt, dass wenn $H(i+1, j) \leq 1$ gilt(siehe \autoref{areacompconcept} für die Definition von $H$ und $W$), als resultierender Flächenwert automatisch $0$ zurückgegeben wird. Da LCP-Intervalle mit Höhe $\leq 1$ einen Substring einer Länge von maximal $1$ beschreiben, sind diese für unsere Zwecke unnütz.  
+
+Im Folgenden sei $I := [i..j]$ ein Abouelhoda-Intervall. Dann ist $LCP[i+1..j]$ das zugehörige LCP-Intervall und seien $h := H(i+1, j)$ und $w := W(i+1, j)$:
+
+\begin{itemize}[leftmargin=2.5cm]
+    \item[$A(I) = h \cdot w$] Diese Flächenfunktion schätzt die erreichbare Kompression durch eine Multiplikation der Anzahl der Vorkommen ($w$) mit der Länge des ersetzten Substrings ($h$) ab.\\ Im Code heißt diese Flächenfunktion \texttt{ChildArea}.
+    \item[$A(I) = h \cdot w - w$] Diese Flächenfunktion ist ähnlich wie die vorhergehende, allerdings subtrahiert sie die Anzahl der Vorkommen, von dem Flächenwert. Die Motivation dahinter ist, dass jedes der $w$ Vorkommen durch ein Nichtterminal ersetzt werden muss. Daher sinkt die tatsächlich erreichbare Kompression um $w$ gegenüber $h \cdot w$.\\ Im Code heißt diese Flächenfunktion \texttt{PotentialCompressionArea}.
+    \item[$A(I) = w$] Hier wird allein die Anzahl der Vorkommen Priorisiert.\\
+    Im Code heißt diese Flächenfunktion \texttt{WidthFirstArea}.   
+    \item[$A(I) = h$] Hier wird allein die Länge des zu ersetzenden Substrings priorisiert.\\Im Code heißt diese Flächenfunktion \texttt{HeightFirstArea}.
+    \item[$A(I) = h^2 + w$] Die Idee dieser Flächenfunktion ist eine Verbesserung an \texttt{HeightFirstArea}. Da allein die Höhe des LCP-Intervalls berücksichtigt wird, ist es möglich, dass LCP-Intervalle vor anderen LCP-Intervallen mit gleicher Höhe aber größerer Breite gewählt werden. Allerdings sind aber Letztere a priori vielversprechender.\\
+    Im Code heißt diese Flächenfunktion \texttt{HeightFirstArea}.
+\end{itemize}
+
+
+
+\section{Ergebnisse}
+
+\subsection{english}
+
+% IMPORT-DATA english10 english.10MB.txt
+% IMPORT-DATA english50 english.50MB.txt
+
+\begin{figure}
     \centering
 
-    \subfloat[Laufzeiten]{ \scalebox{0.9}{
+    \subfloat[Laufzeiten]{
         \begin{tikzpicture}
             \begin{axis}[
-                ybar stacked,
-                xtick={1,2,3},
-                xticklabels={AreaCompV4/\\LengthFirstArea,RePair,Sequitur},
-                xticklabel style={align=center},
-                title={Calgary book1 Laufzeit},
-                width=7cm,
-                y unit={ms},
-                ylabel={Laufzeit}
+                xbar stacked,
+                ytick={1,2,3,4,5,6,7},
+                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
+                yticklabel style={align=center},
+                width=11cm,
+                height=6cm,
+                x unit={s},
+                title={English 10MB Laufzeit},
+                xlabel={Laufzeit},
+                legend style={at={(1,0)}, anchor=south east}
             ]
+
+                %a MULTIPLOT(x) SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS y, AVG(comptime) AS y FROM english10 GROUP BY algo
                
-                % PLOT SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, AVG(comptime) AS y FROM algos GROUP BY algo
-                \addplot coordinates { (1,1472.25) (2,7622.75) (3,380.833) };
-                % PLOT SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, AVG(unifytime) AS y FROM algos GROUP BY algo
-                \addplot coordinates { (1,353.25) (2,125.75) (3,82.6667) };
+                % PLOT SELECT AVG(comptime / 1000.0) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english10 GROUP BY algo
+                \addplot coordinates { (63.779,1) (45.645,2) (65.792,3) (73.332,4) (67.6015,5) (161.8085,6) (6.455,7) };
+                
+
+                %a PLOT SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, AVG(unifytime) AS y FROM english10 GROUP BY algo
+
+                % PLOT SELECT AVG(unifytime / 1000.0) AS x ,ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english10 GROUP BY algo
+                \addplot coordinates { (3.033,1) (4.8215,2) (3.46,3) (3.353,4) (2.886,5) (1.904,6) (0.316333,7) };
+
+                \legend{$Compute$,$Unify$}
+            \end{axis}
+        \end{tikzpicture}
+    }
+    \quad
+    \subfloat[Kompressionsrate]{
+        \begin{tikzpicture}
+            \begin{axis}[
+                xbar stacked,
+                ytick={1,2,3,4,5,6,7},
+                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
+                yticklabel style={align=center},
+                width=11cm,
+                height=6cm,
+                title={English 10MB Kompression},
+                xlabel={Kompressionsrate},
+                x unit={output size / input size},
+            ]
+                
+                %a MULTIPLOT(x) SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, MIN(size) AS y FROM english10 GROUP BY algo
+                % PLOT SELECT MIN(size / (1.0 * inputsize)) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS x FROM english10 GROUP BY algo
+                \addplot coordinates { (0.283818,1) (0.155956,2) (0.258607,3) (0.266115,4) (0.371259,5) (0.705408,6) (0.136912,7) };
+
+                %a MULTIPLOT(x) SELECT algo AS x, MIN(size) AS y FROM english10 GROUP BY algo
+            \end{axis}
+        \end{tikzpicture}
+    }
+    \caption{Die Ergebnisse für die Kompression des 10MB Präfixes des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Dieses besteht aus $\approx10.7$ Millionen Zeichen.}
+    \label{resultsenglish10}
+\end{figure}
+
+
+\begin{figure}
+    \centering
+
+    \subfloat[Laufzeiten]{
+        \begin{tikzpicture}
+            \begin{axis}[
+                xbar stacked,
+                ytick={1,2,3,4,5,6,7},
+                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
+                yticklabel style={align=center},
+                width=11cm,
+                height=6cm,
+                x unit={s},
+                title={English 50MB Laufzeit},
+                xlabel={Laufzeit},
+                legend style={at={(1,0)}, anchor=south east}
+            ]
+
+               
+                % PLOT SELECT AVG(comptime / 1000) AS x,  ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english50 GROUP BY algo
+                \addplot coordinates { (911.0,1) (294.0,2) (934.0,3) (875.0,4) (821.0,5) (1628.0,6) (51.5,7) };
+                
+
+                % PLOT SELECT AVG(unifytime / 1000.0) AS x ,ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english50 GROUP BY algo
+                \addplot coordinates { (20.838,1) (28.303,2) (20.767,3) (18.786,4) (19.984,5) (11.387,6) (1.586,7) };
+                
+
                 \legend{$Compute$,$Unify$}
                 
             \end{axis}
         \end{tikzpicture}
-    }}
+    }
     \quad
-    \subfloat[Kompressionsrate]{ \scalebox{0.9}{
+    \subfloat[Kompressionsrate]{
         \begin{tikzpicture}
             \begin{axis}[
-                ybar stacked,
-                xtick={1,2,3},
-                xticklabels={AreaCompV4/\\LengthFirstArea,RePair,Sequitur},
-                xticklabel style={align=center},
-                title={Calgary book1 Kompression},
-                width=7cm,
-                ylabel={Kompressionsrate}
+                xbar stacked,
+                ytick={1,2,3,4,5,6,7},
+                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
+                yticklabel style={align=center},
+                width=11cm,
+                height=6cm,
+                title={English 50MB Kompression},
+                xlabel={Kompressionsrate},
+                x unit={output size / input size},
             ]
                 
-                % PLOT SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, MIN(size * 1.0 / inputsize) AS y FROM algos GROUP BY algo
-                \addplot coordinates { (1,0.31243) (2,0.65078) (3,0.245433) };
+                % PLOT SELECT MIN(size / (1.0 * inputsize)) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS x FROM english50 GROUP BY algo
+                \addplot coordinates { (0.319951,1) (0.14459,2) (0.291531,3) (0.29037,4) (0.389639,5) (0.60334,6) (0.120246,7) };
+
             \end{axis}
         \end{tikzpicture}
-    }}
+    }
+    \caption{Die Ergebnisse für die Kompression des 50MB Präfixes des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Dieses besteht aus $\approx52.4$ Millionen Zeichen.}
+    \label{resultsenglish50}
 \end{figure}
