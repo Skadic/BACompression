@@ -5,6 +5,8 @@ import compression.unified.UnifiedRuleset;
 import compression.unified.UnifiedTerminal;
 import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -186,9 +188,14 @@ class RePairDataStructure implements ToUnifiedRuleset {
         sequence = list.toArray(new SymbolContainer[0]);
     }
 
+    // Stores the last occurrence index of the pair that consists of the replaced symbol and the symbol following it.
+    // Since the first symbol of the pair is always the NonTerminal we are replacing the occurrences in the sequence with,
+    // we can just take the second symbol of the pair as a key for the map
+    private final Object2IntMap<Symbol> PREVIOUS_OCCURRENCE_MAP = new Object2IntOpenHashMap<>();
+
     public boolean replaceMostFrequent() {
         // FIXME Fix handling of overlapping occurrences of pairs
-
+        PREVIOUS_OCCURRENCE_MAP.clear();
         //System.out.println(queue);
         final SymbolPair pair = queue.poll();
 
@@ -199,11 +206,6 @@ class RePairDataStructure implements ToUnifiedRuleset {
 
         var currentIndex = pair.getFirstOccurrence();
         pair.mark(currentId++);
-
-        // Stores the last occurrence index of the pair that consists of the replaced symbol and the symbol following it.
-        // Since the first symbol of the pair is always the NonTerminal we are replacing the occurrences in the sequence with,
-        // we can just take the second symbol of the pair as a key for the map
-        var previousOccurrenceMap = new HashMap<Symbol, Integer>();
 
         while (currentIndex != -1) {
             // Get the left and right symbol in the pair
@@ -240,12 +242,12 @@ class RePairDataStructure implements ToUnifiedRuleset {
 
                 // If a previous occurrence is recorded, set the next occurrence value of the previous occurrence of this pair
                 // to this current occurrence
-                if(previousOccurrenceMap.containsKey(followingSymbol)) {
-                    final int previousOccurrence = previousOccurrenceMap.get(followingSymbol);
+                if(PREVIOUS_OCCURRENCE_MAP.containsKey(followingSymbol)) {
+                    final int previousOccurrence = PREVIOUS_OCCURRENCE_MAP.getInt(followingSymbol);
                     left.setPrevOccurence(previousOccurrence);
                     sequence[previousOccurrence].setNextOccurence(currentIndex);
                 }
-                previousOccurrenceMap.put(left.next().getSymbol(), currentIndex);
+                PREVIOUS_OCCURRENCE_MAP.put(left.next().getSymbol(), currentIndex);
             } else {
                 left.setPrevOccurence(-1);
             }

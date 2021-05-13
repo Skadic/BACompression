@@ -1,12 +1,11 @@
-import compression.areacomp.areas.LengthFirstArea;
+import compression.areacomp.areas.PotentialCompressionArea;
 import compression.areacomp.v4.AreaCompV4;
-import compression.repair.RePair;
-import compression.sequitur.Sequitur;
 import compression.unified.interfaces.UnifiedCompressor;
 import compression.utils.Benchmark;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -24,13 +23,17 @@ public class Main {
         }
 
         final List<UnifiedCompressor> compressors = List.of(
-                new Sequitur(),
-                new AreaCompV4(new LengthFirstArea()),
+                //new Sequitur(),
+                new AreaCompV4(new PotentialCompressionArea())
+                //new AreaCompV4(new HeightFirstArea()),
+                //new AreaCompV4(new ChildArea()),
+                //new AreaCompV4(new SquareHeightAddWidthArea())
+                //new AreaCompV4(new WidthFirstArea()),
                 //,new AreaCompV1(area)
                 //new AreaCompV2(new NaiveArea()),
                 //new AreaCompV3(new ChildArea()),
                 //new AreaCompV3(new LengthFirstArea()),
-                new RePair()
+                //new RePair()
                 //new AreaCompV3(new DepthWithAddArea()),
         );
 
@@ -40,7 +43,7 @@ public class Main {
 
         final String input;
         try {
-             input = Files.readString(inputPath);
+             input = Files.readString(inputPath, StandardCharsets.ISO_8859_1);
         } catch (NoSuchFileException e) {
             System.err.printf("File '%s' does not exist%n. Please make sure the input file is an a directory called \"input\".\n The input path should be relative to that directory", fileName);
             return;
@@ -56,6 +59,7 @@ public class Main {
                 for (UnifiedCompressor compressor : compressors) {
                     System.out.println("Testing " + compressor.name());
                     compressor.sqlplot(fileName);
+                    //compressor.benchmark(input, out);
                     System.out.println("Done testing " + compressor.name());
                 }
             }

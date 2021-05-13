@@ -3,7 +3,7 @@ package compression.areacomp.areas;
 import compression.areacomp.AreaFunction;
 import compression.utils.AugmentedString;
 
-public class DepthWithAddArea implements AreaFunction {
+public class SquareHeightAddWidthArea implements AreaFunction {
 
 
     @Override

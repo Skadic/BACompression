@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-class RuleIntervalIndex {
+public class RuleIntervalIndex {
 
     /**
      * The Predecessor structure, which contains all intervals that are substituted by some production rule, starting at a given index
@@ -17,6 +17,8 @@ class RuleIntervalIndex {
      */
     private final BucketPred<RuleInterval> intervalMap;
 
+    public static final int BUCKET_SIZE_EXPONENT = 16;
+
     private final int len;
 
     /**
@@ -24,9 +26,9 @@ class RuleIntervalIndex {
      * @param topLevelRuleId The id of the top-level rule
      * @param len The length of the input text
      */
-    public RuleIntervalIndex(int topLevelRuleId, int len) {
+    RuleIntervalIndex(int topLevelRuleId, int len) {
         this.len = len;
-        this.intervalMap = new BucketPred<>(len, 16);
+        this.intervalMap = new BucketPred<>(len, BUCKET_SIZE_EXPONENT);
         //this.intervalMap = new PredecessorNavigableMapAdapter<>(new TreeMap<>());
         //this.intervalMap = new XFastTrie<>();
         final var interval = new RuleInterval(topLevelRuleId, 0, len - 1);

@@ -1,9 +1,11 @@
 package compression.unified.interfaces;
 
+import compression.areacomp.v4.RuleIntervalIndex;
 import compression.unified.UnifiedRuleset;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -102,7 +104,7 @@ public interface UnifiedCompressor {
      */
     default void sqlplot(String inputFileName) throws IOException {
         Path inPath = Paths.get("input", inputFileName);
-        String s = Files.readString(inPath);
+        String s = Files.readString(inPath, StandardCharsets.ISO_8859_1);
 
         Path outPath = Paths.get("sql", inputFileName);
         if(!Files.exists(outPath.getParent())) {
@@ -133,7 +135,9 @@ public interface UnifiedCompressor {
         result.add("size=" + unified.rulesetSize());
         result.add("depth=" + unified.rulesetDepth());
 
-        result.add("verified=" + unified.verify(s));
+        result.add("bucketsize=" + RuleIntervalIndex.BUCKET_SIZE_EXPONENT);
+
+        //result.add("verified=" + unified.verify(s));
 
         try(var stream = new PrintStream(Files.newOutputStream(outPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE))) {
             stream.println(result);

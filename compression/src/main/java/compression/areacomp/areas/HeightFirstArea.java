@@ -4,7 +4,7 @@ import compression.areacomp.AreaFunction;
 import compression.utils.AugmentedString;
 
 @SuppressWarnings("Duplicates")
-public class LengthFirstArea implements AreaFunction {
+public class HeightFirstArea implements AreaFunction {
 
 
     @Override
