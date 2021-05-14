@@ -3,7 +3,7 @@ package compression.areacomp.areas;
 import compression.areacomp.AreaFunction;
 import compression.utils.AugmentedString;
 
-public class SquareHeightAddWidthArea implements AreaFunction {
+public class HeightAdvantageArea implements AreaFunction {
 
 
     @Override
@@ -11,6 +11,6 @@ public class SquareHeightAddWidthArea implements AreaFunction {
         var lcpLen = str.lValue(low - 1, high);
         if (lcpLen <= 1) return new AreaFunction.AreaData(low, high, 0, 0);
 
-        return new AreaFunction.AreaData(low, high, lcpLen * lcpLen + high - low, lcpLen);
+        return new AreaFunction.AreaData(low, high,  10 * lcpLen + Math.min(9, (int) Math.log(high - low + 1)), lcpLen);
     }
 }

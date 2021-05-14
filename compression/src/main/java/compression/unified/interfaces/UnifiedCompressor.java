@@ -106,11 +106,6 @@ public interface UnifiedCompressor {
         Path inPath = Paths.get("input", inputFileName);
         String s = Files.readString(inPath, StandardCharsets.ISO_8859_1);
 
-        Path outPath = Paths.get("sql", inputFileName);
-        if(!Files.exists(outPath.getParent())) {
-            Files.createDirectories(outPath.getParent());
-        }
-
         StringJoiner result = new StringJoiner(" ", "RESULT ", "");
 
         result.add("algo=" + name());
@@ -136,6 +131,29 @@ public interface UnifiedCompressor {
         result.add("depth=" + unified.rulesetDepth());
 
         result.add("bucketsize=" + RuleIntervalIndex.BUCKET_SIZE_EXPONENT);
+
+        // I am very sorry
+        final int datasetsize;
+        if(inputFileName.contains("50")) {
+            datasetsize = 50;
+        } else if(inputFileName.contains("40")) {
+            datasetsize = 40;
+        } else if(inputFileName.contains("30")) {
+            datasetsize = 30;
+        } else if(inputFileName.contains("20")) {
+            datasetsize = 20;
+        } else if(inputFileName.contains("10")) {
+            datasetsize = 10;
+        } else {
+            datasetsize = -1;
+        }
+        result.add("datasetsize=" + datasetsize + "MB");
+
+        Path outPath = Paths.get("sql", inputFileName.substring(0, inputFileName.lastIndexOf(String.valueOf(datasetsize)) - 1) + ".txt");
+        if(!Files.exists(outPath.getParent())) {
+            Files.createDirectories(outPath.getParent());
+        }
+
 
         //result.add("verified=" + unified.verify(s));
 

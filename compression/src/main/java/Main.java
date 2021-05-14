@@ -1,4 +1,7 @@
+import compression.areacomp.areas.*;
+import compression.areacomp.v4.AreaCompV4;
 import compression.repair.RePair;
+import compression.sequitur.Sequitur;
 import compression.unified.interfaces.UnifiedCompressor;
 import compression.utils.Benchmark;
 
@@ -22,14 +25,14 @@ public class Main {
         }
 
         final List<UnifiedCompressor> compressors = List.of(
-                //new Sequitur(),
-                new RePair()
-                //new AreaCompV4(new HeightFirstArea()),
-                //new AreaCompV4(new PotentialCompressionArea()),
-                //new AreaCompV4(new ChildArea()),
-                //new AreaCompV4(new SquareHeightAddWidthArea()),
-                //new AreaCompV4(new WidthFirstArea())
+                new Sequitur(),
+                new RePair(),
+                new AreaCompV4(new HeightFirstArea()),
+                new AreaCompV4(new ChildArea()),
+                new AreaCompV4(new HeightAdvantageArea()),
+                new AreaCompV4(new WidthFirstArea())
                 //,new AreaCompV1(area)
+                //new AreaCompV4(new PotentialCompressionArea()),
                 //new AreaCompV2(new NaiveArea()),
                 //new AreaCompV3(new ChildArea()),
                 //new AreaCompV3(new LengthFirstArea()),
