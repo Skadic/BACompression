@@ -28,6 +28,9 @@ class SymbolPair extends Symbol implements Cloneable {
      */
     private int lastOcc;
 
+
+    private int hash = Integer.MIN_VALUE;
+
     public SymbolPair(Symbol left, Symbol right) {
         super();
 
@@ -108,13 +111,13 @@ class SymbolPair extends Symbol implements Cloneable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SymbolPair that = (SymbolPair) o;
-        return Objects.equals(left, that.left) &&
-                Objects.equals(right, that.right);
+        return left == that.left &&
+                right == that.right;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(left, right);
+        return hash == Integer.MIN_VALUE ? hash = Objects.hash(left, right) : hash;
     }
 
     @Override

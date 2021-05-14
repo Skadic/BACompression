@@ -1,7 +1,6 @@
 package compression.repair;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 class Terminal extends Symbol implements Cloneable {
@@ -43,6 +42,6 @@ class Terminal extends Symbol implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Integer.hashCode(value);
     }
 }

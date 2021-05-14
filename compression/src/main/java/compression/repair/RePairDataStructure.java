@@ -5,6 +5,7 @@ import compression.unified.UnifiedRuleset;
 import compression.unified.UnifiedTerminal;
 import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
+import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
@@ -24,10 +25,12 @@ class RePairDataStructure implements ToUnifiedRuleset {
         len = s.length();
         currentId = 1;
         final var index = new AtomicInteger(0);
+        var cache = new Char2ObjectOpenHashMap<Terminal>();
         sequence = s.chars()
-                .mapToObj(Terminal::new)
+                .mapToObj(c -> cache.computeIfAbsent((char) c, Terminal::new))
                 .map(terminal -> new SymbolContainer(terminal, index.getAndIncrement()))
                 .toArray(SymbolContainer[]::new);
+
 
         queue = new RePairQueue(len);
 
