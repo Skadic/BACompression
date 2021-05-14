@@ -133,13 +133,13 @@ Hier muss zwischen verschiedenen Fällen unterschieden werden.
 \begin{itemize}[leftmargin=1.5cm]
     \item[\textbf{Fall 1}] Falls kein solches Intervall existiert, so wird mithilfe von\\
     $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$ Pointer entsprechend gesetzt.  Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
-    \item[\textbf{Fall 2}] Im Fall, dass ein solches Intervall existiert, kann es nun sein, dass das neue Intervall das nun am tiefsten verschachtelte Intervall ist, das an diesem Startindex beginnt. Ist das der Fall, so werden die Pointer des entsprechenden Index gesetzt und das neue Intervall ersetzt nun das vorherige in der Predecessor Datenstruktur, da es nun das tiefste Intervall an diesem Index ist.\\
+    \item[\textbf{Fall 2}] Im Fall, dass ein solches Intervall existiert, kann es sein, dass $R_i$-$[start..end]$ das nun am tiefsten verschachtelte Intervall ist, das an diesem Startindex beginnt. Ist das der Fall, so werden die Pointer des entsprechenden Index gesetzt und das neue Intervall ersetzt nun das vorherige in der Predecessor Datenstruktur, da es nun das tiefste Intervall an diesem Index ist.\\
     Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$ Pointer iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. An diese Stelle muss dann das neue Intervall eingefügt werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte und damit das am wenigsten verschachtelte Intervall, das an diesem Startindex beginnt. Ist das der Fall, so muss der $\texttt{firstAtStartIndex}$ aller Intervalle an diesem Startindex, auf das neue Intervall gesetzt werden. Dies kann während der ohnehin schon stattfindenden Iteration geschehen. 
 \end{itemize} 
 
-Es kann nun sein, dass durch das einfügen eines neuen Intervalls die $\texttt{parent}$ Pointer anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
+Es kann nun sein, dass durch das Einfügen eines neuen Intervalls die $\texttt{parent}$ Pointer anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
 Kindintervall schieben. Dies wird nun dadurch behoben, dass über alle Intervalle der Datenstruktur, die im Intervall $[start+1..end]$ liegen, iteriert wird. In dieser Iteration wird der \texttt{parent} Pointer auf das neue Intervall gesetzt. 
-
+\label{v4marking}
 
 \subsection{Ruleset}
 

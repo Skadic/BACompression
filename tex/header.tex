@@ -148,4 +148,9 @@
 \clubpenalty = 10000
 % Keine einzelnen Zeilen am Ende eines Abschnitts (Hurenkinder)
 \widowpenalty = 10000 \displaywidowpenalty = 10000
+
+
+\makeatletter
+\newcommand\footnoteref[1]{\protected@xdef\@thefnmark{\ref{#1}}\@footnotemark}
+\makeatother
 % EOF

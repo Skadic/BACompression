@@ -1,10 +1,34 @@
-\tikzset{      
-    algorithmxticks/.style={
-        xtick={1,2,3,4,5,6},
-        xticklabels={AreaCompV4/\\$h \cdot w$,AreaCompV4/\\$h$, AreaCompV4/\\$h \cdot w$ Naive, AreaCompV4/\\$h^2 + w$,RePair,Sequitur},
+% IMPORT-DATA dna dna.txt
+% IMPORT-DATA proteins proteins.txt
+
+\pgfplotsset{
+    dataplot/.style={
+        xtick={1,2,3,4,5},
+        xticklabels={10,20,30,40,50},
         xticklabel style={align=center},
-    }
+        xlabel={Größe der Eingabe},
+        x unit={MB},
+        width=7cm,
+        height=6cm,,
+        legend style={at={(1,1)}, anchor=north west}
+    },
+    runtimeplot/.style={
+        dataplot,
+        y unit={s},
+        ylabel={Laufzeit}
+    },
+    sizeplot/.style={
+        dataplot,
+        y unit={outputsize/inputsize},
+        ylabel={Größenverhältnis}
+    },
+    depthplot/.style={
+        dataplot,
+        y unit={\#Schritte zur tiefsten Regel},
+        ylabel={Tiefe}
+    },
 }
+
 
 \chapter{Evaluation}
 
@@ -30,14 +54,15 @@ AreaCompV4 ist in Java 16 programmiert.
 Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf 10MB und 50MB Präfixe folgender Datensätze:
 
 \begin{itemize}
-    \item[\emph{sources}] C/Java Quellcode aus linux-2.6.11.6\footnote{\url{ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.11.6.tar.gz}} und gcc-4.0.0\footnote{\url{ftp://ftp.gnu.org/gnu/gcc/gcc-4.0.0/gcc-4.0.0.tar.bz2}}. Das Alphabet besteht aus 230 Zeichen.
-    \item[\emph{english}] Englischer Text von Project Gutenberg\footnote{\url{	www.gutenberg.org}}. Das Alphabet besteht aus 239 Zeichen.
+    \item[\emph{dna}] DNA Sequenzen von Project Gutenberg\footnote{\label{footnotegutenberg}\url{https://www.gutenberg.org}}. Jedes Basenpaar wird jeweils durch einen der Großbuchstaben \emph{A}, \emph{G}, \emph{C} und \emph{T} dargestellt. Zudem kommen einige Sonderzeichen vor. Das Alphabet besteht aus 16 Zeichen.
+    \item[\emph{english}] Englischer Text von Project Gutenberg\footnoteref{footnotegutenberg}. Das Alphabet besteht aus 239 Zeichen.
     \item[\emph{proteins}] Proteinsequenzen aus der Swissprot Datenbank\footnote{\url{ftp://ftp.ebi.ac.uk/pub/databases/swissprot/release_compressed/uniprot_sprot.dat.gz}}. Jede Aminosäure ist mit jeweils einem Buchstaben kodiert. Das Alphabet besteht aus 27 Zeichen.
+    \item[\emph{xml}] Eine XML-Datei mit Informationen über große Informatik-Zeitschriften etc. von der Universität Trier\footnote{\url{https://dblp.uni-trier.de}}. Das Alphabet besteht aus 97 Zeichen.
 \end{itemize}
 
 \subsection{Flächenfunktion}
 
-Wir betrachten fünf Flächenfunktionen. Diese machen sich die Eigenschaften der Abouelhoda-Intervalle zunutze. 
+Wir betrachten vier Flächenfunktionen. Diese machen sich die Eigenschaften der Abouelhoda-Intervalle zunutze. 
 Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der minimale LCP-Wert eines Abouelhoda-Intervalls $[i..j]$ durch $down[i]$ oder $up[j+1]$ im Kind-Array bestimmen. 
 So muss nicht in Linearzeit durch das Intervall iteriert werden, um das Minimum zu bestimmen. Es kann stattdessen durch eine Konstantzeit-Anfrage an das Kind-Array bestimmt werden. Dies ist erst ab V3 möglich, da V1 und V2 beliebige LCP-Intervalle benutzen, da diese Operationen nur für Abouelhoda-Intervalle funktionieren.
 
@@ -45,139 +70,204 @@ Für alle folgenden Flächenfunktionen gilt, dass wenn $H(i+1, j) \leq 1$ gilt(s
 
 Im Folgenden sei $I := [i..j]$ ein Abouelhoda-Intervall. Dann ist $LCP[i+1..j]$ das zugehörige LCP-Intervall und seien $h := H(i+1, j)$ und $w := W(i+1, j)$:
 
-\begin{itemize}[leftmargin=2.5cm]
-    \item[$A(I) = h \cdot w$] Diese Flächenfunktion schätzt die erreichbare Kompression durch eine Multiplikation der Anzahl der Vorkommen ($w$) mit der Länge des ersetzten Substrings ($h$) ab.\\ Im Code heißt diese Flächenfunktion \texttt{ChildArea}.
-    \item[$A(I) = h \cdot w - w$] Diese Flächenfunktion ist ähnlich wie die vorhergehende, allerdings subtrahiert sie die Anzahl der Vorkommen, von dem Flächenwert. Die Motivation dahinter ist, dass jedes der $w$ Vorkommen durch ein Nichtterminal ersetzt werden muss. Daher sinkt die tatsächlich erreichbare Kompression um $w$ gegenüber $h \cdot w$.\\ Im Code heißt diese Flächenfunktion \texttt{PotentialCompressionArea}.
-    \item[$A(I) = w$] Hier wird allein die Anzahl der Vorkommen Priorisiert.\\
-    Im Code heißt diese Flächenfunktion \texttt{WidthFirstArea}.   
-    \item[$A(I) = h$] Hier wird allein die Länge des zu ersetzenden Substrings priorisiert.\\Im Code heißt diese Flächenfunktion \texttt{HeightFirstArea}.
-    \item[$A(I) = h^2 + w$] Die Idee dieser Flächenfunktion ist eine Verbesserung an \texttt{HeightFirstArea}. Da allein die Höhe des LCP-Intervalls berücksichtigt wird, ist es möglich, dass LCP-Intervalle vor anderen LCP-Intervallen mit gleicher Höhe aber größerer Breite gewählt werden. Allerdings sind aber Letztere a priori vielversprechender.\\
-    Im Code heißt diese Flächenfunktion \texttt{HeightFirstArea}.
+\begin{itemize}[leftmargin=3.3cm]
+    \item[\texttt{ChildArea}] $A(I) = h \cdot w$\\
+    Diese Flächenfunktion schätzt die erreichbare Kompression durch eine Multiplikation der Anzahl der Vorkommen ($w$) mit der Länge des ersetzten Substrings ($h$) ab.
+    \item[\texttt{WidthFirstArea}] $A(I) = w$\\ Hier wird allein die Anzahl der Vorkommen Priorisiert.
+    \item[\texttt{HeightFirstArea}] $A(I) = h$\\
+    Hier wird allein die Länge des zu ersetzenden Substrings priorisiert.
+    \item[\texttt{HeightAdvantageArea}] $A(I) = 10 \cdot h + \min\{\log(w), 9\}$\\ Diese Flächenfunktion ist der Versuch einer Verbesserung von \\
+    \texttt{HeightFirstArea}. Da bei \texttt{HeightFirstArea} allein die Höhe des LCP-Intervalls berücksichtigt wird, ist es möglich, dass LCP-Intervalle vor anderen LCP-Intervallen mit gleicher Höhe aber größerer Breite gewählt werden. Allerdings sind aber Letztere a priori vielversprechender. Hier wird also logarithmisch die Breite in die Berechnung miteingebracht und dieser Wert auf maximal $9$ begrenzt. Da die Höhe mit dem Faktor $10$ multipliziert wird, wird hier sichergestellt, dass keine Intervalle vor einem anderen Intervall mit größerer Höhe gewählt werden.
 \end{itemize}
 
 
 
 \section{Ergebnisse}
 
-\subsection{english}
+\subsection{dna}
 
-% IMPORT-DATA english10 english.10MB.txt
-% IMPORT-DATA english50 english.50MB.txt
+Der \emph{dna} zeichnet sich durch sein besonders kleines Alphabet von nur 16 Zeichen aus. Die Ergebnisse der Algorithmenaufrufe sind in \autoref{resultsdna} zu sehen. 
+
+\subsubsection{Laufzeit}
+
+In \autoref{resultsdnaruntime} sehen wir, dass im Bezug auf Laufzeit, Sequitur und RePair am besten funktionieren. AreaComp hat mit den Flächenfunktionen \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. AreaComp mit den Flächenfunktionen \texttt{ChildArea} und \texttt{WidthFirstArea} sind nur etwa halb so schnell. 
+Während Sequitur, Repair und AreaComp mit den ersten beiden genannten Flächenfunktionen einen linearen Anstieg in der Laufzeit zeigen, hat AreaComp mit den letzteren beiden Flächenfunktionen einen viel steileren Anstieg, insbesondere von $30$MB auf $40$MB.
+
+Dies hängt wahrscheinlich mit dem Markieren der Intervalle in der \texttt{RuleIntervalIndex} Datenstruktur zu tun. Beim Einfügen eines neuen \texttt{RuleInterval} $R_i$-$[start..end]$ in die Datenstruktur muss gegebenfalls durch alle \texttt{RuleInterval}s, die Teilintervalle von $[start..end]$ sind, iteriert werden. Dies ist nötig, da die \texttt{parent} Pointer der \texttt{RuleInterval}s in diesem Bereich invalidiert werden können (siehe \autoref{v4marking}).
+
+Für die Flächenfunktionen \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} kann kein LCP-Intervall mit einem Muster der Länge $i \in \mathbb{N}$ ersetzt werden, bevor nicht alle LCP-Intervalle bearbeitet wurden, dessen Muster eine Länge von $j > i$ hat.
+Dementsprechend kann es nicht vorkommen, dass ein \texttt{RuleInterval} in die Datenstruktur eingefügt wird, dass ein Anderes, Größeres umschließt. Das würde voraussetzen, dass vorher ein kleineres Intervall eingefügt wurde als das jetzige. Dies ist durch die Vorschrift dieser Flächenfunktionen allerdings nicht möglich.
+
+Es folgt, dass wenn ein \texttt{RuleInterval} $R_i$-$[start..end]$ eingefügt wird, kein anderes \texttt{RuleInterval} existiert, das Teilintervall von $[start..end]$ ist. Daraus folgt, dass besagte Iteration nie stattfindet, da keine solche Intervalle existieren.
+
+Im Gegensatz dazu tendieren die Flächenfunktionen \texttt{ChildArea} und insbesondere \texttt{WidthFirstArea} zum gegenteiligen Effekt. Da kürzere Muster tendenziell öfter in einem Text vorkommen als lange Muster, wählen diese Flächenfunktionen meistens die kleinen, aber oft auftretenden Muster als erstes.
+
+Kurze Muster kommen insbesondere in großen Texten sehr viel öfter wiederholt vor als lange Muster. Etwa gibt es Muster von wenigen Zeichen, die in einer jeweiligen Sprache sehr oft vorkommen, wie zum Beispiel \emph{he} oder \emph{th} in Englisch. Daher folgt für ein LCP-Intervall $LCP[i..j]$, das solch ein kurzes Muster beschreibt oft $W(i,j) \gg H(i,j)$. Tendenziell gilt dann je größer $H(i,j)$, desto kleiner $W(i,j)$.
+Dies führt dazu, dass in \texttt{ChildArea} ($w \cdot h$) die Breite des Intervalls die größte Aussagekraft hat. Das resultiert dann in einer ähnlichen Priorisierung von Intervallen, wie mit \texttt{WidthFirstArea}, die nur Breite beachtet.
+
+Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern gehörenden Intervalle erst spät in die \texttt{RuleIntervalIndex} Datenstruktur eingefügt. Dann müssen besagte Iterationen stattfinden, um die \texttt{parent} Pointer zu korrigieren. 
+
+\subsubsection{Grammatikgröße}
 
 \begin{figure}
     \centering
 
     \subfloat[Laufzeiten]{
         \begin{tikzpicture}
-            \begin{axis}[
-                xbar stacked,
-                ytick={1,2,3,4,5,6,7},
-                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
-                yticklabel style={align=center},
-                width=11cm,
-                height=6cm,
-                x unit={s},
-                title={English 10MB Laufzeit},
-                xlabel={Laufzeit},
-                legend style={at={(1,0)}, anchor=south east}
-            ]
+            \begin{axis}[runtimeplot, title={DNA Laufzeit}]
 
-                %a MULTIPLOT(x) SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS y, AVG(comptime) AS y FROM english10 GROUP BY algo
                
-                % PLOT SELECT AVG(comptime / 1000.0) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english10 GROUP BY algo
-                \addplot coordinates { (63.779,1) (45.645,2) (65.792,3) (73.332,4) (67.6015,5) (161.8085,6) (6.455,7) };
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+                %% FROM dna GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,78.0) (2,226.0) (3,365.0) (4,788.0) (5,894.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,51.0) (2,121.0) (3,208.0) (4,282.0) (5,379.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,50.0) (2,120.0) (3,205.0) (4,263.0) (5,358.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,77.0) (2,220.0) (3,347.0) (4,752.0) (5,885.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,14.0) (2,35.0) (3,56.5) (4,73.0) (5,98.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,4.0) (2,9.0) (3,17.0) (4,25.0) (5,36.0) };
+                \addlegendentry{algo=Sequitur};
                 
-
-                %a PLOT SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, AVG(unifytime) AS y FROM english10 GROUP BY algo
-
-                % PLOT SELECT AVG(unifytime / 1000.0) AS x ,ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english10 GROUP BY algo
-                \addplot coordinates { (3.033,1) (4.8215,2) (3.46,3) (3.353,4) (2.886,5) (1.904,6) (0.316333,7) };
-
-                \legend{$Compute$,$Unify$}
             \end{axis}
         \end{tikzpicture}
+        \label{resultsdnaruntime}
     }
     \quad
-    \subfloat[Kompressionsrate]{
+    \subfloat[Größe der erzeugten Grammatik]{
         \begin{tikzpicture}
-            \begin{axis}[
-                xbar stacked,
-                ytick={1,2,3,4,5,6,7},
-                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
-                yticklabel style={align=center},
-                width=11cm,
-                height=6cm,
-                title={English 10MB Kompression},
-                xlabel={Kompressionsrate},
-                x unit={output size / input size},
-            ]
-                
-                %a MULTIPLOT(x) SELECT ROW_NUMBER() OVER(ORDER BY algo ASC) AS x, MIN(size) AS y FROM english10 GROUP BY algo
-                % PLOT SELECT MIN(size / (1.0 * inputsize)) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS x FROM english10 GROUP BY algo
-                \addplot coordinates { (0.283818,1) (0.155956,2) (0.258607,3) (0.266115,4) (0.371259,5) (0.705408,6) (0.136912,7) };
+            \begin{axis}[sizeplot, title={DNA Grammatikgröße}]
 
-                %a MULTIPLOT(x) SELECT algo AS x, MIN(size) AS y FROM english10 GROUP BY algo
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, MIN(size / (1.0 * inputsize)) AS y, MULTIPLOT 
+                %% FROM dna GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,0.429235) (2,0.429114) (3,0.429129) (4,0.429873) (5,0.429092) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,0.216447) (2,0.205636) (3,0.201329) (4,0.197742) (5,0.194624) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,0.218332) (2,0.207557) (3,0.203194) (4,0.199581) (5,0.19631) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,0.429413) (2,0.429373) (3,0.429393) (4,0.430037) (5,0.429272) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,0.647652) (2,0.527011) (3,0.640813) (4,0.53727) (5,0.516707) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,0.146958) (2,0.139801) (3,0.138794) (4,0.137584) (5,0.135546) };
+                \addlegendentry{algo=Sequitur};
+                
+                
+
             \end{axis}
         \end{tikzpicture}
+        \label{resultsdnasize}
     }
-    \caption{Die Ergebnisse für die Kompression des 10MB Präfixes des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Dieses besteht aus $\approx10.7$ Millionen Zeichen.}
-    \label{resultsenglish10}
+    \quad
+    \subfloat[Tiefe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[depthplot, title={DNA Grammatiktiefe}, ymode=log]
+
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(depth) AS y, MULTIPLOT 
+                %% FROM dna GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,7.0) (2,7.0) (3,9.0) (4,9.0) (5,9.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,48.0) (2,52.0) (3,58.0) (4,58.0) (5,58.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,49.0) (2,51.0) (3,57.0) (4,58.0) (5,57.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,3.0) (2,3.0) (3,3.0) (4,3.0) (5,3.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,335.0) (2,532.0) (3,2403.0) (4,1635.0) (5,3034.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,11.0) (2,11.0) (3,12.0) (4,12.0) (5,12.0) };
+                \addlegendentry{algo=Sequitur};
+                
+                
+
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsdnadepth}
+    }
+    \caption{Die Ergebnisse für die Kompression des \emph{dna} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsdnaruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsdnasize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsdnadepth} zeigt die Tiefe der erzeugten Grammatiken.}
+    \label{resultsdna}
 \end{figure}
 
 
+\subsection{proteins}
+
 \begin{figure}
     \centering
 
     \subfloat[Laufzeiten]{
         \begin{tikzpicture}
-            \begin{axis}[
-                xbar stacked,
-                ytick={1,2,3,4,5,6,7},
-                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
-                yticklabel style={align=center},
-                width=11cm,
-                height=6cm,
-                x unit={s},
-                title={English 50MB Laufzeit},
-                xlabel={Laufzeit},
-                legend style={at={(1,0)}, anchor=south east}
-            ]
+            \begin{axis}[runtimeplot, title={Proteins Laufzeit}]
 
                
-                % PLOT SELECT AVG(comptime / 1000) AS x,  ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english50 GROUP BY algo
-                \addplot coordinates { (911.0,1) (294.0,2) (934.0,3) (875.0,4) (821.0,5) (1628.0,6) (51.5,7) };
-                
-
-                % PLOT SELECT AVG(unifytime / 1000.0) AS x ,ROW_NUMBER() OVER(ORDER BY algo ASC) AS y FROM english50 GROUP BY algo
-                \addplot coordinates { (20.838,1) (28.303,2) (20.767,3) (18.786,4) (19.984,5) (11.387,6) (1.586,7) };
-                
-
-                \legend{$Compute$,$Unify$}
-                
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+                %% FROM proteins GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,44.0) (2,107.0) (3,170.0) (4,247.0) (5,235.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,39.0) (2,91.0) (3,131.0) (4,163.0) (5,199.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,38.0) (2,89.0) (3,135.0) (4,163.0) (5,203.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,42.0) (2,102.0) (3,155.0) (4,197.0) (5,202.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,16.0) (2,40.0) (3,78.0) (4,87.0) (5,121.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,6.0) (2,16.0) (3,29.0) (4,43.0) (5,60.0) };
+                \addlegendentry{algo=Sequitur};
             \end{axis}
         \end{tikzpicture}
+        \label{resultsproteinsruntime}
     }
     \quad
-    \subfloat[Kompressionsrate]{
+    \subfloat[Größe der erzeugten Grammatik]{
         \begin{tikzpicture}
-            \begin{axis}[
-                xbar stacked,
-                ytick={1,2,3,4,5,6,7},
-                yticklabels={AreaCompV4: $h \cdot w$,AreaCompV4: $h$, AreaCompV4: $h \cdot w - w$, AreaCompV4: $h^2 + w$,AreaCompV4: $w$,RePair,Sequitur},
-                yticklabel style={align=center},
-                width=11cm,
-                height=6cm,
-                title={English 50MB Kompression},
-                xlabel={Kompressionsrate},
-                x unit={output size / input size},
-            ]
-                
-                % PLOT SELECT MIN(size / (1.0 * inputsize)) AS x, ROW_NUMBER() OVER(ORDER BY algo ASC) AS x FROM english50 GROUP BY algo
-                \addplot coordinates { (0.319951,1) (0.14459,2) (0.291531,3) (0.29037,4) (0.389639,5) (0.60334,6) (0.120246,7) };
+            \begin{axis}[sizeplot, title={Proteins Grammatikgröße}]
 
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, MIN(size / (1.0 * inputsize)) AS y, MULTIPLOT 
+                %% FROM proteins GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,0.341726) (2,0.365969) (3,0.386289) (4,0.400567) (5,0.404739) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,0.212851) (2,0.202009) (3,0.222857) (4,0.249495) (5,0.264087) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,0.21661) (2,0.20566) (3,0.227152) (4,0.254638) (5,0.269725) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,0.433566) (2,0.432746) (3,0.432112) (4,0.43228) (5,0.432293) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,0.767845) (2,0.776813) (3,0.744482) (4,0.834881) (5,0.828773) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,0.179865) (2,0.169194) (3,0.180369) (4,0.198115) (5,0.208265) };
+                \addlegendentry{algo=Sequitur};
             \end{axis}
         \end{tikzpicture}
+        \label{resultsproteinssize}
     }
-    \caption{Die Ergebnisse für die Kompression des 50MB Präfixes des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Dieses besteht aus $\approx52.4$ Millionen Zeichen.}
-    \label{resultsenglish50}
+    \quad
+    \subfloat[Tiefe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[depthplot, title={Proteins Grammatiktiefe}, ymode=log]
+                
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(depth) AS y, MULTIPLOT 
+                %% FROM proteins GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,36.0) (2,43.0) (3,47.0) (4,49.0) (5,50.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,53.0) (2,59.0) (3,62.0) (4,64.0) (5,64.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,50.0) (2,52.0) (3,62.0) (4,64.0) (5,64.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,3.0) (2,4.0) (3,4.0) (4,4.0) (5,4.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,1628.0) (2,2819.0) (3,3413.0) (4,2982.0) (5,3733.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,20.0) (2,24.0) (3,24.0) (4,24.0) (5,24.0) };
+                \addlegendentry{algo=Sequitur};
+                
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsproteinsdepth}
+    }
+    \caption{Die Ergebnisse für die Kompression des \emph{proteins} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsdnaruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsdnasize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsdnadepth} zeigt die Tiefe der erzeugten Grammatiken.}
+    \label{resultsproteins}
 \end{figure}

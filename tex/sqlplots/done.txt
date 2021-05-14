@@ -1,0 +1,20 @@
+english 10
+english 20
+english 30
+english 40
+english 50 done
+proteins 10 done
+proteins 20 done
+proteins 30 done
+proteins 40 done
+proteins 50 done
+xml 10
+xml 20
+xml 30
+xml 40
+xml 50 done
+dna 10 done
+dna 20 done
+dna 30 done
+dna 40 done
+dna 50 done
