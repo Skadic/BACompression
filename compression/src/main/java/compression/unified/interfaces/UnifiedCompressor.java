@@ -128,6 +128,8 @@ public interface UnifiedCompressor {
         result.add("unifytime=" + (duration / 1000000));
 
         result.add("size=" + unified.rulesetSize());
+        result.add("numRules=" + unified.ruleCount());
+        result.add("avgLen=" + unified.averageRuleLength());
         result.add("depth=" + unified.rulesetDepth());
 
         result.add("bucketsize=" + RuleIntervalIndex.BUCKET_SIZE_EXPONENT);

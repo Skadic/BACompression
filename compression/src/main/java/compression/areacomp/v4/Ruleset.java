@@ -172,11 +172,6 @@ class Ruleset implements ToUnifiedRuleset {
         return count;
     }
 
-    /**
-     * Set that contains all previously found rule interval start indices. Only used in {@link #differingOccurences(int[])}
-     * @see #differingOccurences(int[])
-     */
-    private final IntSet DIFFERING_OCCURRENCES_SET = new IntOpenHashSet();
 
 
     /**
@@ -196,7 +191,7 @@ class Ruleset implements ToUnifiedRuleset {
      */
     private boolean differingOccurences(int[] positions) {
         if(positions.length == 0) return false;
-        DIFFERING_OCCURRENCES_SET.clear();
+        var set = new IntOpenHashSet();
 
         int firstRuleId = -1;
 
@@ -214,14 +209,14 @@ class Ruleset implements ToUnifiedRuleset {
 
             if(firstRuleId == -1){
                 firstRuleId = ruleId;
-            } else if(ruleId != firstRuleId || DIFFERING_OCCURRENCES_SET.contains(startIndex)) {
+            } else if(ruleId != firstRuleId || set.contains(startIndex)) {
                 // This interval (or at least one that starts at the same index) already has an interval.
                 // This new one must be distinct from that other one. If it's the very same interval, that is obvious.
                 // If this is a different interval from before, it can't be the same rule id, since then it would have a later start id
                 // Therefore the occurrences must be distinct also
                 return true;
             }
-            DIFFERING_OCCURRENCES_SET.add(startIndex);
+            set.add(startIndex);
         }
 
 

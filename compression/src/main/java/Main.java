@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 public class Main {
@@ -19,11 +20,19 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        if(args.length != 1) {
+        if(args.length < 1) {
             System.out.println("Please specify an input file");
             return;
         }
 
+        for (String file : args) {
+            benchmark(file);
+            System.gc();
+        }
+
+    }
+
+    private static void benchmark(String fileName) throws IOException {
         final List<UnifiedCompressor> compressors = List.of(
                 new Sequitur(),
                 new RePair(),
@@ -39,13 +48,14 @@ public class Main {
                 //new AreaCompV3(new DepthWithAddArea()),
         );
 
-        final String fileName = args[0];
         final var inputPath = Paths.get("input", fileName).toAbsolutePath();
         final var outputPath = Paths.get("output", fileName).toAbsolutePath();
 
+        System.out.println("Processing " + fileName);
+
         final String input;
         try {
-             input = Files.readString(inputPath, StandardCharsets.ISO_8859_1);
+            input = Files.readString(inputPath, StandardCharsets.ISO_8859_1);
         } catch (NoSuchFileException e) {
             System.err.printf("File '%s' does not exist%n. Please make sure the input file is an a directory called \"input\".\n The input path should be relative to that directory", fileName);
             return;
@@ -72,6 +82,5 @@ public class Main {
             values.forEach((counterName, time) -> System.out.printf("%-25s: %s%n", counterName, time.toString()));
             System.out.println();
         });
-
     }
 }

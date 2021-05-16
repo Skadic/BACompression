@@ -2,7 +2,10 @@ package compression.unified;
 
 import compression.unified.interfaces.ToUnifiedRuleset;
 import compression.unified.interfaces.UnifiedSymbol;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,13 +25,13 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
     /**
      * A map which take a rule ID and return the rule's right side as a list of symbols.
      */
-    private final Map<Integer, List<UnifiedSymbol>> rules;
+    private final Int2ObjectMap<List<UnifiedSymbol>> rules;
 
     /**
      * Creates a new empty ruleset
      */
     public UnifiedRuleset() {
-        rules = new HashMap<>();
+        rules = new Int2ObjectOpenHashMap<>();
     }
 
     public int getTopLevelRuleId() {
@@ -39,7 +42,7 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
         this.topLevelRuleId = topLevelRuleId;
     }
 
-    public Map<Integer, List<UnifiedSymbol>> rules() {
+    public Int2ObjectMap<List<UnifiedSymbol>> rules() {
         return rules;
     }
 
@@ -66,8 +69,8 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
         // Top level rule is possibly unused. So we prevent getting a null value
         usageCount.put(topLevelRuleId, 0);
 
-        rules.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getKey)).forEach(entry -> {
-            Integer id = entry.getKey();
+        rules.int2ObjectEntrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getKey)).forEach(entry -> {
+            int id = entry.getIntKey();
             var rule = new StringJoiner(" ", "R" + id + " -> ", "\n");
 
             for (UnifiedSymbol symbol : entry.getValue()) {
@@ -100,11 +103,29 @@ public class UnifiedRuleset implements ToUnifiedRuleset {
         return rules.values().stream().mapToInt(List::size).sum();
     }
 
+    /**
+     * Gets the amount of rules
+     * @return The amount of rules
+     */
+    public int ruleCount() {
+        return rules.size();
+    }
+
+    /**
+     * The average length of a rule, excluding the top level rule
+     * @return The average length
+     */
+    public double averageRuleLength() {
+        return rules.entrySet().stream().filter(entry -> entry.getKey() != topLevelRuleId)
+                .map(Map.Entry::getValue)
+                .mapToInt(List::size).average().orElse(0);
+    }
+
 
     public int rulesetDepth() {
         var topLevel = rules.get(topLevelRuleId);
         int depth = 0;
-        var rule = topLevel.stream().filter(symbol -> symbol instanceof UnifiedNonTerminal)
+        IntSet rule = topLevel.stream().filter(symbol -> symbol instanceof UnifiedNonTerminal)
                 .mapToInt(symbol -> ((UnifiedNonTerminal) symbol).id())
                 .collect(IntOpenHashSet::new, IntOpenHashSet::add, IntOpenHashSet::addAll);
 
