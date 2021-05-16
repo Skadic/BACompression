@@ -1,5 +1,7 @@
 % IMPORT-DATA dna dna.txt
 % IMPORT-DATA proteins proteins.txt
+% IMPORT-DATA xml dblp.xml.txt
+% IMPORT-DATA english english.txt
 
 \pgfplotsset{
     dataplot/.style={
@@ -15,12 +17,14 @@
     runtimeplot/.style={
         dataplot,
         y unit={s},
-        ylabel={Laufzeit}
+        ylabel={Laufzeit},
+        ytick distance=50
     },
     sizeplot/.style={
         dataplot,
         y unit={outputsize/inputsize},
-        ylabel={Größenverhältnis}
+        ylabel={Größenverhältnis},
+        ytick distance=0.1
     },
     depthplot/.style={
         dataplot,
@@ -91,24 +95,13 @@ Der \emph{dna} zeichnet sich durch sein besonders kleines Alphabet von nur 16 Ze
 \subsubsection{Laufzeit}
 
 In \autoref{resultsdnaruntime} sehen wir, dass im Bezug auf Laufzeit, Sequitur und RePair am besten funktionieren. AreaComp hat mit den Flächenfunktionen \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. AreaComp mit den Flächenfunktionen \texttt{ChildArea} und \texttt{WidthFirstArea} sind nur etwa halb so schnell. 
-Während Sequitur, Repair und AreaComp mit den ersten beiden genannten Flächenfunktionen einen linearen Anstieg in der Laufzeit zeigen, hat AreaComp mit den letzteren beiden Flächenfunktionen einen viel steileren Anstieg, insbesondere von $30$MB auf $40$MB.
-
-Dies hängt wahrscheinlich mit dem Markieren der Intervalle in der \texttt{RuleIntervalIndex} Datenstruktur zu tun. Beim Einfügen eines neuen \texttt{RuleInterval} $R_i$-$[start..end]$ in die Datenstruktur muss gegebenfalls durch alle \texttt{RuleInterval}s, die Teilintervalle von $[start..end]$ sind, iteriert werden. Dies ist nötig, da die \texttt{parent} Pointer der \texttt{RuleInterval}s in diesem Bereich invalidiert werden können (siehe \autoref{v4marking}).
-
-Für die Flächenfunktionen \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} kann kein LCP-Intervall mit einem Muster der Länge $i \in \mathbb{N}$ ersetzt werden, bevor nicht alle LCP-Intervalle bearbeitet wurden, dessen Muster eine Länge von $j > i$ hat.
-Dementsprechend kann es nicht vorkommen, dass ein \texttt{RuleInterval} in die Datenstruktur eingefügt wird, dass ein Anderes, Größeres umschließt. Das würde voraussetzen, dass vorher ein kleineres Intervall eingefügt wurde als das jetzige. Dies ist durch die Vorschrift dieser Flächenfunktionen allerdings nicht möglich.
-
-Es folgt, dass wenn ein \texttt{RuleInterval} $R_i$-$[start..end]$ eingefügt wird, kein anderes \texttt{RuleInterval} existiert, das Teilintervall von $[start..end]$ ist. Daraus folgt, dass besagte Iteration nie stattfindet, da keine solche Intervalle existieren.
-
-Im Gegensatz dazu tendieren die Flächenfunktionen \texttt{ChildArea} und insbesondere \texttt{WidthFirstArea} zum gegenteiligen Effekt. Da kürzere Muster tendenziell öfter in einem Text vorkommen als lange Muster, wählen diese Flächenfunktionen meistens die kleinen, aber oft auftretenden Muster als erstes.
-
-Kurze Muster kommen insbesondere in großen Texten sehr viel öfter wiederholt vor als lange Muster. Etwa gibt es Muster von wenigen Zeichen, die in einer jeweiligen Sprache sehr oft vorkommen, wie zum Beispiel \emph{he} oder \emph{th} in Englisch. Daher folgt für ein LCP-Intervall $LCP[i..j]$, das solch ein kurzes Muster beschreibt oft $W(i,j) \gg H(i,j)$. Tendenziell gilt dann je größer $H(i,j)$, desto kleiner $W(i,j)$.
-Dies führt dazu, dass in \texttt{ChildArea} ($w \cdot h$) die Breite des Intervalls die größte Aussagekraft hat. Das resultiert dann in einer ähnlichen Priorisierung von Intervallen, wie mit \texttt{WidthFirstArea}, die nur Breite beachtet.
-
-Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern gehörenden Intervalle erst spät in die \texttt{RuleIntervalIndex} Datenstruktur eingefügt. Dann müssen besagte Iterationen stattfinden, um die \texttt{parent} Pointer zu korrigieren. 
+Während Sequitur, Repair und AreaComp mit den ersten beiden genannten Flächenfunktionen einen linearen Anstieg in der Laufzeit zeigen, hat AreaComp mit den letzteren beiden Flächenfunktionen einen viel steileren Anstieg, insbesondere wenn die Eingabedatenmenge von $30$MB auf $40$MB steigt.
 
 \subsubsection{Grammatikgröße}
 
+
+
+% DNA PLOT
 \begin{figure}
     \centering
 
@@ -119,17 +112,17 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
                
                 %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
                 %% FROM dna GROUP BY MULTIPLOT, datasetsize
-                \addplot coordinates { (1,78.0) (2,226.0) (3,365.0) (4,788.0) (5,894.0) };
+                \addplot coordinates { (1,47.0) (2,106.0) (3,171.0) (4,232.0) (5,314.0) };
                 \addlegendentry{algo=AreaCompV4/ChildArea};
-                \addplot coordinates { (1,51.0) (2,121.0) (3,208.0) (4,282.0) (5,379.0) };
+                \addplot coordinates { (1,51.0) (2,116.0) (3,198.0) (4,282.0) (5,380.0) };
                 \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
-                \addplot coordinates { (1,50.0) (2,120.0) (3,205.0) (4,263.0) (5,358.0) };
+                \addplot coordinates { (1,50.0) (2,117.0) (3,190.0) (4,266.0) (5,368.0) };
                 \addlegendentry{algo=AreaCompV4/HeightFirstArea};
-                \addplot coordinates { (1,77.0) (2,220.0) (3,347.0) (4,752.0) (5,885.0) };
+                \addplot coordinates { (1,44.0) (2,103.0) (3,159.0) (4,227.0) (5,306.0) };
                 \addlegendentry{algo=AreaCompV4/WidthFirstArea};
-                \addplot coordinates { (1,14.0) (2,35.0) (3,56.5) (4,73.0) (5,98.0) };
+                \addplot coordinates { (1,15.0) (2,35.0) (3,57.0) (4,75.0) (5,102.0) };
                 \addlegendentry{algo=RePair};
-                \addplot coordinates { (1,4.0) (2,9.0) (3,17.0) (4,25.0) (5,36.0) };
+                \addplot coordinates { (1,4.0) (2,9.0) (3,15.0) (4,23.0) (5,31.0) };
                 \addlegendentry{algo=Sequitur};
                 
             \end{axis}
@@ -143,19 +136,18 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
 
                 %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, MIN(size / (1.0 * inputsize)) AS y, MULTIPLOT 
                 %% FROM dna GROUP BY MULTIPLOT, datasetsize
-                \addplot coordinates { (1,0.429235) (2,0.429114) (3,0.429129) (4,0.429873) (5,0.429092) };
+                \addplot coordinates { (1,0.429266) (2,0.429114) (3,0.429129) (4,0.429873) (5,0.429092) };
                 \addlegendentry{algo=AreaCompV4/ChildArea};
                 \addplot coordinates { (1,0.216447) (2,0.205636) (3,0.201329) (4,0.197742) (5,0.194624) };
                 \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
                 \addplot coordinates { (1,0.218332) (2,0.207557) (3,0.203194) (4,0.199581) (5,0.19631) };
                 \addlegendentry{algo=AreaCompV4/HeightFirstArea};
-                \addplot coordinates { (1,0.429413) (2,0.429373) (3,0.429393) (4,0.430037) (5,0.429272) };
+                \addplot coordinates { (1,0.429441) (2,0.429373) (3,0.429393) (4,0.430037) (5,0.429272) };
                 \addlegendentry{algo=AreaCompV4/WidthFirstArea};
                 \addplot coordinates { (1,0.647652) (2,0.527011) (3,0.640813) (4,0.53727) (5,0.516707) };
                 \addlegendentry{algo=RePair};
                 \addplot coordinates { (1,0.146958) (2,0.139801) (3,0.138794) (4,0.137584) (5,0.135546) };
                 \addlegendentry{algo=Sequitur};
-                
                 
 
             \end{axis}
@@ -181,7 +173,7 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
                 \addlegendentry{algo=RePair};
                 \addplot coordinates { (1,11.0) (2,11.0) (3,12.0) (4,12.0) (5,12.0) };
                 \addlegendentry{algo=Sequitur};
-                
+            
                 
 
             \end{axis}
@@ -195,6 +187,7 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
 
 \subsection{proteins}
 
+% PROTEINS PLOT
 \begin{figure}
     \centering
 
@@ -205,17 +198,17 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
                
                 %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
                 %% FROM proteins GROUP BY MULTIPLOT, datasetsize
-                \addplot coordinates { (1,44.0) (2,107.0) (3,170.0) (4,247.0) (5,235.0) };
+                \addplot coordinates { (1,43.0) (2,97.0) (3,135.0) (4,167.0) (5,214.0) };
                 \addlegendentry{algo=AreaCompV4/ChildArea};
-                \addplot coordinates { (1,39.0) (2,91.0) (3,131.0) (4,163.0) (5,199.0) };
+                \addplot coordinates { (1,40.0) (2,87.0) (3,125.0) (4,159.0) (5,202.0) };
                 \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
-                \addplot coordinates { (1,38.0) (2,89.0) (3,135.0) (4,163.0) (5,203.0) };
+                \addplot coordinates { (1,39.0) (2,86.0) (3,131.0) (4,161.0) (5,205.0) };
                 \addlegendentry{algo=AreaCompV4/HeightFirstArea};
-                \addplot coordinates { (1,42.0) (2,102.0) (3,155.0) (4,197.0) (5,202.0) };
+                \addplot coordinates { (1,39.0) (2,84.0) (3,118.0) (4,154.0) (5,192.0) };
                 \addlegendentry{algo=AreaCompV4/WidthFirstArea};
-                \addplot coordinates { (1,16.0) (2,40.0) (3,78.0) (4,87.0) (5,121.0) };
+                \addplot coordinates { (1,16.0) (2,42.0) (3,79.0) (4,92.0) (5,123.0) };
                 \addlegendentry{algo=RePair};
-                \addplot coordinates { (1,6.0) (2,16.0) (3,29.0) (4,43.0) (5,60.0) };
+                \addplot coordinates { (1,6.0) (2,15.5) (3,27.0) (4,40.0) (5,58.0) };
                 \addlegendentry{algo=Sequitur};
             \end{axis}
         \end{tikzpicture}
@@ -268,6 +261,158 @@ Da die kleinen Muster als erstes gewählt werden, werden die zu großen Mustern 
         \end{tikzpicture}
         \label{resultsproteinsdepth}
     }
-    \caption{Die Ergebnisse für die Kompression des \emph{proteins} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsdnaruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsdnasize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsdnadepth} zeigt die Tiefe der erzeugten Grammatiken.}
+    \caption{Die Ergebnisse für die Kompression des \emph{proteins} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsproteinsruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsproteinssize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsproteinsdepth} zeigt die Tiefe der erzeugten Grammatiken.}
     \label{resultsproteins}
+\end{figure}
+
+% XML PLOT
+\begin{figure}
+    \centering
+
+    \subfloat[Laufzeiten]{
+        \begin{tikzpicture}
+            \begin{axis}[runtimeplot, title={XML Laufzeit}]
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+                %% FROM xml GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,41.0) (2,91.0) (3,145.0) (4,203.0) (5,269.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,35.0) (2,83.0) (3,135.0) (4,202.0) (5,265.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,35.0) (2,85.0) (3,139.0) (4,192.0) (5,250.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,35.0) (2,78.0) (3,125.0) (4,174.0) (5,232.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,11.0) (2,29.0) (3,45.0) (4,63.0) (5,80.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,4.0) (2,9.0) (3,15.0) (4,22.0) (5,29.0) };
+                \addlegendentry{algo=Sequitur};
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsxmlruntime}
+    }
+    \quad
+    \subfloat[Größe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[sizeplot, title={XML Grammatikgröße}]
+
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, MIN(size / (1.0 * inputsize)) AS y, MULTIPLOT 
+                %% FROM xml GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,0.150608) (2,0.153637) (3,0.157878) (4,0.157854) (5,0.166147) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,0.086619) (2,0.0805638) (3,0.078124) (4,0.0753391) (5,0.0757765) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,0.088598) (2,0.0824666) (3,0.0799382) (4,0.0771623) (5,0.0775188) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,0.29432) (2,0.29514) (3,0.298642) (4,0.30164) (5,0.366257) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,0.266995) (2,0.277118) (3,0.258805) (4,0.280782) (5,0.304951) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,0.0779639) (2,0.0725272) (3,0.0702591) (4,0.0670736) (5,0.0680445) };
+                \addlegendentry{algo=Sequitur};
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsxmlsize}
+    }
+    \quad
+    \subfloat[Tiefe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[depthplot, title={XML Grammatiktiefe}, ymode=log]
+                
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(depth) AS y, MULTIPLOT 
+                %% FROM xml GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,17.0) (2,16.0) (3,17.0) (4,17.0) (5,16.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,28.0) (2,33.0) (3,36.0) (4,36.0) (5,36.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,26.0) (2,31.0) (3,34.0) (4,33.0) (5,33.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,7.0) (2,8.0) (3,7.0) (4,7.0) (5,7.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,85.0) (2,116.0) (3,180.0) (4,155.0) (5,243.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,19.0) (2,19.0) (3,19.0) (4,19.0) (5,19.0) };
+                \addlegendentry{algo=Sequitur};
+                
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsxmldepth}
+    }
+    \caption{Die Ergebnisse für die Kompression des \emph{xml} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsxmlruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsxmlsize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsxmldepth} zeigt die Tiefe der erzeugten Grammatiken.}
+    \label{resultsxml}
+\end{figure}
+
+% ENGLISH PLOT
+\begin{figure}
+    \centering
+
+    \subfloat[Laufzeiten]{
+        \begin{tikzpicture}
+            \begin{axis}[runtimeplot, title={English Laufzeit}]
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+                %% FROM english GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,44.0) (2,113.0) (3,162.0) (4,231.0) (5,297.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,47.0) (2,114.0) (3,174.0) (4,244.0) (5,315.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,46.0) (2,114.0) (3,177.0) (4,242.0) (5,333.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,37.0) (2,89.0) (3,138.0) (4,192.0) (5,246.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,30.0) (2,77.0) (3,121.0) (4,168.0) (5,209.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,5.0) (2,13.0) (3,23.0) (4,34.0) (5,47.0) };
+                \addlegendentry{algo=Sequitur};
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsenglishruntime}
+    }
+    \quad
+    \subfloat[Größe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[sizeplot, title={English Grammatikgröße}]
+
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, MIN(size / (1.0 * inputsize)) AS y, MULTIPLOT 
+                %% FROM xml GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,0.150608) (2,0.153637) (3,0.157878) (4,0.157854) (5,0.166147) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,0.086619) (2,0.0805638) (3,0.078124) (4,0.0753391) (5,0.0757765) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,0.088598) (2,0.0824666) (3,0.0799382) (4,0.0771623) (5,0.0775188) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,0.29432) (2,0.29514) (3,0.298642) (4,0.30164) (5,0.366257) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,0.266995) (2,0.277118) (3,0.258805) (4,0.280782) (5,0.304951) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,0.0779639) (2,0.0725272) (3,0.0702591) (4,0.0670736) (5,0.0680445) };
+                \addlegendentry{algo=Sequitur};
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsenglishsize}
+    }
+    \quad
+    \subfloat[Tiefe der erzeugten Grammatik]{
+        \begin{tikzpicture}
+            \begin{axis}[depthplot, title={English Grammatiktiefe}, ymode=log]
+                
+                %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(depth) AS y, MULTIPLOT 
+                %% FROM xml GROUP BY MULTIPLOT, datasetsize
+                \addplot coordinates { (1,17.0) (2,16.0) (3,17.0) (4,17.0) (5,16.0) };
+                \addlegendentry{algo=AreaCompV4/ChildArea};
+                \addplot coordinates { (1,28.0) (2,33.0) (3,36.0) (4,36.0) (5,36.0) };
+                \addlegendentry{algo=AreaCompV4/HeightAdvantageArea};
+                \addplot coordinates { (1,26.0) (2,31.0) (3,34.0) (4,33.0) (5,33.0) };
+                \addlegendentry{algo=AreaCompV4/HeightFirstArea};
+                \addplot coordinates { (1,7.0) (2,8.0) (3,7.0) (4,7.0) (5,7.0) };
+                \addlegendentry{algo=AreaCompV4/WidthFirstArea};
+                \addplot coordinates { (1,85.0) (2,116.0) (3,180.0) (4,155.0) (5,243.0) };
+                \addlegendentry{algo=RePair};
+                \addplot coordinates { (1,19.0) (2,19.0) (3,19.0) (4,19.0) (5,19.0) };
+                \addlegendentry{algo=Sequitur};
+                
+            \end{axis}
+        \end{tikzpicture}
+        \label{resultsenglishdepth}
+    }
+    \caption{Die Ergebnisse für die Kompression des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. In \autoref{resultsenglishruntime} ist die Laufzeit der verschiedenen Algorithmen auf den jeweiligen Präfixen dieses Datensatzes zu sehen. In \autoref{resultsenglishsize} ist die Größe der Verhältnis im Verhältnis zu der Größe der Eingabe dargestellt. Die Werte sind die jeweiligen Quotienten von der Größe der Grammatik und der Anzahl der Zeichen in der Eingabe. \autoref{resultsenglishdepth} zeigt die Tiefe der erzeugten Grammatiken.}
+    \label{resultsenglish}
 \end{figure}

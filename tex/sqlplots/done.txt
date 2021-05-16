@@ -1,17 +1,17 @@
-english 10
-english 20
-english 30
-english 40
+english 10 done
+english 20 done
+english 30 done
+english 40 done
 english 50 done
 proteins 10 done
 proteins 20 done
 proteins 30 done
 proteins 40 done
 proteins 50 done
-xml 10
-xml 20
-xml 30
-xml 40
+xml 10 done
+xml 20 done
+xml 30 done
+xml 40 done
 xml 50 done
 dna 10 done
 dna 20 done

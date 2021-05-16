@@ -1,33 +1,30 @@
-RESULT algo=Sequitur inputsize=52428800 comptime=35079 unifytime=1454 size=7106507 depth=12 bucketsize=16 datasetsize=50MB
-RESULT algo=AreaCompV4/HeightFirstArea inputsize=52428800 comptime=328345 unifytime=29797 size=10292286 depth=57 bucketsize=16 datasetsize=50MB
-RESULT algo=AreaCompV4/ChildArea inputsize=52428800 comptime=878168 unifytime=16525 size=22496801 depth=9 bucketsize=16 datasetsize=50MB
-RESULT algo=AreaCompV4/WidthFirstArea inputsize=52428800 comptime=869569 unifytime=15645 size=22506206 depth=3 bucketsize=16 datasetsize=50MB
-RESULT algo=RePair inputsize=10485808 comptime=13598 unifytime=1223 size=6791153 depth=335 bucketsize=16 datasetsize=10MB
-RESULT algo=Sequitur inputsize=10485808 comptime=4178 unifytime=299 size=1540973 depth=11 bucketsize=16 datasetsize=10MB
-RESULT algo=AreaCompV4/HeightFirstArea inputsize=10485808 comptime=45572 unifytime=4727 size=2289389 depth=49 bucketsize=16 datasetsize=10MB
-RESULT algo=AreaCompV4/ChildArea inputsize=10354566 comptime=74744 unifytime=3391 size=4444545 depth=7 bucketsize=16 datasetsize=10MB
-RESULT algo=AreaCompV4/WidthFirstArea inputsize=10354566 comptime=73855 unifytime=3260 size=4446386 depth=3 bucketsize=16 datasetsize=10MB
-RESULT algo=RePair inputsize=10485808 comptime=13684 unifytime=1062 size=6791153 depth=335 bucketsize=16 datasetsize=10MB
-RESULT algo=RePair inputsize=10485808 comptime=13435 unifytime=1232 size=6791153 depth=335 bucketsize=16 datasetsize=10MB
-RESULT algo=RePair inputsize=52428800 comptime=92448 unifytime=6551 size=27090350 depth=3034 bucketsize=16 datasetsize=50MB
-RESULT algo=Sequitur inputsize=20971642 comptime=9493 unifytime=410 size=2931850 depth=11 bucketsize=16 datasetsize=20MB
-RESULT algo=RePair inputsize=20971642 comptime=32616 unifytime=3154 size=11052278 depth=532 bucketsize=16 datasetsize=20MB
-RESULT algo=AreaCompV4/HeightFirstArea inputsize=20971642 comptime=111159 unifytime=9740 size=4352805 depth=51 bucketsize=16 datasetsize=20MB
-RESULT algo=AreaCompV4/ChildArea inputsize=20971642 comptime=220478 unifytime=6222 size=8999223 depth=7 bucketsize=16 datasetsize=20MB
-RESULT algo=AreaCompV4/WidthFirstArea inputsize=20971642 comptime=214098 unifytime=6720 size=9004649 depth=3 bucketsize=16 datasetsize=20MB
-RESULT algo=Sequitur inputsize=31457495 comptime=16657 unifytime=855 size=4366127 depth=12 bucketsize=16 datasetsize=30MB
-RESULT algo=RePair inputsize=31457495 comptime=53876 unifytime=4613 size=20158374 depth=2403 bucketsize=16 datasetsize=30MB
-RESULT algo=AreaCompV4/HeightFirstArea inputsize=31457495 comptime=189580 unifytime=15915 size=6391975 depth=57 bucketsize=16 datasetsize=30MB
-RESULT algo=AreaCompV4/ChildArea inputsize=31457495 comptime=356277 unifytime=8999 size=13499317 depth=9 bucketsize=16 datasetsize=30MB
-RESULT algo=AreaCompV4/WidthFirstArea inputsize=31457495 comptime=338779 unifytime=8723 size=13507632 depth=3 bucketsize=16 datasetsize=30MB
-RESULT algo=Sequitur inputsize=41943313 comptime=24038 unifytime=1027 size=5770709 depth=12 bucketsize=16 datasetsize=40MB
-RESULT algo=RePair inputsize=41943313 comptime=67770 unifytime=5796 size=22534874 depth=1635 bucketsize=16 datasetsize=40MB
-RESULT algo=AreaCompV4/HeightFirstArea inputsize=41943313 comptime=243421 unifytime=19940 size=8371071 depth=58 bucketsize=16 datasetsize=40MB
-RESULT algo=AreaCompV4/ChildArea inputsize=41943313 comptime=775078 unifytime=13237 size=18030279 depth=9 bucketsize=16 datasetsize=40MB
-RESULT algo=AreaCompV4/WidthFirstArea inputsize=41943313 comptime=739390 unifytime=12631 size=18037162 depth=3 bucketsize=16 datasetsize=40MB
-RESULT algo=RePair inputsize=31457495 comptime=52489 unifytime=2941 size=20158374 depth=2403 bucketsize=16 datasetsize=30MB
-RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=10485808 comptime=47096 unifytime=4176 size=2269617 depth=48 bucketsize=16 datasetsize=10MB
-RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=20971642 comptime=111598 unifytime=9421 size=4312529 depth=52 bucketsize=16 datasetsize=20MB
-RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=31457495 comptime=194159 unifytime=14556 size=6333300 depth=58 bucketsize=16 datasetsize=30MB
-RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=41943313 comptime=261266 unifytime=21460 size=8293972 depth=58 bucketsize=16 datasetsize=40MB
-RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=52428800 comptime=351229 unifytime=28629 size=10203911 depth=58 bucketsize=16 datasetsize=50MB
+RESULT algo=Sequitur inputsize=10485808 comptime=4109 unifytime=346 size=1540973 numRules=119842 avgLen=2.04732103370299 depth=11 bucketsize=16 datasetsize=10MB
+RESULT algo=RePair inputsize=10485808 comptime=13490 unifytime=1526 size=6791153 numRules=113457 avgLen=2.0 depth=335 bucketsize=16 datasetsize=10MB
+RESULT algo=AreaCompV4/HeightFirstArea inputsize=10485808 comptime=45903 unifytime=4364 size=2289389 numRules=551990 avgLen=2.193027397285091 depth=49 bucketsize=16 datasetsize=10MB
+RESULT algo=AreaCompV4/ChildArea inputsize=10485808 comptime=43977 unifytime=3142 size=4501199 numRules=71 avgLen=2.0142857142857142 depth=7 bucketsize=16 datasetsize=10MB
+RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=10485808 comptime=46275 unifytime=4768 size=2269617 numRules=545201 avgLen=2.179891782831988 depth=48 bucketsize=16 datasetsize=10MB
+RESULT algo=AreaCompV4/WidthFirstArea inputsize=10485808 comptime=41742 unifytime=2635 size=4503033 numRules=63 avgLen=2.0 depth=3 bucketsize=16 datasetsize=10MB
+RESULT algo=Sequitur inputsize=20971642 comptime=8702 unifytime=515 size=2931850 numRules=213943 avgLen=2.0758429854820464 depth=11 bucketsize=16 datasetsize=20MB
+RESULT algo=RePair inputsize=20971642 comptime=32822 unifytime=2978 size=11052278 numRules=319827 avgLen=2.0 depth=532 bucketsize=16 datasetsize=20MB
+RESULT algo=AreaCompV4/HeightFirstArea inputsize=20971642 comptime=107797 unifytime=9748 size=4352805 numRules=1047671 avgLen=2.2036662307787758 depth=51 bucketsize=16 datasetsize=20MB
+RESULT algo=AreaCompV4/ChildArea inputsize=20971642 comptime=100628 unifytime=6159 size=8999223 numRules=78 avgLen=2.0259740259740258 depth=7 bucketsize=16 datasetsize=20MB
+RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=20971642 comptime=107207 unifytime=9151 size=4312529 numRules=1034095 avgLen=2.189667477037871 depth=52 bucketsize=16 datasetsize=20MB
+RESULT algo=AreaCompV4/WidthFirstArea inputsize=20971642 comptime=97691 unifytime=5690 size=9004649 numRules=69 avgLen=2.0 depth=3 bucketsize=16 datasetsize=20MB
+RESULT algo=Sequitur inputsize=31457495 comptime=14648 unifytime=741 size=4366127 numRules=311928 avgLen=2.08105742689796 depth=12 bucketsize=16 datasetsize=30MB
+RESULT algo=RePair inputsize=31457495 comptime=53683 unifytime=4123 size=20158374 numRules=303421 avgLen=2.0 depth=2403 bucketsize=16 datasetsize=30MB
+RESULT algo=AreaCompV4/HeightFirstArea inputsize=31457495 comptime=176823 unifytime=13843 size=6391975 numRules=1536728 avgLen=2.202879236194848 depth=57 bucketsize=16 datasetsize=30MB
+RESULT algo=AreaCompV4/ChildArea inputsize=31457495 comptime=163010 unifytime=8067 size=13499317 numRules=154 avgLen=2.026143790849673 depth=9 bucketsize=16 datasetsize=30MB
+RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=31457495 comptime=182534 unifytime=16063 size=6333300 numRules=1517817 avgLen=2.187643298001866 depth=58 bucketsize=16 datasetsize=30MB
+RESULT algo=AreaCompV4/WidthFirstArea inputsize=31457495 comptime=151133 unifytime=8307 size=13507632 numRules=148 avgLen=2.0136054421768708 depth=3 bucketsize=16 datasetsize=30MB
+RESULT algo=Sequitur inputsize=41943313 comptime=21993 unifytime=1081 size=5770709 numRules=409847 avgLen=2.0893872332534658 depth=12 bucketsize=16 datasetsize=40MB
+RESULT algo=RePair inputsize=41943313 comptime=69411 unifytime=5809 size=22534874 numRules=619826 avgLen=2.0 depth=1635 bucketsize=16 datasetsize=40MB
+RESULT algo=AreaCompV4/HeightFirstArea inputsize=41943313 comptime=247647 unifytime=18791 size=8371071 numRules=2010878 avgLen=2.205528234695608 depth=58 bucketsize=16 datasetsize=40MB
+RESULT algo=AreaCompV4/ChildArea inputsize=41943313 comptime=221052 unifytime=11839 size=18030279 numRules=155 avgLen=2.012987012987013 depth=9 bucketsize=16 datasetsize=40MB
+RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=41943313 comptime=261696 unifytime=20458 size=8293972 numRules=1985923 avgLen=2.1901504691523637 depth=58 bucketsize=16 datasetsize=40MB
+RESULT algo=AreaCompV4/WidthFirstArea inputsize=41943313 comptime=215770 unifytime=11912 size=18037162 numRules=148 avgLen=2.0 depth=3 bucketsize=16 datasetsize=40MB
+RESULT algo=Sequitur inputsize=52428800 comptime=30529 unifytime=1283 size=7106507 numRules=502206 avgLen=2.095512788602264 depth=12 bucketsize=16 datasetsize=50MB
+RESULT algo=RePair inputsize=52428800 comptime=94340 unifytime=7962 size=27090350 numRules=666054 avgLen=2.0 depth=3034 bucketsize=16 datasetsize=50MB
+RESULT algo=AreaCompV4/HeightFirstArea inputsize=52428800 comptime=341922 unifytime=26559 size=10292286 numRules=2471372 avgLen=2.2055219552224252 depth=57 bucketsize=16 datasetsize=50MB
+RESULT algo=AreaCompV4/ChildArea inputsize=52428800 comptime=298127 unifytime=16666 size=22496801 numRules=187 avgLen=2.043010752688172 depth=9 bucketsize=16 datasetsize=50MB
+RESULT algo=AreaCompV4/HeightAdvantageArea inputsize=52428800 comptime=352101 unifytime=28008 size=10203911 numRules=2441951 avgLen=2.1920526628309345 depth=58 bucketsize=16 datasetsize=50MB
+RESULT algo=AreaCompV4/WidthFirstArea inputsize=52428800 comptime=290276 unifytime=16265 size=22506206 numRules=178 avgLen=2.0338983050847457 depth=3 bucketsize=16 datasetsize=50MB
