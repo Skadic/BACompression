@@ -3,6 +3,15 @@
 % IMPORT-DATA xml dblp.xml.txt
 % IMPORT-DATA english english.txt
 
+\pgfplotscreateplotcyclelist{algs}{%
+    lime!80!black,every mark/.append style={fill=lime},mark=square*\\%
+    red,every mark/.append style={fill=red},mark=triangle*\\%
+    teal,every mark/.append style={fill=teal!80},mark=pentagon*\\%
+    black,mark=star\\%
+    purple!30!blue,every mark/.append style={fill=purple!30!blue},mark=diamond*\\%
+    orange!80!black,every mark/.append style={solid,fill=orange},mark=*\\%
+}
+
 \pgfplotsset{
     dataplot/.style={
         xtick={1,2,3,4,5},
@@ -12,7 +21,8 @@
         x unit={MB},
         width=70mm,
         height=6cm,,
-        legend style={at={(1.1,0.5)}, anchor=west}
+        legend style={at={(1.1,0.5)}, anchor=west},
+        cycle list name=algs
     },
     runtimeplot/.style={
         dataplot,
@@ -22,51 +32,48 @@
     },
     sizeplot/.style={
         dataplot,
-        y unit={outputsize/inputsize},
+        %y unit={outputsize/inputsize},
         ylabel={Größenverhältnis},
         ytick distance=0.1
     },
     depthplot/.style={
         dataplot,
-        y unit={\#Schritte zur tiefsten Regel},
+        %y unit={\#Schritte zur tiefsten Regel},
         ylabel={Tiefe}
     },
     countplot/.style={
         dataplot,
-        ylabel={\#Regeln}
+        ylabel={Regeln}
     },
     lengthplot/.style={
         dataplot,
-        y unit={\#Zeichen},
+        %y unit={\#Zeichen},
         ylabel={Durchschnittslänge}
     },
 }
-
 
 \chapter{Evaluation}
 
 \section{Methodik}
 
-Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewendet. 
-
-Nach der Berechnung der Algorithmus-spezifischen Repräsentation der Grammatik, wird diese in eine einheitliche Repräsentation überführt. Diese besteht lediglich aus einer Hashtabelle, die Regel-IDs auf eine Liste abbildet, die die Symbole der rechten Seite der Regel enthält. Die dafür benötigte Zeit ist in der in den Diagrammen abgebildeten Laufzeit enthalten.
+Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewendet.
 
 Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz) und 16GB RAM.
 
 \subsection{Implementationen}
 
-Die hier gewählte Implementation von Sequitur ist die Java-Implementation von Professor Eibe Frank\footnote{\url{http://www.sequitur.info/java}}. 
+Die hier gewählte Implementation von Sequitur ist die Java-Implementation von Eibe Frank\footnote{\url{http://www.sequitur.info/java}}. 
 
-Für RePair wird eine eigene Implementation benutzt. Die meisten Implementationen waren in nicht JVM-Kompatiblen Programmiersprachen geschrieben. 
-Die einzige auffindbare JVM-kompatible Implementation, war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $\mathtt{0x110000}$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar.
+Für RePair wird eine eigene Implementation benutzt. Die meisten bestehenden Implementationen waren in nicht JVM-kompatiblen Programmiersprachen geschrieben. 
+Die einzige auffindbare JVM-kompatible Implementation war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $2^16$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar, weil die auf den hier verwendeten Datensätzen erzeugten Grammatiken größer sind.
 
-Diese Implementation von AreaCompV4 sowie die Sequitur und RePair Implementation sind in Java 16 programmiert.
+Die Implementation von AreaCompV4 sowie die Sequitur- und RePair-Implementation sind in Java 16 programmiert.
 
 \subsection{Datensätze}
 
-Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf 10MB und 50MB Präfixe folgender Datensätze:
+Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf $10$, $20$, $30$, $40$ und $50$MB Präfixe folgender Datensätze angewendet:
 
-\begin{itemize}
+\begin{itemize}[leftmargin=2cm]
     \item[\emph{dna}] DNA Sequenzen von Project Gutenberg\footnote{\label{footnotegutenberg}\url{https://www.gutenberg.org}}. Jedes Basenpaar wird jeweils durch einen der Großbuchstaben \emph{A}, \emph{G}, \emph{C} und \emph{T} dargestellt. Zudem kommen einige Sonderzeichen vor. Das Alphabet besteht aus 16 Zeichen.
     \item[\emph{english}] Englischer Text von Project Gutenberg\footnoteref{footnotegutenberg}. Das Alphabet besteht aus 239 Zeichen.
     \item[\emph{proteins}] Proteinsequenzen aus der Swissprot Datenbank\footnote{\url{ftp://ftp.ebi.ac.uk/pub/databases/swissprot/release_compressed/uniprot_sprot.dat.gz}}. Jede Aminosäure ist mit jeweils einem Buchstaben kodiert. Das Alphabet besteht aus 27 Zeichen.
@@ -75,41 +82,99 @@ Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\u
 
 \subsection{Flächenfunktion}
 
-Wir betrachten vier Flächenfunktionen. Diese machen sich die Eigenschaften der Abouelhoda-Intervalle zunutze. 
+Wir betrachten vier Flächenfunktionen. Diese machen sich die Eigenschaften der \\
+Abouelhoda-Intervalle zunutze. 
 Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der minimale LCP-Wert eines Abouelhoda-Intervalls $[i..j]$ durch $down[i]$ oder $up[j+1]$ im Kind-Array bestimmen. 
-So muss nicht in Linearzeit durch das Intervall iteriert werden, um das Minimum zu bestimmen. Es kann stattdessen durch eine Konstantzeit-Anfrage an das Kind-Array bestimmt werden. Dies ist erst ab V3 möglich, da V1 und V2 beliebige LCP-Intervalle benutzen, da diese Operationen nur für Abouelhoda-Intervalle funktionieren.
+So muss nicht in Linearzeit durch das Intervall iteriert werden, um das Minimum zu bestimmen. Es kann stattdessen durch eine Konstantzeit-Anfrage an das Kind-Array bestimmt werden. 
+
+Da AreaComp V1 und V2 beliebige LCP-Intervalle verwenden, funktioniert dieses Vorgehen für diese Versionen von AreaComp nicht. Dieses Vorgehen ist also erst ab V3 möglich, da erst ab V3 ausschießlich Abouelhoda-Intervalle benutzt werden.
 
 Für alle folgenden Flächenfunktionen gilt, dass wenn $H(i+1, j) \leq 1$ gilt(siehe \autoref{areacompconcept} für die Definition von $H$ und $W$), als resultierender Flächenwert automatisch $0$ zurückgegeben wird. Da LCP-Intervalle mit Höhe $\leq 1$ einen Substring einer Länge von maximal $1$ beschreiben, sind diese für unsere Zwecke unnütz.  
 
-Im Folgenden sei $I := [i..j]$ ein Abouelhoda-Intervall. Dann ist $LCP[i+1..j]$ das zugehörige LCP-Intervall und seien $h := H(i+1, j)$ und $w := W(i+1, j)$:
+Im Folgenden sei $I := [i..j]$ ein Abouelhoda-Intervall. Dann ist $LCP[i+1..j]$ das zugehörige LCP-Intervall und seien $h := H(i+1, j)$ und $w := W(i+1, j)$. Wir definieren folgende Flächenfunktionen:
 
-\begin{itemize}[leftmargin=3.3cm]
+\begin{itemize}[leftmargin=3.6cm]
     \item[\texttt{ChildArea}] $A(I) = h \cdot w$\\
     Diese Flächenfunktion schätzt die erreichbare Kompression durch eine Multiplikation der Anzahl der Vorkommen ($w$) mit der Länge des ersetzten Substrings ($h$) ab.
     \item[\texttt{WidthFirstArea}] $A(I) = w$\\ Hier wird allein die Anzahl der Vorkommen Priorisiert.
     \item[\texttt{HeightFirstArea}] $A(I) = h$\\
     Hier wird allein die Länge des zu ersetzenden Substrings priorisiert.
-    \item[\texttt{HeightAdvantageArea}] $A(I) = 10 \cdot h + \min\{\log(w), 9\}$\\ Diese Flächenfunktion ist der Versuch einer Verbesserung von \\
-    \texttt{HeightFirstArea}. Da bei \texttt{HeightFirstArea} allein die Höhe des LCP-Intervalls berücksichtigt wird, ist es möglich, dass LCP-Intervalle vor anderen LCP-Intervallen mit gleicher Höhe aber größerer Breite gewählt werden. Allerdings sind aber Letztere a priori vielversprechender. Hier wird also logarithmisch die Breite in die Berechnung miteingebracht und dieser Wert auf maximal $9$ begrenzt. Da die Höhe mit dem Faktor $10$ multipliziert wird, wird hier sichergestellt, dass keine Intervalle vor einem anderen Intervall mit größerer Höhe gewählt werden.
+    \item[\texttt{HeightAdvantageArea}] $A(I) = 10 \cdot h + \min\{\ln(w), 9\}$\\ 
+    Diese Flächenfunktion ist der Versuch einer Verbesserung von \\
+    \texttt{HeightFirstArea}. Da bei \texttt{HeightFirstArea} allein die Höhe des LCP-Intervalls berücksichtigt wird, ist es möglich, dass LCP-Intervalle vor anderen LCP-Intervallen mit gleicher Höhe aber größerer Breite gewählt werden. Allerdings sind aber Letztere a priori vielversprechender. Die Höhe wird mit dem Faktor $10$ multipliziert. Der Unterschied in der Höhe von LCP-Intervallen geht also zehnfach in die Flächenfunktion ein. So entsteht zwischen zwei LCP-Intervallen, die sich um $1$ in der Höhe unterscheiden, ein Unterschied von $10$. Innerhalb des entstehenden Intervalls können also weitere Unterscheidungen stattfinden. 
+
+    Hier ist das Ziel, dass möglichst unter den Intervallen mit gleicher Höhe, Intervalle mit größerer Breite vor Intervallen mit niedrigerer Breite gewählt werden sollen. \texttt{HeightFirstArea} lässt dies außer Acht, daher ist die Reihenfolge der Intervalle gleicher Höhe willkürlich.
+
+    Die Lösung ist also  logarithmisch die Breite in die Berechnung miteinzubringen und diesen Wert auf maximal $9$ zu begrenzen. Dies sorgt dafür, dass die Breite des Intervalls ebenfalls in den Flächenwert miteingeht. Zudem wird aber gesichert, dass nie ein bestimmtes Intervall über ein anderes Intervall mit größerer Höhe priorisiert werden kann. 
+    
+    Für diese Flächenfunktion können anstatt $10$ und $9$ im Grunde beliebige Zahlen $k$ und $k - 1$ für $k \geq 2$ gewählt werden. Ebenfalls kann der Algorithmus zu einer beliebigen Basis gewählt werden.
+    Abhängig von $k$ kann die Flächenfunktion dann entscheiden, in welchen der $k$ durch den Logarithmus gegebenen Bereichen $w$ liegt. Ist $b$ die Basis des Logarithmus, sind diese Bereiche sind jeweils $[1..b^1), [b^1..b^2), \dots [b^{k-1}..\infty)$. 
+
+    In der Implementierung von AreaComp wird hierzu der natürliche Logarithmus und $k = 10$ gewählt.
+    So ist die Grenze, bis zu der die Flächenfunktion Breitenwerte unterscheiden kann, $e^9 \approx 8103$. Da es nicht anzunehmen ist, dass es sehr viele größere Muster gibt, die öfter als $e^9$-Mal vorkommen, ist dies eine angemessene Wahl für diese Datensätze.
 \end{itemize}
 
-
-
 \section{Ergebnisse}
-
-\subsection{Diagramme}
-\label{diagrams}
+\label{results}
 
 %%%%%%
-\autoref{resultsdna} bis \ref{resultsenglish} zeigen die Ergebnisse der Algorithmen auf den verschiedenen Datensätzen. In den Abbildungen $a)$ sehen wir die Laufzeit der Algorithmen in Sekunden für die Präfixe der angegebenen Größe in MB.
+\autoref{resultsdna} bis \ref{resultsenglish} zeigen die Ergebnisse der Algorithmen auf den verschiedenen Datensätzen. 
 
-Die Abbildungen $b)$ zeigen die Größe der von den Algorithmen produzierten Grammatik. Die Größe ist dabei wie in \autoref{grammarcomp} definiert.
+In den Abbildungen $a)$ sehen wir die Laufzeit der Algorithmen in Sekunden für die Präfixe der angegebenen Größe in MB.
 
-Hingegen zeigen Abbildungen $c)$, $d)$ und $e)$ jeweils die Tiefe, Regelanzahl und durchschnittliche Länge der Regeln in der Grammatik. 
+Die Abbildungen $b)$ zeigen die Größenverhältnisse der Größe der von den Algorithmen produzierten Grammatik zu der Länge der Eingabe. Die Größe ist dabei wie in \autoref{grammarcomp} definiert. Für eine Grammatik $G :=(N, \Sigma, P, S)$ ist die Größe $|G|$ also definiert als
+\begin{equation*}
+	|G| := \sum_{(A \rightarrow \alpha) \in P} |\alpha|.
+\end{equation*}
+Für eine Eingabe $s$ der Länge $n$ und der von einem Algorithmus erzeugten Grammatik $G_s$, ist in den Abbildungen also $\tfrac{|G_s|}{n}$ aufgeführt.
+
+Abbildungen $c)$ zeigen dabei die Tiefe der erzeugten Grammatiken. Die Tiefe ist dabei folgendermaßen definiert: Betrachte den Syntaxbaum einer Ableitung einer Grammatik, wie in \autoref{syntaxtree} dargestellt. Da wir hier Straight-Line-Grammatiken betrachten, ist der Syntaxbaum jeder Grammatik einzigartig. Die Tiefe der Grammatik ist definiert als die Tiefe des Syntaxbaums, also die Anzahl der Kanten, die von der Wurzel zum am weitesten entfernten Knoten führen.  
+
+\begin{figure}
+    \centering
+    \subfloat[Grammatik]{
+        \parbox[t][3cm][c]{5cm}{
+            \centering
+            $\begin{aligned}
+                S &\rightarrow AB\\
+                A &\rightarrow ab\\
+                B &\rightarrow cC\\
+                C &\rightarrow de
+            \end{aligned}$
+        }
+    }
+    \subfloat[Syntaxbaum]{
+        \parbox[t][3cm][c]{5cm}{
+            \centering
+            \begin{tikzpicture}
+                \node (S) at (0,0) {S};
+                \node (A) at (-1, -1) {A};
+                \node (ab) at (-1, -2) {ab};
+                \node (B) at (1, -1) {B};
+                \node (c) at (0, -2) {c};
+                \node (C) at (2, -2) {C};
+                \node (de) at (2, -3) {de};
+
+                \draw (S) -- (A);
+                \draw (S) -- (B);
+                \draw (A) -- (ab);
+                \draw (B) -- (c);
+                \draw (B) -- (C);
+                \draw (C) -- (de);
+            \end{tikzpicture}
+        }
+    }
+    \caption{Eine Grammatik und der zugehörige Syntaxbaum für den String $abcde$.}
+    \label{syntaxtree}
+\end{figure}
+
+Abbildungen $d)$ zeigen die Anzahl von Produktionsregeln in den Grammatiken. 
+
+Zuletzt, zeigen die Abbildungen $e)$ die durchschnittliche Länge der rechten Seite der Regeln in der Grammatik.
 
 \subsection{Laufzeit}
 
-Auf allen Datensätzen ist Sequitur der schnellste Algorithmus. Wie in \autoref{resultsenglishruntime} zu sehen ist, hat Sequitur auf dem \emph{english} Datensatz einen besonders großen Abstand zu den anderen Algorithmen. Der nächstschnellste Algorithmus ist hier RePair, der auf dem \emph{english} Datensatz $334$\% mehr Zeit benötigt als Sequitur. Auf anderen Datensätzen ist der Abstand allerdings geringer.
+Auf allen Datensätzen ist Sequitur der schnellste Algorithmus. Wie in \autoref{resultsenglishruntime} zu sehen ist, hat Sequitur auf dem \emph{english} Datensatz einen besonders großen Abstand zu den anderen Algorithmen. Der nächstschnellste Algorithmus ist hier RePair, der auf dem \emph{english} Datensatz etwa $4,3$-Mal so viel Zeit benötigt wie Sequitur. Auf anderen Datensätzen ist der Abstand allerdings geringer.
 Im Vergleich zu Sequitur und Repair erzielte AreaComp weitaus schlechtere Laufzeiten.
 
 Die Wahl der Flächenfunktion schien in manchen Fällen keine große Auswirkung auf die Laufzeit zu haben. In \autoref{resultsproteinsruntime} und \autoref{resultsxmlruntime} sehen wir, dass es auf den Datensätzen \emph{proteins} und \emph{xml} nur einen sehr kleinen Unterschied zwischen den Flächenfunktionen gibt. 
@@ -122,10 +187,10 @@ Ebenfalls ist zu beobachten, dass die Laufzeit von AreaComp linear zu steigen sc
 
 Auf diesen Datensätzen RePair produzierte RePair die größten und tiefsten Grammatiken. Eine Ausnahme ist der \emph{xml} Datensatz. Wie in \autoref{resultsxmlsize} zu sehen, produzierte AreaComp mit der \texttt{WidthFirstArea} eine größere Grammatik als RePair.
 
-Der Grund für die Größe der von RePair produzierten Grammatiken ist wahrscheinlich, dass RePair nur Produktionsregeln der Länge $2$ besitzt, die Startregel ausgeschlossen. Da viele solcher Regeln rekursiv erstellt werden, ist die Grammatik auch sehr tief. Allerdings könnten diese Eigenschaften möglicherweise Vorteile bei der Kodierung liefern.
+Der Grund für die Größe der von RePair produzierten Grammatiken ist wahrscheinlich, dass RePair nur Produktionsregeln der Länge $2$ besitzt, die Startregel ausgeschlossen. Da viele solcher Regeln rekursiv erstellt werden, ist die Grammatik auch sehr tief. Allerdings können diese Eigenschaften möglicherweise Vorteile bei der Kodierung liefern. \cite{tabei_succinct_2013}
 
 Abgesehen von der zuvor erwähnten Ausnahmen, produziert AreaComp mit der\\
-\texttt{WidthFirstArea} die nächstkleinere Grammatik. AreaComp mit \texttt{ChildArea} produziert wiederum die nächstkleinere Grammatik. Allerdings variiert der Unterschied zwischen diesen beiden auf den verschiedenen Datensätzen. Während auf dem \emph{xml} \texttt{WidthFirstArea} eine $120$\% größere Grammatik produziert (siehe \autoref{resultsxmlsize}), ist die Größe auf dem \emph{dna} Datensatz fast identisch (siehe \autoref{resultsdnasize}).
+\texttt{WidthFirstArea} die nächstkleinere Grammatik. AreaComp mit \texttt{ChildArea} produziert wiederum die nächstkleinere Grammatik. Allerdings variiert der Unterschied zwischen diesen beiden auf den verschiedenen Datensätzen. Während auf dem \emph{xml} \texttt{WidthFirstArea} eine $120$\% größere Grammatik produziert als \texttt{ChildArea} (siehe \autoref{resultsxmlsize}), ist die Größe auf dem \emph{dna} Datensatz fast identisch (siehe \autoref{resultsdnasize}).
 
 Weitaus bessere Ergebnisse erzielt AreaComp mit den Flächenfunktionen \\
 \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
@@ -182,12 +247,6 @@ Auf \emph{xml} hingegen, produziert \texttt{HeightFirstArea} die Grammatik mit d
 Auf \emph{proteins} und \emph{english} produziert \texttt{ChildArea} Grammatiken mit durchschnittlichen Regellängen von über $10$ (siehe \autoref{resultsproteinsavglen}). Auf dem \emph{english} Datensatz sogar bis zu $96$.
 Hier produziert auch \texttt{WidthFirstArea} eine Grammatik mit einer durchschnittlichen Regellänge von bis zu $40$ (siehe \autoref{resultsenglishavglen}).
 
-
-\section{Fazit}
-
-Wir sehen, dass von den hier vorgestellten Flächenfunktionen \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} die besten Ergebnisse liefern. Die von diesen beiden Flächenfunktionen erzeugten Grammatiken haben fast identische Eigenschaften. \texttt{HeightAdvantageArea} scheint marginal kleinere Grammatiken zu erzeugen, allerdings ist der Unterschied zu \texttt{HeightFirstArea} sehr gering. AreaComp scheint in der Praxis eine linear steigende Laufzeit zu besitzen. Trotzdem ist AreaComp langsamer als RePair und insbesondere Sequitur. Letzterer erzeugt die kleinsten Grammatik unter all den betrachteten Algorithmen und hat zudem die beste Laufzeit auf allen betrachteten Datensätzen.
-
-Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} der von Sequitur erzeugten Grammatiken sehr nahe. So zum Beispiel auf den Datensätzen \emph{english} und \emph{xml}.
 
 
 % DNA PLOT
@@ -288,7 +347,7 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
     }
     \subfloat[Durchschnittslänge der Regeln]{
         \begin{tikzpicture}
-            \begin{axis}[lengthplot, title={DNA Regellänge}]
+            \begin{axis}[lengthplot, title={DNA Regellänge}, ymode=log]
 
                 %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(avgLen) AS y, MULTIPLOT 
                 %% FROM dna GROUP BY MULTIPLOT, datasetsize
@@ -307,7 +366,7 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
         \end{tikzpicture}
         \label{resultsdnaavglen}
     }
-    \caption{Die Ergebnisse für die Kompression des \emph{dna} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{diagrams} für weitere Erläuterungen.}
+    \caption{Die Ergebnisse für die Kompression des \emph{dna} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{results} für weitere Erläuterungen.}
     \label{resultsdna}
 \end{figure}
 
@@ -432,7 +491,7 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
         \end{tikzpicture}
         \label{resultsproteinsavglen}
     }
-    \caption{Die Ergebnisse für die Kompression des \emph{proteins} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{diagrams} für weitere Erläuterungen.}
+    \caption{Die Ergebnisse für die Kompression des \emph{proteins} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{results} für weitere Erläuterungen.}
     \label{resultsproteins}
 \end{figure}
 
@@ -532,7 +591,7 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
     }
     \subfloat[Durchschnittslänge der Regeln]{
         \begin{tikzpicture}
-            \begin{axis}[lengthplot, title={XML Regellänge}]
+            \begin{axis}[lengthplot, title={XML Regellänge}, ymode=log]
 
                 %% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG(avgLen) AS y, MULTIPLOT 
                 %% FROM xml GROUP BY MULTIPLOT, datasetsize
@@ -552,7 +611,7 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
         \end{tikzpicture}
         \label{resultsxmlavglen}
     }
-    \caption{Die Ergebnisse für die Kompression des \emph{xml} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{diagrams} für weitere Erläuterungen.}
+    \caption{Die Ergebnisse für die Kompression des \emph{xml} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{results} für weitere Erläuterungen.}
     \label{resultsxml}
 \end{figure}
 
@@ -672,6 +731,16 @@ Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und 
         \end{tikzpicture}
         \label{resultsenglishavglen}
     }
-    \caption{Die Ergebnisse für die Kompression des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{diagrams} für weitere Erläuterungen.}
+    \caption{Die Ergebnisse für die Kompression des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{results} für weitere Erläuterungen.}
     \label{resultsenglish}
 \end{figure}
+
+\section{Fazit}
+
+Wir sehen, dass von den hier vorgestellten Flächenfunktionen \texttt{HeightFirstArea} und\\
+\texttt{HeightAdvantageArea} die kleinsten Grammatiken erzeugen. Diese benötigen auch in der Regel etwas mehr Laufzeit als die anderen Flächenfunktionen, allerdings ist der Unterschied hier sehr klein im Vergleich zu dem Unterschied in der Grammatikgröße. Die von diesen beiden Flächenfunktionen erzeugten Grammatiken haben fast identische Eigenschaften.
+
+Allerdings scheint \texttt{HeightAdvantageArea} marginal kleinere Grammatiken zu erzeugen, doch der Unterschied zu \texttt{HeightFirstArea} ist sehr gering. AreaComp scheint in der Praxis eine linear steigende Laufzeit zu besitzen. Trotzdem ist AreaComp langsamer als RePair und insbesondere Sequitur. Letzterer erzeugt die kleinsten Grammatik unter all den betrachteten Algorithmen und hat zudem die beste Laufzeit auf allen betrachteten Datensätzen.
+
+Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und\\
+\texttt{HeightAdvantageArea} der von Sequitur erzeugten Grammatiken sehr nahe. So zum Beispiel auf den Datensätzen \emph{english} und \emph{xml}.
