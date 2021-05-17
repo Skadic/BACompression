@@ -1,1 +1,31 @@
+% einleitung.tex
 \chapter{Einleitung}
+
+Grammatikbasierte Kompression erzeugt eine kontextfreie Grammatik, dessen Sprache nur aus einem Wort besteht: Eine Straight-Line-Grammatik \cite{benz_effective_2013}. Die Kompression geschieht, indem zu einem String eine Straight-Line-Grammatik erzeugt wird, die effizienter zu speichern ist als der String selbst.
+
+Diese Arbeit stellt den AreaComp-Algorithmus vor, der sich des Enhanced Suffix Arrays bedient, um wiederholte Substrings zu ermitteln und diese durch Produktionsregeln der Grammatik zu ersetzen.
+Dieser Algorithmus wird mit ähnlichen Algorithmen in Bezug auf die Größe der erzeugten Grammatik evaluiert.
+
+\section{Motivation und Hintergrund}
+
+Mit der stets steigenden Menge an Daten wird die Aufgabe der effizienten Datenkompression immer wichtiger. Einerseits sollte ein Kompressionsalgorithmus bezüglich der Laufzeit performant sein, andererseits auch eine möglichst gute Kompressionsrate erreichen. 
+Zu diesem Zweck wurden schon diverse Techniken entwickelt, dieses Problem zu lösen. 
+
+Etwa existieren Entropie-Kodierer wie zum Beispiel die Huffman-Kodierung \cite{huffman_method_1952}, die für jedes Symbol im Eingabealphabet anhand der Häufigkeit im Eingabetext ein präfixfreies Codewort variabler und optimaler Länge erzeugt und anschließend jedes Vorkommen des entsprechenden Symbols durch dieses Codewort ersetzt. 
+Dabei erhalten die häufigsten Symbole die kürzesten und die seltensten Symbole die längsten Codeworte.
+
+Ebenfalls gibt es Kodierer, die mithilfe von Wörterbuchkompression arbeiten. Hier wird im Eingabetext nach sich wiederholenden Substrings gesucht. Diese werden durch spezielle Symbole ersetzt, die einen Pointer in einen Wörterbucheintrag darstellen. 
+Mithilfe des Wörterbuches und dieser Pointer-Symbole lässt sich dann der Eingabetext rekonstruieren.
+Eines der bekannteren Beispiele ist die LZ77-Kodierung von Lempel und Ziv \cite{ziv_universal_1977}.
+
+Diese Arbeit befasst sich besonders mit grammatikbasierten Kodierern. Diese erzeugen eine Straight Line Grammatik, die einen Eingabetext in kompakter Weise beschreibt \cite{kieffer_grammar-based_2000}. 
+Eine Straight Line Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Re-Pair \cite{larsson_offline_1999} und Sequitur \cite{nevill-manning_identifying_1997}.
+
+Es wird der AreaComp-Algorithmus vorgestellt, der mithilfe von Suffix-Arrays und LCP-Arrays \cite{manber_suffix_1993} eine Straight-Line-Grammatik berechnet. Es werden mithilfe einer Kostenfunktion Intervalle im LCP-Array bestimmt, die den möglichst günstigsten zu ersetzenden Substring beschreiben, und diesen Substring durch ein neues Symbol und eine entsprechende Produktionsregel ersetzt.
+Der Algorithmus arbeitet dabei Off-Line. Das heißt, dass die gesamte Eingabe zur Zeit der Ausführung des Algorithmus im Speicher vorliegt.
+
+Dieser erzeugt in der Praxis kleine Grammatiken in Linearzeit, die mit bekannten Grammatikkompressionsalgorithmen mithalten können.  
+
+\section{Aufbau der Arbeit}
+
+In \autoref{theorie} werden Grundlagen vorgestellt, die für die Arbeit relevant sind. Daraufhin werden in \autoref{algorithmen} bekannte Kompressionsalgorithmen vorgestellt, die ähnlich arbeiten. In \autoref{areacomp} wird die Implementierung des AreaComp-Algorithmus besprochen, sowie dessen Entwicklungsverlauf. Darauf folgt eine praktische Evaluierung und ein Vergleich mit anderen Kompressionsalgorithmen in \autoref{evaluation}. In \autoref{ausblick} werden Ergebnisse zusammengefasst, und ein Ausblick auf mögliche weitere Arbeit in diese Richtung gegeben.
