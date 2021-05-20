@@ -97,6 +97,33 @@ public interface UnifiedCompressor {
         out.println();
     }
 
+    default void benchmarkSimple(String input, PrintStream out, boolean printGrammar) {
+        // Print the name of the algorithm
+        out.println("Testing " + name() + " Algorithm on input with " + input.length() + " characters:");
+
+        // Measure the time it takes to compress the string
+        var now = System.nanoTime();
+        ToUnifiedRuleset ruleset = compress(input);
+        UnifiedRuleset unified = ruleset.toUnified();
+        var duration = System.nanoTime() - now;
+
+        // Output the compression time in milliseconds
+        out.println("Compression Time: " + (duration / 1000000) + "ms");
+
+        // Print the size of the generated grammar
+        out.println("Grammar size: " + unified.rulesetSize());
+        out.println("Grammar depth: " + unified.rulesetDepth());
+        out.println("Rule count: " + unified.ruleCount());
+        out.println("Average rule length: " + unified.averageRuleLength());
+
+
+        // If enabled, print the grammar to the PrintStream
+        if(printGrammar) {
+            out.println();
+            out.print(unified.getAsString());
+        };
+    }
+
     /**
      * Creates an sqlplot-tools RESULT line with the results of compressing the given file
      * @param inputFileName The file to compress
