@@ -1,0 +1,323 @@
+\section{Ablauf}
+
+Im Folgenden betrachten wir den Ablauf des Algorithmus genauer. Dies bezieht sich insbesondere auf V4 des Algorithmus.
+
+Die Ruleset-Klasse ist für die Kompression des Strings verantwortlich. Das Ruleset beinhaltet eine Instanz der \texttt{RuleIntervalIndex} Datenstruktur. Sei im Folgenden $s \in \Sigma^*$ ein Eingabestring mit $n := |s|$ Dazu sind folgende Teilschritte erforderlich:
+
+\subsection{Berechnen des Enhanced Suffix Array}
+
+Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorithmus \cite{larsson_faster_2007} wird in $\mathcal{O}(n \log n)$ Laufzeit das Suffix-Array berechnet. Für das LCP-Array wird der Linearzeit-Algorithmus aus \cite{kasai_linear-time_2001} verwendet. Zuletzt wird für die komprimierte Variante des Kind-Array der von Abouelhoda et al. beschriebene Algorithmus aus \cite{abouelhoda_optimal_2002} verwendet. Dieser berechnet das Kind-Array ebenfalls in $\mathcal{O}(n)$ Laufzeit.
+
+\subsection{Berechnen der Prioritätswarteschlange}
+\label{calcqueue}
+
+Nun, da das Kind-Array berechnet ist, kann für jedes Abouelhoda-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ Abouelhoda-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle Abouelhoda-Intervalle durch rekursive Aufrufe also in $\mathcal{O}(n)$ berechnet werden.
+
+Diese Intervalle werden nun in eine auf einem Binären Heap \cite{williams_algorithm_1964} basierenden Prioritätswarteschlange eingefügt. Die benötigte Laufzeit, um ein Element einzufügen oder das minimale/maximale Element zu entfernen, ist $\mathcal{O}(\log n)$ im Worst-Case. 
+%Die Aufrufe der Operationen der Prioritätswarteschlange keinen signifikanten Anteil der Laufzeit des Algorithmus ausmachen, ist es hier nicht nötig, nach alternativen möglicherweise effizienteren Heap-Implementationen zu forschen.
+
+Da die LCP-Intervalle anhand ihrer Flächenwerte priorisiert werden, muss die Flächenfunktion für jedes Intervall mindestens einmal aufgerufen werden. Sei $A$ eine Flächenfunktion und $I$ ein LCP-Intervall. In \autoref{v1problemruntime} stellten wir fest, dass dort eine Flächenfunktion $\mathcal{O}(|I|)$ Laufzeit haben muss, damit diese das Minimum von $I$ und damit die Höhe bestimmen kann.
+Da AreaCompV4 allerdings ausschließlich Abouelhoda-Intervalle benutzt, kann dessen Höhe in $\mathcal{O}(1)$ bestimmt werden. Sei $I = [i..j]$ mit $i < j$ nun ein Abouelhoda-Intervall. Dann ist die Höhe von dem zugehörigen LCP-Intervall $LCP[i+1..j]$ in $\texttt{up}[i+1]$ und $\texttt{down}[j+1]$ des Kind-Array zu finden.
+
+Da sich die Breite von $LCP[i+1..j]$ mit $j - i + 1$ ebenfalls in konstanter Laufzeit berechnen lässt, benötigt eine Flächenfunktion, die nur arithmetische Operationen auf die Höhe und Breite anwenden, nur eine Laufzeit von $\mathcal{O}(1)$.
+
+Da es $\mathcal{O}(n)$ viele Abouelhoda-Intervalle gibt (siehe \autoref{lcpchoice}), folgt insgesamt als Laufzeit für die Konstruktion der Prioritätswarteschlange: $\mathcal{O}(n \log n)$.
+
+\subsection{Kompression}
+
+Die folgenden Operationen werden solange wiederholt, bis die konstruierte Prioritätswarteschlange leer ist. 
+
+\begin{algorithm}
+    \KwIn{Prioritätswarteschlange mit LCP-Intervallen, Suffix Array}
+    $interval \leftarrow$ Intervall mit maximalem Flächenwert aus der Prioritätswarteschlange\;
+    $positions \leftarrow$ Array der Position der Vorkommen des Musters durch Suffix Array\;
+    $len \leftarrow$ Länge des Musters\;
+    \If{$len \leq 1$} {
+        Terminiere Algorithmus\tcp*{Es ex. kein Intervall mit $len > 1$ mehr}
+    }
+    Sortiere $positions$\;
+    $positionCount \leftarrow cleanPositions(positions, len)$\tcp*{Entferne überlappende und unersetzbare Vorkommen}
+    \If{$positionCount \leq 1$} {
+        Zur nächsten Iteration\tcp*{Es ist nur noch max. ein Vorkommen übrig}
+    }
+    $multipleOccurrences \leftarrow differingOccurrences(position)$\tcp*{Kommt das Muster öfter als einmal in der Grammatik vor?}
+    \If{\Not $multipleOccurrences$} {
+        Zur nächsten Iteration\tcp*{Es ist nur noch max. ein Vorkommen übrig}
+    }
+    $substitute(len, positions)$\;
+
+    \caption{compressNext}
+    \label{compressNextv4}
+\end{algorithm}
+
+\subsubsection{Berechnung der Vorkommen}
+
+Zuerst wird das Intervall $[i..j]$, $0 < i \leq j < n$ mit dem größten Flächenwert aus der Prioritätswarteschlange entnommen. Dann können die Indizes aller Vorkommen des Substrings in $SA[i-1..j]$ gefunden werden. Diese speichern wir in einem neuen Array $\texttt{positions}$, da diese Indizes noch nachbearbeitet werden müssen.
+
+Die Länge des zu ersetzenden Substring $p \in \Sigma^*$ von $s$ ist dann gleich $k := |p| = \min_{i \leq a \leq j} LCP[a]$.
+Dies kann in linearer Laufzeit berechnet werden, doch wir können uns hier die Eigenschaften der Abouelhoda-Intervalle und des Kind-Arrays zunutze machen. 
+Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der LCP-Wert eines Abouelhoda-Intervalls in $\mathcal{O}(1)$ Zeit bestimmen. Dies geschieht, indem mithilfe des $up$, beziehungsweise des $down$ Eintrages im Kind-Array, der erste $l$-Index des Intervalls bestimmt werden kann. Da an jedem $l$-Index im LCP-Array das Minimum über diesem Intervall enthält, ist damit die Länge des Substrings gefunden.
+
+Somit sind sowohl die Vorkommen des Substrings, als auch dessen Länge berechnet. Ist $occ_p := j - i + 2$, die Anzahl an Vorkommen von $p$ in $s$, so benötigt diese Berechnung $\mathcal{O}(occ_p)$ Laufzeit, begrenzt durch die Berechnung der $occ_p$ Indizes, an denen $p$ vorkommt.
+
+\subsubsection{Bereinigen der Indizes}
+
+Nun ist es möglich, dass einige der Vorkommen sich nicht (mehr) für eine Ersetzung eignen. Etwa, weil diese sich mit dem vorhergehenden Vorkommen überlappen, oder weil dieses Vorkommen die anderen nötigen Vorraussetzung für eine Substitution nicht erfüllen. Dies wurde in \autoref{v3problems} und in der Beschreibung der neuen \texttt{RuleIntervalIndex} Datenstruktur genauer behandelt. Es werden nun mit den folgenden 2 Algorithmen diejenigen Indizes entfernt, die nicht für eine Substitution in Frage kommen.
+
+\paragraph{substitutionAllowed}
+
+\autoref{substitutionAllowedv4} bestimmt für ein Intervall $[from..to]$, ob eine Substitution dieses Intervalls erlaubt ist. 
+\begin{algorithm}[t]
+    \KwIn{$from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+    \KwOut{\KwTrue genau dann, wenn das Intervall $[from..to]$ durch eine neue Regel substituiert werden darf, \KwFalse sonst}
+    $fromInterval \leftarrow intervalIndex.intervalContaining(from)$\;
+    \While{$from = fromInterval.start \textbf{ and } to > fromInterval.end \textbf{ and }$\\$fromInterval.parent \neq \texttt{null}$} {
+        $fromInterval \leftarrow fromInterval.parent$\;
+    }
+
+    \If{$to > fromInterval.end$} {
+        \KwRet{\KwFalse}
+    }
+
+    $toInterval \leftarrow intervalIndex.intervalContaining(to)$\;
+    \While{$toInterval$ does not contain $fromInterval \textbf{ and }$\\$to = toInterval.end \textbf{ and } toInterval.parent \neq null$}{
+        $toInterval \leftarrow toInterval.parent$\;
+    }
+    \KwRet{$toInterval = fromInterval$}
+    
+    \caption{substitutionAllowed}
+    \label{substitutionAllowedv4}
+\end{algorithm}
+Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Symbole (Terminale oder Nichtterminale) finden lassen, dessen vollständig expandierte Form genau bei $from$ im Eingabestring beginnt, beziehungsweise genau bei $to$ endet (inklusive des Zeichens).
+In der Regel ist das Intervall das tiefste verschachtelte Intervall jeweils bei $from$ und $to$. 
+
+Liegen $from$ oder $to$ innerhalb des tiefsten Intervalls an dem jeweiligen Index, so dürfen für den jeweiligen Index keine weniger verschachtelten Intervalle berücksichtigt werden, da sonst die Grenzen der tieferen Intervalle verletzt würden.\\ 
+Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mit zu berücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \emph{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnen.
+
+In diesen beiden Fällen gilt auch dasselbe wieder, falls $from$ auch im Elternintervall genau auf den Anfang fällt, beziehungsweise $to$ auch dort auf das Ende fällt.
+
+\subparagraph{Laufzeit} 
+Die Laufzeit wird durch die $intervalContaining$ Aufrufe mit ihrer $\mathcal{O}(b + d)$ Laufzeit dominiert. Die While-Schleifen können maximal $d$ wiederholt werden. Insgesamt folgt eine $\mathcal{O}(b + d)$ Laufzeit. 
+
+\subparagraph{Beispiele}
+Um dies besser zu veranschaulichen, hierzu drei Beispiele. Betrachten wir die folgende Grammatik für den String $abacaba$:
+
+\begin{align*}
+    S &\rightarrow AcA\\
+    A &\rightarrow aba
+\end{align*}
+\begin{enumerate}
+    \item Die Methode liefert \texttt{true} für $from=0$ und $to=3$. Hier beschreibt der Index $0$ hier entweder das erste $a$ aus dem ersten Ersetzungsintervall der Regel $A$, oder das erste $A$ in der Regel $S$. Letzteres ist möglich, da der Index $0$ genau auf den Anfang des Ersetzungsintervalls $[0..2]$ der Regel $A$ fällt. Der Index $3$ kann hier nur $c$ beschreiben.
+    Es lassen sich hier also das erste $A$ als Startsymbol, und das $c$ als Endsymbol finden, die beide in dem einen Ersetzungsintervall der Regel $S$ liegen. Damit ist die Ersetzung von $Ac$ in der Regel $S$ erlaubt.
+    \item Für $from=1$ und $to=3$ liefert die Methode allerdings \texttt{false}. Der Index $3$ liefert wie im vorhergehenden Fall wieder nur das $c$ aus Regel $S$.
+    Index $1$ allerdings, liefert nur das $b$ aus dem ersten Ersetzungsintervall der Regel $A$. Hier dürfen keine weniger tiefen Ersetzungsintervalle (in diesem Fall nur das Eine der Regel $S$) berücksichtigt werden, da der Index $1$ nicht der Anfangsindex des Ersetzungsintervalls ist, in dem dieser Index liegt.
+    Wir haben als Wahl für das Startsymbol nur $b$ aus Regel $A$ und als Endsymbol nur das $c$ aus Regel $S$. Hier lassen sich also kein Paar von Start- und Endsymbolen finden, die in demselben Ersetzungsintervall liegen. Die Substitution ist als ungültig.
+    \item Für $from=0$ und $to=5$ liefert die Methode ebenfalls \texttt{false}. Hier liefert der Index $0$ wie im ersten Fall wieder $a$ aus dem ersten Ersetzungsintervall der Regel $A$ und das erste $A$ in der Regel $S$. Index $5$ liefert hier nur das $b$ aus dem \emph{zweiten} Ersetzungsintervall der Regel $A$. 
+    Da wir als Wahl für das Endsymbol nur das $b$ aus einem Ersetzungsintervall der Regel $A$ zur Verfügung haben, kommt für das Startsymbol nur das $a$ infrage, da das $A$ aus einem Ersetzungsintervall der Regel $S$ stammt.
+    Allerdings ist die Kombination von $a$ als Startsymbol und $b$ als Endsymbol ebenfalls ungültig, da diese jeweils aus unterschiedlichen Ersetzungsintervallen stammen.
+    Die Substitution ist hier also auch ungültig.
+\end{enumerate}
+
+\paragraph{cleanPositions}
+\label{parcleanpositions}
+
+Mithilfe von \autoref{substitutionAllowedv4} lassen sich die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen. \autoref{cleanpositionsv4} leistet dies, und gibt zusätzlich die Anzahl der übrigen Positionen zurück. In diesem Algorithmus werden Positionen entfernt, indem sie durch $-1$ ersetzt werden. Beachte, dass dieser Algorithmus erwartet, dass das $positions$ Array aufsteigend sortiert ist.
+
+\begin{algorithm}[t]
+    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$}
+    \KwOut{ Anzahl übriger Positionen }
+    $count \leftarrow 0$\;
+    $previous \leftarrow -\infty$\;
+    \For{$i$ \textbf{in} $0$ \textbf{to} $|positions| - 1$} {
+        $pos \leftarrow positions[i]$\;
+        \eIf{$previous + len \leq pos$ \textbf{ and } $substitutionAllowed(pos, pos + len - 1)$}{
+            $previous \leftarrow pos$\;
+            $count \leftarrow count + 1$\;
+        }{
+            $positions[i] \leftarrow -1$\;
+        }
+    }
+    \KwRet{$count$}
+    \caption{cleanPositions}
+    \label{cleanpositionsv4}
+\end{algorithm}
+
+Der Algorithmus iteriert durch das Array der gegebenen Positionen. Falls dann das jetzige Vorkommen sich nicht mit dem Vorherigen überschneidet und eine Substitution dieses Vorkommens erlaubt ist, so erhöhe den Zähler. Falls dies nicht der Fall ist, so entferne dieses Vorkommen.
+
+\subparagraph{Laufzeit}
+Sei $occ_p$ die Anzahl der Vorkommen von $p$, also $occ_p = |positions|$. In jedem Durchlauf der For-Schleife wird \autoref{substitutionAllowedv4} aufgerufen mit jeweils $\mathcal{O}(b + d)$ Laufzeit. Es folgt insgesamt eine Laufzeit von $\mathcal{O}(occ_p \cdot (b + d))$ für \autoref{cleanpositionsv4}.
+
+\subsubsection{Sicherstellen unterschiedlicher Vorkommen}
+\label{differingV4}
+
+Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global für den Eingabestring berechnet werden, ist es möglich, dass es zwar mehrere Vorkommen eines Musters im Eingabestring gibt, aber durch vorhergehende Substitutionen dieses Vorkommen nur noch einmal in der Grammatik vorkommt. Betrachten wir wieder das Beispiel von vorher:
+
+\begin{align*}
+    S &\rightarrow AcA\\
+    A &\rightarrow aba
+\end{align*}
+
+Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $0$ und $4$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \emph{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
+
+Dies leistet \autoref{diffoccv4}. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen in der Grammatik gibt, sonst \texttt{false}:
+
+\begin{algorithm}[t]
+    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
+    \KwOut{ \KwTrue, falls mehrere tatsächlich unterschiedliche Vorkommen in der Grammatik existieren, \KwFalse sonst }
+    $set \leftarrow \emptyset$\;
+    $firstRuleId \leftarrow -1$\;
+    \For{$pos$ \textbf{in} $positions$} {
+        \If{$pos = -1$} { 
+            \KwContinue\;
+        }
+        $ruleInterval \leftarrow intervalIndex.intervalContaining(pos)$\;
+        $ruleId \leftarrow ruleInterval.ruleId$\;
+        $startIndex \leftarrow ruleInterval.start$\;
+
+        \If{$firstRuleId = -1$} {
+            $firstRuleId \leftarrow ruleId$\;
+        }
+        \ElseIf{$ruleId \neq firstRuleId$ \textbf{ or } $startIndex \in set$} {
+            \KwRet{$true$}
+        }
+        $set \leftarrow set \cup \{startIndex\}$\;
+    }
+    \KwRet{$false$}
+    
+    \caption{differingOccurrences}
+    \label{diffoccv4}
+\end{algorithm}
+
+Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel, die in der nun folgenden for-Schleife gefunden wird.
+
+Die for-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positionen und berechnet jeweils das tiefste Intervall an dem gegebenen Index, sowie dessen ID und Startindex. Ist die $firstRuleId$ noch nicht gesetzt, so wird diese auf die ID des berechneten Intervalls gesetzt. Andernfalls wird geprüft, ob die ID des soeben berechneten Intervalls mit der als erstes berechneten Intervalls übereinstimmt. Stimmen diese nicht überein, so sind bereits zwei Vorkommen in unterschiedlichen Regeln gefunden worden. Diese müssen zwangsweise unterschiedlich sein. Also gibt der Algorithmus dann \texttt{true} zurück.
+
+Ist dies nicht der Fall, so wird geprüft ob der Startindex des jetzigen Intervalls bereits in der Menge zu finden ist, also schon ein Vorkommen in einem Intervall mit diesem Startindex gefunden wurde. Wenn ja, dann muss das aktuell betrachtete Vorkommen zwangsweise unterschiedlich mit dem bereits gefundenen sein. Denn es gibt hier zwei Fälle:
+\begin{itemize}
+    \item[\textbf{Fall 1}] \emph{Das jetzige Intervall ist dasselbe Intervall, indem bereits ein Vorkommen gefunden wurde.}\\
+    In diesem Fall existiert also in demselben Intervall ein Vorkommen an einem kleineren Index. Dies gilt, da die Indizes aufsteigend sortiert sind (ausgenommen der entfernten Indizes) und an jedem Index nur maximal \emph{ein} Intervall mit einer gegebenen Regel ID existieren kann. 
+    \item[\textbf{Fall 2}] \emph{Das jetzige Intervall ist ein anderes Intervall, das an demselben Startindex beginnt.}\\
+    Wie in Fall 1 schon beschrieben, muss also das jetzige Intervall einer anderen Regel angehlören. Da nun ein Vorkommen in einer anderen Regel gefunden wurde, als das vorherige Vorkommen, so folgt sofort, dass das jetzige Vorkommen unterschiedlich sein muss. 
+\end{itemize}   
+Also wird \texttt{true} zurückgegeben, wenn ein Startindex zweimal gefunden wird.
+
+Tritt keine dieser Bedingungen je ein, so existieren keine unterschiedlichen Vorkommen und der Algorithmus gibt $\texttt{false}$ zurück.\\\\
+Gibt \autoref{diffoccv4} \texttt{false} zurück, so wird keine Substitution durchgeführt, da insgesamt nur ein Vorkommen des Musters in der Grammatik existiert.
+
+\paragraph{Laufzeit}
+
+Der Worst-Case tritt ein, wenn keine unterschiedlichen Vorkommen des Musters in der Grammatik auftreten. Denn dann muss die For-Schleife durch alle Elemente in $positions$ iterieren.
+
+In jedem Durchlauf der For-Schleife wird ein $intervalContaining$ Aufruf durchgeführt mit $\mathcal{O}(b + d)$ Laufzeit. Die Operationen $\cup$ und $\in$ von $set$ laufen in erwarteter $\mathcal{O}(1)$ Laufzeit, da das Set als Hashtabelle implementiert werden kann.
+Da für die For-Schleife maximal $occ_p = |positions|$ Durchläufe möglich sind, folgt eine Worst-Case Laufzeit von $\mathcal{O}(occ_p \cdot (b + d))$.  
+
+\subsubsection{Substituierung}
+
+Der letzte Schritt der Kompression ist die tatsächliche Substitution der Vorkommen des Musters.
+\begin{algorithm}[t]
+        \KwIn{ $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
+        $nextId \leftarrow$ nächste unbenutzte Regel ID\;
+        \For{$pos \leftarrow positions$} {
+            \If{$pos = -1$} {
+                \textbf{continue}\;
+            }
+            $intervalIndex.mark(nextId, pos, pos + len - 1)$\;
+        }
+        \caption{substitute}
+        \label{substitutev4}
+\end{algorithm}
+
+\autoref{substitutev4} iteriert nur durch das Array der Startindizes der Vorkommen des Musters und markiert die jeweiligen Intervalle, die das Vorkommen des Musters einnimmt, in der Datenstruktur. 
+
+\paragraph{Laufzeit}
+
+Für einen Aufruf von $mark(id, start, end)$ gilt eine Laufzeit von $\mathcal{O}(len \cdot b + d)$, wobei $b$ die Bucketgröße von \texttt{BucketPred} und $d$ die Tiefe der Grammatik am Ende von AreaComp ist.
+
+Da $positions$ nur noch nicht-überlappende Vorkommen von $p$ enthält, ist die Anzahl von $mark$ Aufrufen durch $\frac{n}{len}$ beschränkt, wobei $n$ die Länge des Eingabestrings ist.
+Also folgt eine Laufzeit von $\mathcal{O}(\tfrac{n}{len} \cdot (len \cdot b + d)) = \mathcal{O}(n \cdot b + \tfrac{n}{len} d)) \subset \mathcal{O}(n \cdot (b + d))$ für einen Aufruf von \autoref{substitutev4}. 
+
+\subsection{Abschluss des Algorithmus}
+
+Wenn der Algorithmus terminiert, sind alle Ersetzungsintervalle in der \texttt{RuleIntervalIndex} Datenstruktur gespeichert.
+Diese lässt sich mithilfe des Eingabestrings die Grammatik in eine Darstellung überführen, in der die Produktionsregeln der Grammatik explizit gespeichert werden. Diese Darstellung besteht nur aus einer Hashtabelle, die Regel-IDs auf eine Liste der zugehörigen rechten Seite der Regel abbildet.
+
+%Es kann für jedes Zeichen im Eingabestring die tiefste Regel bestimmt werden, in der das jeweilige Zeichen liegt, und in eine entsprechende Liste von Zeichen eingefügt werden.
+
+Hierzu werden 2 Stacks angewendet.
+\begin{itemize}[leftmargin=2.5cm]
+    \item[\texttt{nestingStack}] Ein Stack von Ersetzungsintervallen. Ist die Iteration bei Index $i$, so enthält \texttt{nestingStack} alle Ersetzungsintervalle in denen $i$ liegt, in der Reihenfolge ihrer Verschachtelung. Dabei liegt das am tiefsten verschachtelte Intervall oben auf dem Stack.
+    \item[\texttt{symbolStack}] Ein Stack von Listen von Symbolen. Für jedes Ersetzungsintervall enthält \texttt{symbolStack} jeweils eine korrespondierende Liste von Symbolen. 
+    Ist die Iteration bei Index $i$, so enthalten die Listen jeweils Symbole der rechten Seite der Produktionsregel, die durch das korrespondierende Ersetzungsintervall repräsentiert wird. Sie enthalten Symbole, die in dem Ersetzungsintervall bis zum Index $i$ im Eingabestring vorkommen. 
+\end{itemize} 
+
+Zu Anfang wird das Intervall $R_0$-$[0..n-1]$ auf den \texttt{nestingStack} gelegt und eine zugehörige leere Liste auf den $\texttt{symbolStack}$. 
+Wir iterieren durch die Zeichen des Eingabestrings. Sei $i$ der jetzige Index in der Iteration.
+Solange $i$ größer als der Endindex des Intervalls $R_k$-$[start..end]$ oben auf dem $\texttt{nestingStack}$, entferne dieses Intervall und die zugehörige Symbolliste $symbols$ von den Stacks und speichere die Regel $R_k \rightarrow symbols$. Danach, füge $R_k$ in die Symbolliste ein, die jetzt oben auf $\texttt{symbolStack}$ liegt.
+
+Beginnen bei Index $i$ neue Ersetzungsintervalle, so füge diese Intervalle und jeweils eine zugehörige leere Liste in die Stacks ein. Dabei wird das am wenigsten verschachtelte Intervall zuerst und das am tiefsten Verschachtelte als letztes eingefügt.
+
+Zuletzt wird das Zeichen im Eingabestring bei Index $i$ in die Liste oben auf dem $\texttt{symbolStack}$ an das Ende eingefügt. Gehe nun zur nächsten Iteration.\\\\
+
+Ist der gesamte Eingabestring durchlaufen, so sind alle Regel explizit gespeichert und der Eingabestring wird nicht mehr benötigt um den String aus der Grammatik wiederherzustellen.
+
+\paragraph{Laufzeit}
+
+Für die Stacks wird in dieser Implementierung jeweils ein dynamisches Array gewählt. $push$, $pop$ und $peek$ laufen dann in amortisierter $\mathcal{O}(1)$ Laufzeit.
+
+Die Iteration durch die Zeichen der Eingabe ergeben $n$ Durchläufe der Schleife.
+An jedem Index können maximal $d$ Ersetzungsintervalle beginnen, beziehungsweise enden.
+
+Damit können also in jedem Durchlauf jeweils maximal $d$ Intervalle von den Stacks entfernt und eingefügt werden.
+
+Um zu bestimmen ob ein \texttt{RuleInterval} existiert, das an einem Index beginnt ist nur eine Anfrage an $\texttt{BucketPred}$ nötig, die eine erwartete $\mathcal{O}(1)$ Laufzeit besitzt.
+
+Das Einfügen eines Symbols in die oberste Liste in $\texttt{symbolStack}$ ist eben falls in amortisierter $\mathcal{O}(1)$ Laufzeit möglich, da sowohl die Stacks als auch die Listen in \texttt{symbolStack} als dynamische Arrays implementiert sind.
+
+Insgesamt folgt dann eine Worst-Case Laufzeit von $\mathcal{O}(n \cdot d)$.
+
+\section{Laufzeit}
+
+Sei $s \in \Sigma^*$ ein String und $n := |s|$. Sei zusätzlich $d \in \mathbb{N}$ die Tiefe der erzeugten Grammatik und $b$ die Bucketgröße von \texttt{BucketPred}.
+
+\begin{algorithm}[t]
+    \KwIn{$s:$ Eingabestring, $A:$ Flächenfunktion}
+    Berechne Suffix-Array $SA$, LCP-Array $LCP$ und Kind-Array für $s$\;
+    $queue \leftarrow$ Prioritätswarteschlange aller Abouelhoda-Intervalle mit LCP-Wert $\geq 2$, Priorität bestimmt durch $A$\;
+    \While{$queue \neq \emptyset$}{
+        $compressNext(queue, SA)$\;
+    }
+    \caption{AreaCompV4}
+    \label{areacompv4alg}
+\end{algorithm}
+
+
+\autoref{areacompv4alg} zeigt den AreaCompV4 Algorithmus.
+Er beginnt mit der Konstruktion des Enhanced Suffix Array (Suffix-Array, LCP-Array und Kind-Array). Das Suffix-Array wird in $\mathcal{O}(n \log n)$ Laufzeit berechnet \cite{larsson_faster_2007}, das LCP-Array und Kind-Array jeweils in $\mathcal{O}(n)$ Laufzeit \cite{kasai_linear-time_2001, abouelhoda_optimal_2002}.
+
+Die Konstruktion der Prioritätswarteschlange benötigt, wie in \autoref{calcqueue} beschrieben, ebenfalls $\mathcal{O}(n \log n)$ Laufzeit.
+
+Wir betreten nun die While-Schleife. Da die Prioritätswarteschlange zu Anfang $\mathcal{O}(n)$ Elemente besitzt, hat diese Schleife auch maximal $\mathcal{O}(n)$ Durchläufe.
+
+\subsection{Laufzeit für $compressNext$}
+
+Wie betrachten nun die Laufzeit für \autoref{compressNextv4}.
+
+Zuerst wird das LCP-Intervall $LCP[i..j]$ mit $0 < i \leq j < n$mit dem größten Flächenwert aus der Prioritätswarteschlange entnommen. Dies benötigt $\mathcal{O}(\log n)$ Laufzeit, da sie durch einen binären Heap implementiert ist.
+Sei im Folgenden $p \in \Sigma^*$ das durch $LCP[i..j]$ bestimmte zu ersetzende Muster, $occ_p := j - i + 2$ die Anzahl Vorkommen von $p$ in $s$.  
+
+Wir bestimmen nun die Positionen $positions$, an denen $p$ vorkommt indem wir $SA[i-1..j]$ bestimmen. Dies ist in $\mathcal{O}(occ_p)$ möglich.
+Die Länge des Musters $len$ lässt sich durch die Eigenschaften der Abouelhoda-Intervalle in $\mathcal{O}(1)$ bestimmen, durch $up[i-1]$ oder $down[j+1]$ im Kind-Array. (siehe \autoref{childtree})
+Das Sortieren von $positions$ ist in erwarteter $\mathcal{O}(occ_p \log occ_p)$ Laufzeit etwa durch Quicksort möglich.
+
+Wie in \autoref{parcleanpositions} beschrieben, läuft \autoref{cleanpositionsv4} in $\mathcal{O}(occ_p \cdot (b + d))$ Laufzeit.
+\autoref{diffoccv4} läuft, wie in \autoref{differingV4} beschrieben, ebenfalls in $\mathcal{O}(occ_p \cdot (b + d))$ Laufzeit.
+Die eigentliche Substitution hingegen (\autoref{substitutev4}) läuft in $\mathcal{O}(n \cdot (b + d))$ Laufzeit.
+
+Hier dominiert die Laufzeit der eigentlichen Substitution, da $n > occ_p$.
+Also folgt insgesamt eine Laufzeit von $\mathcal{O}(n \cdot (b + d))$ für einen Aufruf von \autoref{compressNextv4}.
+
+\subsection{Gesamtlaufzeit}
+
+Da also $\mathcal{O}(n)$-Mal \autoref{compressNextv4} aufgerufen wird, folgt eine Gesamtlaufzeit von $\mathcal{O}(n^2 \cdot (b + d))$. Wenn $b$ als konstant angesehen wird ist die Laufzeit $\mathcal{O}(n^2 \cdot d)$.
+
+

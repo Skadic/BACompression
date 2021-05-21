@@ -27,80 +27,93 @@
 \section{AreaComp V4}
 \label{v4}
 
-Dies ist nun die finale Version dieses Algorithmus. 
+Dies ist die finale Version dieses Algorithmus. 
 
 \subsection{Bessere Predecessor-Datenstruktur}
 
-Bisher verwendete \texttt{RuleIntervalIndex} Red-Black-Trees als zugrundeliegende Predecessor-Datenstruktur. Zwar ist eine Laufzeit von $\mathcal{O}(\log n)$ für jede Operation der Predecessor-Datenstruktur nicht schlecht. Da aber etwa die $\texttt{get}$ und $\texttt{predecessor}$ Operation sehr oft aufgerufen werden, stellt dies ein Bottleneck für die Laufzeit dar.
+Bisher verwendete \texttt{RuleIntervalIndex} Red-Black-Trees als zugrundeliegende Predecessor-Datenstruktur. Diese benötigen $\mathcal{O}(\log n)$ Laufzeit für jede Operation. Da aber etwa die $\texttt{get}$ und $\texttt{predecessor}$ Operation sehr oft aufgerufen werden, stellt dies ein Bottleneck für die Laufzeit dar.
 Die Idee ist nun, Red-Black-Trees durch eine für diese Zwecke effizientere Datenstruktur zu ersetzen.
 
-Dazu bietet sich die Predecessor-Datenstruktur aus \cite{dinklage_engineering_2021} an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante, die durch eine Hashtabelle gestützt wird. Diese Hashtabelle ist global. 
+Dazu bietet sich die in Kapitel 4 von \cite{dinklage_engineering_2021} beschriebene  Predecessor-Datenstruktur an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante dieser Datenstruktur. Die ursprüngliche \texttt{BucketPred} Datenstruktur speichert nur die ganzzahligen Schlüssel. Wir erweitern \texttt{BucketPred} durch eine Hashtabelle. Diese bildet die in der Predecessor-Datenstruktur gespeicherten Schlüssel auf zugehörige Daten ab. Es gibt nur eine Hashtabelle für die gesamte Datenstruktur.   
 Eine lokale Hashtabelle für jeden Bucket, scheint bei Tests keine Vorteile zu bieten.\\
-Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ amortisierte Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(u \backslash b)$ Laufzeit für $\texttt{insert}$ Operationen. 
+Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ erwartete Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(\tfrac{u}{b})$ Laufzeit für $\texttt{insert}$ Operationen. 
 
-Wie in \cite{dinklage_engineering_2021} beschrieben, ist es ebenfalls möglich, das hier verwendete Array von Buckets durch eine Hashtabelle zu ersetzen. Dies würde für $\texttt{insert}$ Operationen eine amortisierte $\mathcal{O}(1)$ Laufzeit bedeuten, da nun nicht mehr im Array die $\mathcal{O}(u \backslash b)$ Pointer verändert werden müssen. Allerdings würde dies auch eine Laufzeit von $\mathcal{O}(u \backslash b)$ für $\texttt{predecessor}$ Operationen bedeuten, da potenziell $\mathcal{O}(u \backslash b)$ Anfragen an die Hashtabelle gestellt werden müssen, um einen aktiven Bucket zu finden. 
+Wie in \cite{dinklage_engineering_2021} beschrieben, ist es ebenfalls möglich, das hier verwendete Array von Buckets durch eine Hashtabelle zu ersetzen. Dies würde für $\texttt{insert}$ Operationen eine erwartete $\mathcal{O}(1)$ Laufzeit bedeuten, da nun nicht mehr im Array die $\mathcal{O}(\tfrac{u}{b})$ Pointer verändert werden müssen. Allerdings würde dies auch eine Laufzeit von $\mathcal{O}(\tfrac{u}{b})$ für $\texttt{predecessor}$ Operationen bedeuten, da potenziell $\mathcal{O}(\tfrac{u}{b})$ Anfragen an die Hashtabelle gestellt werden müssen, um einen aktiven Bucket zu finden. 
 
 Allerdings wird $\texttt{predecessor}$ viel häufiger benötigt als $\texttt{insert}$ Operationen. Daher ist es von größerer Bedeutung, dass $\texttt{predecessor}$ Aufrufe performant sind. Daher eignet sich hier das Bucket-Array besser.
 
-Da $u = |s|$ durch den Eingabestring $s$ gegeben ist, ist also die Wahl von $b = 2^k$, für ein $k \in \mathbb{N}$, interessant. Dieser widmen wir uns bei der Evaluation.
+%Da $u = |s|$ durch den Eingabestring $s$ gegeben ist, ist also die Wahl von $b = 2^k$, für ein $k \in \mathbb{N}$, interessant. Dieser widmen wir uns bei der Evaluation.
 % TODO DAS AUCH MACHEN 
 
 \subsection{Verbesserung von \texttt{RuleIntervalIndex}}
 
 Wie bereits beschrieben, hat die vorherige Version von \texttt{RuleIntervalIndex} das Problem, dass bestimmte Fälle, in denen eine Substitution legal ist, nicht korrekt erkannt werden. Außerdem ist das Markieren von Bereichen noch ineffizient.  
 
-Zu diesem Zweck verändern wir die Funktionsweise von \texttt{RuleIntervalIndex} etwas.
-Wir speichern nun nicht mehr die am tiefsten verschachtelten Teile von Intervallen. Stattdessen speichern wir alle existierenden Intervalle. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger verschachtelte Intervalle. 
+Zu diesem Zweck verändern wir die Funktionsweise von \texttt{RuleIntervalIndex} etwas. In V3 wurden einzelne Teile von Intervallen gespeichert, sodass immer nur das tiefste Intervall an einem Index gespeichert wird.
+Stattdessen speichern wir jetzt alle existierenden Intervalle ganz. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger tief verschachtelte Intervalle. 
 
 \subsubsection{Beispiel}
 
-Betrachten wir wieder die Grammatik von zuvor für den String $abcdeabcd$:
-\begin{align*}
-	R_0 &\rightarrow R_1 c d e R_1 c d\\
-	R_1 &\rightarrow a b\\
-\end{align*}
-Die neue Version der Datenstruktur sieht dann folgendermaßen aus:
+Ein Beispiel für die neue Version der Datenstruktur für den String $abcdeabcd$ und eine gegebene Grammatik ist in \autoref{newrii} abgebildet.
 
-\begin{figure}[H]
+\begin{figure}
     \centering
-    \begin{tikzpicture}
+    \subfloat[Grammatik für $abcdeabcd$]{
+        \parbox[c]{5cm}{
+            \centering
+            $\begin{aligned}
+                R_0 &\rightarrow R_1 c d e R_1 c d\\
+                R_1 &\rightarrow a b\\
+            \end{aligned}$
+        }
+        \label{newriigrammar}
+    }
+    \quad
+    \subfloat[Die neue \texttt{RuleIntervalIndex} Struktur]{
+        \begin{tikzpicture}
         
-        \matrix (A) [table, text width=7mm] {
-            $a$ & $b$ & $c$ & $d$ & $e$ & $a$ & $b$ & $c$ & $d$\\
-            \\
-            |[draw=none]| & |[draw=none]|  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
-            |[draw=none]| & |[draw=none]|  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
-        };
-        
-        
-        \node[draw, fit=(A-3-1)(A-3-9), table nodes] {$R_0$-$[0..8]$};
-        \node[draw, fit=(A-4-1)(A-4-2), table nodes] {$R_1$-$[0..1]$};
-        \node[draw, fit=(A-4-6)(A-4-7), table nodes] {$R_1$-$[5..6]$};
-    \end{tikzpicture}
-    \caption{Die neue \texttt{RuleIntervalIndex} Struktur}
+            \matrix (A) [table, text width=7mm, ampersand replacement=\&] {
+                |[draw=none]| $0$ \& |[draw=none]| $1$ \& |[draw=none]| $2$ \& |[draw=none]| $3$ \& |[draw=none]| $4$ \& |[draw=none]| $5$ \& |[draw=none]| $6$ \& |[draw=none]| $7$ \& |[draw=none]| $8$\\
+                $a$ \& $b$ \& $c$ \& $d$ \& $e$ \& $a$ \& $b$ \& $c$ \& $d$\\
+                \\
+                |[draw=none]| \& |[draw=none]|  \&  \&  \&  \& |[draw=none]|  \& |[draw=none]|  \&  \& |[draw=none]|\\
+                |[draw=none]| \& |[draw=none]|  \&  \&  \&  \& |[draw=none]|  \& |[draw=none]|  \&  \& |[draw=none]|\\
+            };
+            
+            
+            \node[draw, fit=(A-4-1)(A-4-9), table nodes] {$R_0$-$[0..8]$};
+            \node[draw, fit=(A-5-1)(A-5-2), table nodes] {$R_1$-$[0..1]$};
+            \node[draw, fit=(A-5-6)(A-5-7), table nodes] {$R_1$-$[5..6]$};
+        \end{tikzpicture}
+    }
+
+    \caption{Die neue \texttt{RuleIntervalIndex} Struktur für den String $abcdeabcd$ und die in \autoref{newriigrammar} abgebildete Grammatik.}
     \label{newrii}
 \end{figure}
 
-\subsubsection{Neue \texttt{RuleInterval} Attribute}
+\subsubsection{Neue \texttt{RuleInterval}s}
 
-Die Intervalle behalten die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ Attribute. Die anderen Attribute werden durch die Folgenden ersetzt:
+In V3 waren \texttt{RuleInterval}s Teile von Ersetzungsintervallen. In V4 ist ein \texttt{RuleInterval} ein \emph{ganzes} Ersetzungsintervall. Demnach bezeichnen wir im Folgenden mit $R_k$-$[i..j]$ nicht mehr den \emph{Teil} eines Ersetzungsintervalls, sondern ein \emph{ganzes} Ersetzungsintervall.
+
+Die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ sind genau wie in \autoref{riiv3}. Die anderen Attribute werden durch die Folgenden ersetzt:
 
 \begin{itemize}[leftmargin=3cm]
-    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. Im obigen Beispiel zeigt der \texttt{parent} Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
+    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. In \autoref{newrii} zeigt der \texttt{parent}-Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
     \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \emph{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
     \item[\texttt{nextAtStartIndex}] Ein Pointer auf das Ersetzungsintervall, das am selben Startindex beginnt und das nächst-tiefer verschachtelt ist
 \end{itemize}
 
-Die erste Idee war, in der zugrundeliegenden Predecessor-Struktur dynamische Arrays von $\texttt{RuleInterval}$s zu speichern. Dies war allerdings aufgrund des Speicherverbrauchs und des Laufzeit-Overhead von Allokationen und Reallokationen unhaltbar. Als Verbesserung sind die Elemente der Predecessor Struktur nun für jeden Index das jeweils das am tiefsten verschachtelte Intervall, das an diesem Startindex beginnt. Auf die anderen Intervalle, die an demselben Startindex beginnen, kann mithilfe der $\texttt{firstAtStartIndex}$, $\texttt{nextAtStartIndex}$ und $\texttt{parent}$ Pointer zugegriffen werden.
+Die erste Idee war, in der zugrundeliegenden Predecessor-Struktur dynamische Arrays von $\texttt{RuleInterval}$s zu speichern. Dies war allerdings aufgrund des Speicherverbrauchs und des Laufzeit-Overhead von Allokationen und Reallokationen unhaltbar. Als Verbesserung sind die Elemente der Predecessor Struktur nun für jeden Index das jeweils das am tiefsten verschachtelte Intervall, das an diesem Startindex beginnt. Auf die anderen Intervalle, die an demselben Startindex beginnen, kann mithilfe der $\texttt{firstAtStartIndex}$, $\texttt{nextAtStartIndex}$ und $\texttt{parent}$-Pointer zugegriffen werden.
 
 \subsubsection{Bestimmen der umschließenden Intervalle}
-Wir können nun bestimmen, welches das tiefste verschachtelte Ersetzungsintervall ist, das ein Intervall $[i..j]$ umschließt.
-Dies ist mithilfe des folgenden Algorithmus möglich.
 
-\begin{algorithm}
+Wir können nun bestimmen, welches das tiefste verschachtelte Ersetzungsintervall ist, das ein Intervall $[from..to]$ umschließt.
+Dies ist mithilfe von \autoref{intervalcontainingv4} möglich.
+
+\begin{algorithm}[t]
     \KwIn {$from, to$ Start- und Endindizes}
     \KwOut{Das tiefste Ersetzungsintervall, das sowohl $from$ als auch $to$ umschließt}
-    $current \leftarrow floorInterval(from)$\;
+    $current \leftarrow floorInterval(from)$\tcp*{\texttt{predecessor}-Anfrage um das Vorgänger-Intervall zu bestimmen}
     \While {$current \neq$ \KwNull} {
         \If {$current.start \leq from \textbf{ and } to \leq current.end$} {
             \KwRet{$current$}
@@ -116,244 +129,70 @@ Dies ist mithilfe des folgenden Algorithmus möglich.
     }
     \KwRet{\KwNull}
     \caption{intervalContaining}
+    \label{intervalcontainingv4}
 \end{algorithm}
 
-Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$. 
-In der While-Schleife wird nun geprüft, ob das jetzige Intervall auch beide Grenzen einschließt. Ist dies der Fall, so haben ist dies das tiefste Intervall, das das Intervall $[from..to]$ einschießt, gefunden.\\
-Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$ Pointer iteriert, bis ein Intervall gefunden wird, das beide Grenzen enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall bestimmen, indem ein Index $i$ liegt, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
+Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$ ($floorInterval(from)$). 
+In der While-Schleife wird nun geprüft, ob das jetzige Intervall auch beide Grenzen einschließt. Ist dies der Fall, so haben wir das tiefste Intervall, das das Intervall $[from..to]$ einschießt, gefunden.\\
+Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$-Pointer iteriert, bis ein Intervall gefunden wird, das beide Grenzen enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall an einem Index $i$ bestimmen, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
 
-In dem Fall, dass selbst das am wenigsten verschachtelte Intervall an diesem Startindex (\texttt{firstAtStartIndex}) nicht die gegebenen Grenzen umschließt, so kann direkt zum Eltern-Intervall von \texttt{firstAtStartIndex} gesprungen werden, da somit keines der übersprungenen Intervalle die Grenzen umschließt. 
+In dem Fall, dass selbst das am wenigsten verschachtelte Intervall an diesem Startindex (\texttt{firstAtStartIndex}) nicht die gegebenen Grenzen umschließt, so kann direkt zum Eltern-Intervall von \texttt{firstAtStartIndex} gesprungen werden, da somit keines der übersprungenen Intervalle die Grenzen umschließt.
+
+Die dominierenden Teile der Laufzeit von \autoref{intervalcontainingv4} bestehen aus dem $floorInterval$-Aufruf mit $\mathcal{O}(b)$ Laufzeit, wobei $b$ die Größe der Buckets von \texttt{BucketPred} ist. Dazu kommt die While-Schleife. Ist $d$ die Tiefe der Grammatik wenn AreaComp terminiert, so können maximal $d$ Wiederholungen stattfinden, da durch die \texttt{parent}-Pointer iteriert wird. Insgesamt folgt eine Laufzeit von $\mathcal{O}(b + d)$. 
 
 \subsubsection{Markieren von Ersetzungsintervallen}
 
+\begin{algorithm}[t]
+    \KwIn{$id:$ ID der Regel, $start, end:$ Start- und Endindex des Intervalls, $pred:$ Die \texttt{BucketPred} Datenstruktur}
+    $current \leftarrow$ tiefstes Intervall mit Startindex $start$\;
+    $interval \leftarrow R_{id}$-$[start..end]$\;
+
+    \If{$current =$ \KwNull} {
+        $parent \leftarrow intervalContaining(start, end)$\;
+        Setze Pointer von $interval$\;
+        $pred.insert(start, interval)$\;
+    }
+    \ElseIf{$interval \subset current$} {
+        Setze Pointer von $interval$\tcp*{Dann ist $current$ das Elternintervall von $interval$}
+        $pred.insert(start, interval)$\;
+    }
+    \Else {
+        $current \leftarrow$ Iteriere solange durch $\texttt{parent}$-Pointer von $interval$, bis das Elternintervall von $current$ $interval$ enthält\;
+        Setze Pointer von $interval$\;
+    }
+    Iteriere durch alle \texttt{RuleInterval}s, die Teilintervalle von $[start..end]$ sind und setze ihre $\texttt{parent}$-Pointer auf $interval$, falls nötig\;
+    \caption{mark}
+    \label{markv4}
+\end{algorithm}
+
+
 Beim Markieren der Ersetzungsintervalle wird ein neues $\texttt{RuleInterval}$ $R_i$-$[start..end]$ in die Datenstruktur eingefügt. 
-Zunächst, wird geprüft, ob es bereits ein Intervall gibt, das bei Startindex $start$ beginnt.
+Zunächst wird geprüft, ob es bereits ein Intervall gibt, das bei Startindex $start$ beginnt.
 Hier muss zwischen verschiedenen Fällen unterschieden werden.
 
 \begin{itemize}[leftmargin=1.5cm]
     \item[\textbf{Fall 1}] Falls kein solches Intervall existiert, so wird mithilfe von\\
-    $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$ Pointer entsprechend gesetzt.  Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
+    $\texttt{intervalContaining(start, end)}$ das Eltern-Intervall des neuen Intervalls bestimmt und der $\texttt{parent}$-Pointer entsprechend gesetzt.  Es wird nun nur noch das Intervall in die Predecessor Datenstruktur eingefügt.
     \item[\textbf{Fall 2}] Im Fall, dass ein solches Intervall existiert, kann es sein, dass $R_i$-$[start..end]$ das nun am tiefsten verschachtelte Intervall ist, das an diesem Startindex beginnt. Ist das der Fall, so werden die Pointer des entsprechenden Index gesetzt und das neue Intervall ersetzt nun das vorherige in der Predecessor Datenstruktur, da es nun das tiefste Intervall an diesem Index ist.\\
-    Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$ Pointer iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. An diese Stelle muss dann das neue Intervall eingefügt werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte und damit das am wenigsten verschachtelte Intervall, das an diesem Startindex beginnt. Ist das der Fall, so muss der $\texttt{firstAtStartIndex}$ aller Intervalle an diesem Startindex, auf das neue Intervall gesetzt werden. Dies kann während der ohnehin schon stattfindenden Iteration geschehen. 
+    Ist das Intervall nicht das tiefste an diesem Index, so kann durch die $\texttt{parent}$-Pointer iteriert werden, bis ein Intervall an diesem Startindex gefunden wird, das das neue Intervall enthält. An diese Stelle muss dann das neue Intervall eingefügt werden. Es kann nun sein, das es kein solches Intervall gibt. Dann ist das neue Intervall, das größte und damit das am wenigsten verschachtelte Intervall, das an diesem Startindex beginnt. Ist das der Fall, so muss der $\texttt{firstAtStartIndex}$ aller Intervalle an diesem Startindex, auf das neue Intervall gesetzt werden. Dies kann während der ohnehin schon stattfindenden Iteration geschehen. 
 \end{itemize} 
 
-Es kann nun sein, dass durch das Einfügen eines neuen Intervalls die $\texttt{parent}$ Pointer anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
-Kindintervall schieben. Dies wird nun dadurch behoben, dass über alle Intervalle der Datenstruktur, die im Intervall $[start+1..end]$ liegen, iteriert wird. In dieser Iteration wird der \texttt{parent} Pointer auf das neue Intervall gesetzt. 
+Es kann nun sein, dass durch das Einfügen eines neuen Intervalls die $\texttt{parent}$-Pointer anderer Intervalle fehlerhaft werden, da sich das neue Intervall zwischen das Eltern- und
+Kindintervall schieben. Dies wird nun dadurch behoben, dass über alle Intervalle der Datenstruktur, die im Intervall $[start+1..end]$ liegen, iteriert wird. In dieser Iteration wird der \texttt{parent}-Pointer auf das neue Intervall gesetzt. 
 \label{v4marking}
 
-\subsection{Ruleset}
+\paragraph{Laufzeit}
 
-Die Ruleset-Klasse ist für die Kompression des Strings verantwortlich. Das Ruleset beinhaltet eine Instanz der \texttt{RuleIntervalIndex} Datenstruktur. Sei im Folgenden $s \in \Sigma^*$ ein Eingabestring mit $n := |s|$ Dazu sind folgende Teilschritte erforderlich:
+Sei $k := end - start + 1$ also die Länge des Musters, für das wir das Intervall markieren und $id$ die ID der Regel. Das neue Intervall ist also $R_{id}$-$[start..end]$.
 
-\subsubsection{Berechnen der benötigten Arrays}
+In jedem Fall muss bestimmt werden, ob es ein Intervall in der Datenstruktur gibt, dass bei Index $start$ beginnt. Dies benötigt erwartete $\mathcal{O}(1)$ Laufzeit aufgrund der Hashtabelle der \texttt{BucketPred} Datenstruktur. 
 
-Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorithmus \cite{larsson_faster_2007} wird in $\mathcal{O}(n \log n)$ Laufzeit das Suffix-Array berechnet. Für das LCP-Array wird der Linearzeit Algorithmus aus \cite{kasai_linear-time_2001} verwendet. Zuletzt wird für die komprimierte Variante des Kind-Array der von Abouelhoda et al. beschriebene Algorithmus aus \cite{abouelhoda_optimal_2002} verwendet. Dieser berechnet das Kind-Array ebenfalls in $\mathcal{O}(n)$ Laufzeit.
+Im Fall, dass kein solches Intervall existiert, muss das tiefste verschachtelte Intervall bestimmt werden, dass $[start..end]$ enthält. Dies kann mit \texttt{BucketPred} in $\mathcal{O}(b + d)$ bestimmt werden, wobei $b$ die Bucketgröße und $d$ die Tiefe der Grammatik ist, wenn AreaComp terminiert. Das Setzen der Pointer benötigt ebenfalls $\mathcal{O}(1)$ Laufzeit. 
+Dann muss $R_{id}$-$[start..end]$ in \texttt{BucketPred} eingefügt werden, was eine erwartete Laufzeit von $\mathcal{O}(1)$ hat, wenn die Datenstruktur nicht sehr spärlich besetzt ist. Zuletzt muss noch durch die Teilintervalle von $[start..end]$ iteriert werden, um ihre \texttt{parent}-Pointer anzupassen. Es können nur $\mathcal{O}(k)$ viele von diesen Intervallen existieren. Da das bestimmen des Nachfolgers eines Intervalls $\mathcal{O}(b)$ Laufzeit benötigt, folgt hierfür eine Laufzeit von $\mathcal{O}(k \cdot b)$, was die Laufzeit dieses Falls dominiert.
 
-\subsubsection{Berechnen der Prioritätswarteschlange}
+Falls ein anderes Intervall $[start..end']$ bereits existiert mit $end < end'$, dann müssen nur die $\texttt{parent}$- und $\texttt{firstAtStartIndex}$-Pointer von $R_{id}$-$[start..end]$ gesetzt werden und es in \texttt{BucketPred} eingefügt werden. Wieder muss durch die Teilintervalle von $[start..end]$ iteriert werden und es folgt wieder eine Laufzeit von $\mathcal{O}(k \cdot b)$.
 
-Nun, da das Kind-Array berechnet ist, kann für jedes Abouelhoda-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ Abouelhoda-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle Abouelhoda-Intervalle durch rekursive Aufrufe also in $\mathcal{O}(n)$ berechnet werden.
+Falls aber ein anderes Intervall $[start..end']$ bereits existiert mit $end > end'$, dann ist $R_{id}$-$[start..end]$ nicht das tiefste Intervall an diesem Index. Dann wird eine Laufzeit von $\mathcal{O}(d)$ benötigt, um die Stelle in der verketteten Struktur zu finden, an die $R_{id}$-$[start..end]$ eingefügt werden muss. Dann muss wieder durch die Teilintervalle iteriert werden.
+Es folgt eine Laufzeit von ${O}(d + k \cdot b)$.
 
-Diese Intervalle werden nun in eine auf einem Binären Heap \cite{williams_algorithm_1964} basierenden Prioritätswarteschlange eingefügt. Die benötigte Laufzeit um ein Element einzufügen oder das minimale/maximale Element zu entfernen ist $\mathcal{O}(\log n)$ im Worst-Case. Da die Aufrufe der Operationen der Prioritätswarteschlange keinen signifikanten Anteil der Laufzeit des Algorithmus ausmachen, ist es hier nicht nötig nach alternativen möglicherweise effizienteren Heap-Implementationen zu forschen.
-
-Da die LCP-Intervalle anhand ihrer Flächenwerte priorisiert werden, muss die Flächenfunktion für jedes Intervall mindestens einmal aufgerufen werden. Sei $A$ die Flächenfunktion und $I$ ein LCP-Intervall. Sei dann die Laufzeit der Flächenfunktion $A(I)$ gleich $a(k)$, wobei $k = |I|$. 
-Da die Länge jedes Intervalls $\mathcal{O}(n)$ ist, folgt insgesamt als Laufzeit für die Konstruktion der Prioritätswarteschlange: $\mathcal{O}(n \cdot a(n) \cdot \log n)$.\\\\
-
-\subsubsection{Kompression}
-
-Die folgenden Operationen werden solange wiederholt, bis die konstruierte Prioritätswarteschlange leer ist. 
-
-\paragraph{Berechnung der Vorkommen}
-
-Zuerst wird das Intervall $[i..j]$, $0 < i \leq j < n$ mit dem größten Flächenwert aus der Prioritätswarteschlange entnommen. Dann können die Indizes aller Vorkommen des Substrings in $SA[i-1..j]$ gefunden werden. Diese speichern wir in einem neuen Array $\texttt{positions}$, da diese Indizes noch nachbearbeitet werden müssen.
-
-Die Länge des zu ersetzenden Substring $p \in \Sigma^*$ von $s$ ist dann gleich $k := |p| = \min_{i \leq a \leq j} LCP[a]$.
-Dies kann in linearer Laufzeit berechnet werden, doch wir können uns hier die Eigenschaften der Abouelhoda-Intervalle und des Kind-Arrays zunutze machen. 
-Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der LCP-Wert eines Abouelhoda-Intervalls in $\mathcal{O}(1)$ Zeit bestimmen. Dies geschieht, indem mithilfe des $up$, beziehungsweise des $down$ Eintrages im Kind-Array, der erste $l$-Index des Intervalls bestimmt werden kann. Da an jedem $l$-Index im LCP-Array das Minimum über diesem Intervall enthält, ist damit die Länge des Substrings gefunden.
-
-Somit sind sowohl die Vorkommen des Substrings, als auch dessen Länge berechnet. Ist $occ_p := j - i + 2$, die Anzahl an Vorkommen von $p$ in $s$. So benötigt diese Berechnung $\mathcal{O}(occ_p)$ Laufzeit, begrenzt durch die Berechnung der Indizes, an denen $p$ vorkommt.
-
-\paragraph{Bereinigen der Indizes}
-
-Nun ist es möglich, dass einige der Vorkommen sich nicht (mehr) für eine Ersetzung eignen. Etwa, weil diese sich mit dem vorhergehenden Vorkommen überlappen, oder weil dieses Vorkommen, die anderen nötigen Vorraussetzung für eine Substitution nicht erfüllen. Dies wurde in \ref{v3problems} und in der Beschreibung der neuen \texttt{RuleIntervalIndex} Datenstruktur genauer behandelt. Es werden nun mit den folgenden 2 Algorithmen, diejenigen Indizes entfernt, die nicht für eine Substitution in Frage kommen.
-
-\subparagraph{substitutionAllowed}
-
-Der erste Algorithmus bestimmt für ein Intervall, ob eine Substitution dieses Intervalls erlaubt ist. 
-
-\begin{algorithm}
-    \KwIn{$from, to: $ Start- und Endindizes, beide inklusiv,\\$intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
-    $fromInterval \leftarrow intervalIndex.intervalContaining(from)$\;
-    \While{$from = fromInterval.start \textbf{ and } to > fromInterval.end \textbf{ and }$\\$fromInterval.parent \neq \texttt{null}$} {
-        $fromInterval \leftarrow fromInterval.parent$\;
-    }
-
-    \If{$to > fromInterval.end$} {
-        \KwRet{$false$}
-    }
-
-    $toInterval \leftarrow intervalIndex.intervalContaining(to)$\;
-    \While{$toInterval$ does not contain $fromInterval \textbf{ and }$\\$to = toInterval.end \textbf{ and } toInterval.parent \neq null$}{
-        $toInterval \leftarrow toInterval.parent$\;
-    }
-    \KwRet{$toInterval = fromInterval$}
-    
-    \caption{substitutionAllowed}
-\end{algorithm}
-Dieser Algorithmus prüft, ob das Intervall $[from..to]$ substituiert werden darf. Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Symbole (Terminale oder Nichtterminale) finden lassen, dessen vollständig expandierte Form genau bei $from$ im Eingabestring beginnt, beziehungsweise genau bei $to$ endet (inklusive des Zeichens).
-In der Regel ist das Intervall das tiefste verschachtelte Intervall jeweils bei $from$ und $to$. 
-
-Liegen $from$ oder $to$ innerhalb des tiefsten Intervalls an dem jeweiligen Index, so dürfen für den jeweiligen Index keine weniger verschachtelten Intervalle berücksichtigt werden, da sonst die Grenzen der tieferen Intervalle verletzt würden.\\ 
-Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mit zu berücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \emph{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnen.
-
-In diesen beiden Fällen gilt auch dasselbe wieder, falls $from$ auch im Elternintervall genau auf den Anfang fällt, beziehungsweise $to$ auch dort auf das Ende fällt.
-
-Um dies besser zu veranschaulichen, hierzu ein Beispiel. Betrachten wir die folgende Grammatik für den String $abacaba$:
-
-\begin{align*}
-    S &\rightarrow AcA\\
-    A &\rightarrow aba
-\end{align*}
-
-Die Methode liefert \texttt{true} für $from=0$ und $to=3$. Hier beschreibt der Index $0$ hier entweder das erste $a$ aus dem ersten Ersetzungsintervall der Regel $A$, oder das erste $A$ in der Regel $S$. Letzteres ist möglich, da der Index $0$ genau auf den Anfang des Ersetzungsintervalls $[0..2]$ der Regel $A$ fällt. Der Index $3$ kann hier nur $c$ beschreiben.
-Es lassen sich hier also das erste $A$ als Startsymbol, und das $c$ als Endsymbol finden, die beide in dem einen Ersetzungsintervall der Regel $S$ liegen. Damit ist die Ersetzung von $Ac$ in der Regel $S$ erlaubt.
-
-Für $from=1$ und $to=3$ liefert die Methode allerdings \texttt{false}. Der Index $3$ liefert wie im vorhergehenden Fall wieder nur das $c$ aus Regel $S$.
-Index $1$ allerdings, liefert nur das $b$ aus dem ersten Ersetzungsintervall der Regel $A$. Hier dürfen keine weniger tiefen Ersetzungsintervalle (in diesem Fall nur das Eine der Regel $S$) berücksichtigt werden, da der Index $1$ nicht der Anfangsindex des Ersetzungsintervalls ist, in dem dieser Index liegt.
-Wir haben als Wahl für das Startsymbol nur $b$ aus Regel $A$ und als Endsymbol nur das $c$ aus Regel $S$. Hier lassen sich also kein Paar von Start- und Endsymbolen finden, die in demselben Ersetzungsintervall liegen. Die Substitution ist als ungültig.
-
-Für $from=0$ und $to=5$ liefert die Methode ebenfalls \texttt{false}. Hier liefert der Index $0$ wie im ersten Fall wieder $a$ aus dem ersten Ersetzungsintervall der Regel $A$ und das erste $A$ in der Regel $S$. Index $5$ liefert hier nur das $b$ aus dem \emph{zweiten} Ersetzungsintervall der Regel $A$. 
-Da wir als Wahl für das Endsymbol nur das $b$ aus einem Ersetzungsintervall der Regel $A$ zur Verfügung haben, kommt für das Startsymbol nur das $a$ infrage, da das $A$ aus einem Ersetzungsintervall der Regel $S$ stammt.
-Allerdings ist die Kombination von $a$ als Startsymbol und $b$ als Endsymbol ebenfalls ungültig, da diese jeweils aus unterschiedlichen Ersetzungsintervallen stammen.
-Die Substitution ist hier also auch ungültig.
-
-\subparagraph{cleanPositions}
-
-Mithilfe des vorherigen Algorithmus lassen sich nun die gegebenen Indizes der Vorkommen von $p$ bereinigen, sodass nur noch Indizes übrig bleiben, bei denen es auch tatsächlich möglich ist, das Vorkommen zu ersetzen. Der folgende Algorithmus leistet dies, und gibt zusätzlich die Anzahl der übrigen Positionen zurück. In diesem Algorithmus werden Positionen entfernt, indem sie durch $-1$ ersetzt werden. Beachte, dass dieser Algorithmus erwartet, dass das $positions$ Array aufsteigend sortiert ist.
-
-\begin{algorithm}
-    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, $len: $ Länge von $p$}
-    $count \leftarrow 0$\;
-    $previous \leftarrow -\infty$\;
-    \For{$i$ \textbf{in} $0$ \textbf{to} $n - 1$} {
-        $pos \leftarrow positions[i]$\;
-        \eIf{$previous + len \leq pos$ \textbf{ and } $substitutionAllowed(pos, pos + len - 1)$}{
-            $previous \leftarrow pos$\;
-            $count \leftarrow count + 1$\;
-        }{
-            $positions[i] \leftarrow -1$\;
-        }
-    }
-    \KwRet{$count$}
-    \caption{cleanPositions}
-\end{algorithm}
-
-Der Algorithmus iteriert durch das Array der gegebenen Positionen. Falls dann das jetzige Vorkommen sich nicht mit dem Vorherigen überschneidet und eine Substitution dieses Vorkommens erlaubt ist, so erhöhe den Zähler. Falls dies nicht der Fall ist, so entferne dieses Vorkommen.
-
-\paragraph{Sicherstellen unterschiedlicher Vorkommen}
-\label{differingV4}
-
-Es stellt sich nun ein weiteres Problem. Da das Suffix- und LCP-Array global für den Eingabestring berechnet werden, ist es möglich, dass es zwar mehrere Vorkommen eines Musters im Eingabestring gibt, aber durch vorhergehende Substitutionen dieses Vorkommen nur noch einmal in der Grammatik vorkommt. Betrachten wir wieder das Beispiel von vorher:
-
-\begin{align*}
-    S &\rightarrow AcA\\
-    A &\rightarrow aba
-\end{align*}
-
-Angenommen, das zu ersetzende Muster sei $ab$ an den Positionen $[0, 4]$. Dies sind zwei unterschiedliche nicht-überlappende Vorkommen im Eingabestring, die auch theoretisch ersetzt werden dürften. Allerdings sehen wir in der Grammatik, dass diese beiden Vorkommen nur zusammengefasst in der rechten Seite der Regel $A$ vorkommen. Insgesamt kommt $ab$ also nur ein einziges Mal in der Grammatik vor. Es müssen also verschiedene Vorkommen \emph{in der Grammatik} existieren, damit eine Substitution überhaupt eine Kompression ermöglicht.
-
-Dies leistet der folgende Algorithmus. Er liefert \texttt{true}, falls es mehrere tatsächlich unterschiedliche Vorkommen gibt, sonst \texttt{false}:
-
-\begin{algorithm}
-    \KwIn{ $positions: $ Array von Indizes an denen $p$ vorkommt, entfernte Positionen $=-1$}
-    \KwOut{ \KwTrue, falls mehrere tatsächlich unterschiedliche Vorkommen in der Grammatik existieren, \KwFalse sonst }
-    $set \leftarrow \emptyset$\;
-    $firstRuleId = -1$\;
-    \For{$pos$ \textbf{in} $positions$} {
-        \If{$pos == -1$} { 
-            \textbf{continue}\;
-        }
-        $ruleInterval \leftarrow intervalIndex.intervalContaining(pos)$\;
-        $ruleId \leftarrow ruleInterval.ruleId$\;
-        $startIndex \leftarrow ruleInterval.start$\;
-
-        \If{$firstRuleId = -1$} {
-            $firstRuleId \leftarrow ruleId$\;
-        }
-        \ElseIf{$ruleId \neq firstRuleId$ \textbf{ or } $startIndex \in set$} {
-            \KwRet{$true$}
-        }
-        $set \leftarrow set \cup \{startIndex\}$\;
-    }
-    \KwRet{$false$}
-    
-    \caption{differingOccurrences}
-\end{algorithm}
-
-Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel, die in der nun folgenden for-Schleife gefunden wird.
-
-Die for-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positionen und berechnet jeweils das tiefste Intervall an dem gegebenen Index, sowie dessen ID und Startindex. Ist die $firstRuleId$ noch nicht gesetzt, so wird diese auf die ID des berechneten Intervalls gesetzt. Andernfalls wird geprüft, ob die ID des soeben berechneten Intervalls mit der als erstes berechneten Intervalls übereinstimmt. Stimmen diese nicht überein, so sind bereits zwei Vorkommen in unterschiedlichen Regeln gefunden worden. Diese müssen zwangsweise unterschiedlich sein. Also gibt der Algorithmus dann \texttt{true} zurück.
-
-Ist dies nicht der Fall, so wird geprüft ob der Startindex des jetzigen Intervalls bereits in der Menge zu finden ist, also schon ein Vorkommen in einem Intervall mit diesem Startindex gefunden wurde. Wenn ja, dann muss das aktuell betrachtete Vorkommen zwangsweise unterschiedlich mit dem bereits gefundenen sein. Denn es gibt hier zwei Fälle:
-\begin{itemize}
-    \item[\textbf{Fall 1}] \emph{Das jetzige Intervall ist dasselbe Intervall, indem bereits ein Vorkommen gefunden wurde.}\\
-    In diesem Fall existiert also in demselben Intervall ein Vorkommen an einem kleineren Index. Dies gilt, da die Indizes aufsteigend sortiert sind (ausgenommen der entfernten Indizes) und an jedem Index nur maximal \emph{ein} Intervall mit einer gegebenen Regel ID existieren kann. 
-    \item[\textbf{Fall 2}] \emph{Das jetzige Intervall ist ein anderes Intervall, das an demselben Startindex beginnt.}\\
-    Wie in Fall 1 schon beschrieben, muss also das jetzige Intervall einer anderen Regel angehlören. Da nun ein Vorkommen in einer anderen Regel gefunden wurde, als das vorherige Vorkommen, so folgt sofort, dass das jetzige Vorkommen unterschiedlich sein muss. 
-\end{itemize}   
-Also wird \texttt{true} zurückgegeben, wenn ein Startindex zweimal gefunden wird.
-
-Tritt keine dieser Bedingungen je ein, so existieren keine unterschiedlichen Vorkommen und der Algorithmus gibt $\texttt{false}$ zurück.\\\\
-Gibt dieser Algorithmus \texttt{false} zurück, so wird keine Substitution durchgeführt, da insgesamt nur ein Vorkommen des Musters in der Grammatik existiert.
-
-\newpage
-\paragraph{Faktorisierung}
-
-Der letzte Schritt der Kompression ist die tatsächliche Substitution der Vorkommen des Musters.
-\begin{algorithm}
-        \KwIn{ $len: $ Länge des Musters,\\ $positions: $ Array mit Startindizes der Vorkommen. Entfernte Vorkommen sind $-1$,\\ $intervalIndex: $ Die Instanz der \texttt{RuleIntervalIndex} Datenstruktur}
-        $nextId \leftarrow$ nächste unbenutzte Regel ID\;
-        \For{$pos \leftarrow positions$} {
-            \If{$pos = -1$} {
-                \textbf{continue}\;
-            }
-            $intervalIndex.mark(nextId, pos, pos + len - 1)$\;
-        }
-\end{algorithm}
-
-Der Algorithmus iteriert nur durch das Array der Startindizes der Vorkommen des Musters und markiert die jeweiligen Intervalle, die das Vorkommen des Musters einnimmt, in der Datenstruktur. 
-
-\paragraph{Abschluss des Algorithmus}
-
-Wenn der Algorithmus terminiert, so sind alle Ersetzungsintervalle in der \texttt{RuleIntervalIndex} Datenstruktur gespeichert.
-Diese lässt sich mithilfe des Eingabestrings die Grammatik in eine Darstellung überführen, in der die Produktionsregeln der Grammatik explizit gespeichert werden.
-Es kann für jedes Zeichen im Eingabestring die tiefste Regel bestimmt werden, in der das jeweilige Zeichen liegt, und in eine entsprechende Liste von Zeichen eingefügt werden.
-
-Hierzu werden 2 Stacks angewendet.
-\begin{itemize}[leftmargin=2cm]
-    \item[\texttt{nestingStack}] Ein Stack von Ersetzungsintervallen. Ist die Iteration bei Index $i$, so enthält \texttt{nestingStack} alle Ersetzungsintervalle in denen $i$ liegt, in der Reihenfolge ihrer Verschachtelung. Dabei liegt das am tiefsten verschachtelte Intervall oben auf dem Stack.
-    \item[\texttt{symbolStack}] Ein Stack von Listen von Symbolen. Für jedes Ersetzungsintervall enthält \texttt{symbolStack} jeweils eine korrespondierende Liste von Symbolen. 
-    Ist die Iteration bei Index $i$, so enthalten die Listen jeweils Symbole der rechten Seite der Produktionsregel, die durch das korrespondierende Ersetzungsintervall repräsentiert wird. Sie enthalten Symbole, die in dem Ersetzungsintervall bis zum Index $i$ im Eingabestring vorkommen. 
-\end{itemize} 
-
-Ein Beispiel dafür. Betrachten wir die folgende Grammatik für $abcdabeabcd$
-
-\begin{align*}
-    S &\rightarrow ABeA\\
-    A &\rightarrow Bcd\\
-    B &\rightarrow ab\\
-\end{align*}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \matrix (A) [table, text width=7mm] {
-            $a$ & $b$ & $c$ & $d$ & $a$ & $b$ & $e$ & $a$ & $b$ & $c$ & $d$\\
-            \\
-            |[draw=none]| & |[draw=none]|  &  &  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
-            |[draw=none]| & |[draw=none]|  &  &  &  &  &  & |[draw=none]|  & |[draw=none]|  &  & |[draw=none]|\\
-        };
-        
-        \node[draw, fit=(A-3-1)(A-3-9), table nodes] {$R_0$-$[0..10]$};
-
-    \end{tikzpicture}
-\end{figure}
+Insgesamt folgt, dass die Markieroperation eine erwartete Laufzeit von ${O}(k \cdot b + d)$ besitzt.

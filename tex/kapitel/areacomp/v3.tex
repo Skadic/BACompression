@@ -3,6 +3,7 @@
 In Version 3 des Algorithmus werden die Wahl der LCP-Intervalle, die in Betracht gezogen werden sollen, eingeschränkt. Ebenfalls werden die in V2 eingeführten Datenstrukturen $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ durch eine effizientere Datenstruktur ersetzt, um effizienteres Markieren von Ersetzungsintervallen zu ermöglichen. 
 
 \subsection{Wahl der LCP-Intervalle}
+\label{lcpchoice}
 
 Die Grundlage hierfür bieten die Abouelhoda-Intervalle von Abouelhoda et al. \cite{abouelhoda_optimal_2002}.
 Hierzu ist nötig, dass an den Eingabestring $s := s_1s_2\dots s_{n-1}$ noch ein Symbol $\$$ an $s$ angehängt wird, das lexikographisch größer ist als alle $s_i$ mit $i \in [0..n-1]$. Der in diesem Algorithmus verarbeitete String ist also $s\$ = s_1s_2\dots s_{n-1}\$$
@@ -53,12 +54,15 @@ Damit ist die Behauptung gezeigt. $\square$\\\\
 Für das LCP Intervall des Eingabestrings ist dann also die Anzahl der Abouelhoda-Intervalle in $\mathcal{O}(n)$. 
 
 \subsection{RuleIntervalIndex}
+\label{riiv3}
 
 Ein weiteres Problem sind die Datenstrukturen $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$. Diese sind sowohl im Bezug auf Speicher als auch Laufzeit ineffizient. Die Lösung für dieses Problem bietet die Datenstruktur $\texttt{RuleIntervalIndex}$.
 
 Diese basiert auf einer assoziativen Predecessor-Datenstruktur \cite{dinklage_engineering_2021} und unterstützt auch entsprechende Anfragen. Hier wird zu diesem Zweck eine assoziative Variante von Red-Black-Trees \cite{bayer_symmetric_1972, guibas_dichromatic_1978} verwendet (\texttt{TreeMap} in Java). Diese hat eine Laufzeit von $\mathcal{O}(\log n)$ bei allen Operationen der Predecessor-Datenstruktur. 
 
-In der Predecessor-Datenstruktur ordnen wir jeweils immer einen Startindex dem am tiefsten verschachtelten Ersetzungsintervall zu, der an diesem Index beginnt. Dabei kann es vorkommen, dass etwa ein kleineres und tieferes Intervall, in einem größeren Intervall liegt. Deswegen werden die Ersetzungsintervalle nicht ganz, sondern in Teilen gespeichert. 
+In der Predecessor-Datenstruktur ordnen wir jeweils immer einen Startindex dem am tiefsten verschachtelten Ersetzungsintervall zu, der an diesem Index beginnt. Dabei kann es vorkommen, dass etwa ein kleineres und tieferes Intervall, in einem größeren Intervall liegt. Deswegen werden die Ersetzungsintervalle nicht ganz, sondern in Teilen gespeichert.
+
+Im Folgenden bezeichnet $R_k$-$[i..j]$ einen Teil eines Ersetzungsintervalls der Regel $k$, der das Intervall $[i..j]$ mit $i \leq j$ belegt. 
 
 Betrachte \autoref{v3ruleintervalindex}. Die Intervallteile $R_1$-$[0..0]$ und $R_1$-$[3..3]$ gehören demselben Ersetzungsintervall $[0..3]$ an. Dies ist insbesondere in der entsprechenden $\texttt{ruleIntervals}$ Datenstruktur in \autoref{v2datastructures} sichtbar. Da allerdings das Ersetzungsintervall $[1..2]$ der Regel $R_2$, und der entsprechende Intervallteil $R_2$-$[1..2]$ tiefer verschachtelt ist, als $[0..3]$, muss an den Indizes $1$ bis $2$ $[1..2]$ gespeichert werden.
 
@@ -162,7 +166,7 @@ In V3 wurden diese durch einen assoziativen Red-Black-Tree ersetzt, wie auch in 
 		\end{tabular}
 	}
 	\quad
-	\subfloat[symbols]{
+	\subfloat[cumulativeLength]{
 		\begin{tabular}{|c|c|c|c|c|c|} \hline
 			$5$ & $6$ & $7$ & $12$ & $18$ & $19$ \\\hline
 		\end{tabular}
