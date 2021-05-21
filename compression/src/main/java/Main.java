@@ -158,7 +158,7 @@ public class Main {
                 fileName.substring(0, fileName.lastIndexOf(".")) + ".out" + fileName.substring(fileName.lastIndexOf("."))
         );
 
-        alg.benchmarkSimple(input, new PrintStream(Files.newOutputStream(outputPath, StandardOpenOption.TRUNCATE_EXISTING)), printGrammar);
+        alg.benchmarkSimple(input, new PrintStream(Files.newOutputStream(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)), printGrammar);
         System.out.println("Results written to " + outputPath.toString());
     }
 }
