@@ -149,69 +149,97 @@ $\texttt{RuleIntervalIndex}$ unterstützt die folgenden Operationen:
 
 Mithilfe dieser Operationen ist es nun möglich, effizienter zu bestimmen, welches das am tiefsten verschachtelte Intervall an einem Index ist. Dies ist einerseits für die Vorverarbeitung der Vorkommen eines zu ersetzenden Musters wichtig. Hier muss festgestellt werden, ob ein Vorkommen ersetzt werden darf. Dazu muss unter Anderem geprüft werden, ob die Grenzen des entstehenden Ersetzungsintervalls in demselben bereits bestehenden Ersetzungsintervall liegen. 
 
-Andererseits ist dies auch für das tatsächliche Ersetzen eines Musters wichtig, um festzustellen in welcher Regel das sich das jeweilige Vorkommen befindet und ersetzt werden muss.
+Andererseits ist dies auch für das tatsächliche Ersetzen eines Musters wichtig, um festzustellen, in welcher Regel das sich das jeweilige Vorkommen befindet und ersetzt werden muss.
 
 \subsection{Kleinere Verbesserungen in der Rule Datenstruktur}
 
 In V2 bestehen die Regeln aus zwei dynamischen Arrays, die einerseits die Symbole selbst (\texttt{symbols}), und andererseits die Präfixsumme über die Länge der einzelnen Symbole speichert (\texttt{cumulativeLength}).
-Die Position eines Terminals in der vollständig expandierten Form von \texttt{symbols} wird durch eine binäre Suche auf \texttt{cumulativeLength} berechnet. Die Suche von Symbolen ist zwar effizient, nur ist das Ersetzen von Bereichen in diesen Arrays ineffizient. Denn hier, muss ein Bereich aus diesen Arrays gelöscht, und durch ein Nichtterminal ersetzt werden. Dies hat eine Laufzeit von $\mathcal{O}(n)$ für eine Regel mit $n$ Symbolen.
+Die Position eines Terminals in der vollständig expandierten Form von \texttt{symbols} wird durch eine binäre Suche auf \texttt{cumulativeLength} berechnet. Die Suche von Symbolen ist zwar effizient, nur ist das Ersetzen von Bereichen in diesen Arrays ineffizient. Denn hier muss ein Bereich aus diesen Arrays gelöscht und durch ein Nichtterminal ersetzt werden. Dies hat eine Laufzeit von $\mathcal{O}(n)$ für eine Regel mit $n$ Symbolen.
 
-In V3 wurden diese durch einen assoziativen Red-Black-Tree ersetzt, wie auch in \texttt{RuleIntervalIndex}. Hier wird der Startindex des Symbols in der vollständig expandierten Form dieser Regel als Schlüssel verwendet. Der assoziierte Wert ist dann das Symbol selbst. Betrachten wir beispielsweise diese Arrays aus V2:
+In V3 wurden diese durch einen assoziativen Red-Black-Tree ersetzt, wie auch in \texttt{RuleIntervalIndex}. Hier wird der Startindex des Symbols in der vollständig expandierten Form dieser Regel als Schlüssel verwendet. Der assoziierte Wert ist dann das Symbol selbst. Betrachten wir beispielsweise wieder die Grammatik aus \autoref{v2datastructures}.
+Die V2 Datenstrukturen für die Regel $R_0$ sind in \autoref{v2ruledatastructure} abgebildet. Die neue V3 Datenstruktur für dieselbe Regel ist in \autoref{v3ruledatastructure} zu sehen.
 
-\begin{figure}[H]
-	\centering
-	\subfloat[symbols]{
-		\begin{tabular}{|c|c|c|c|c|c|} \hline
-			$R_1$ & $a$ & $b$ & $R_3$ & $R_2$ & $d$ \\\hline
-		\end{tabular}
-	}
-	\quad
-	\subfloat[cumulativeLength]{
-		\begin{tabular}{|c|c|c|c|c|c|} \hline
-			$5$ & $6$ & $7$ & $12$ & $18$ & $19$ \\\hline
-		\end{tabular}
-	}
-\end{figure}
+\begin{figure}
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \subfloat[symbols]{
+            \begin{tabular}{|c|c|c|c|} \hline
+                $R_1$ & $R_2$ & $R_1$ & $c$ \\\hline
+            \end{tabular}
+            
+        }
+        
+        \subfloat[cumulativeLength]{
+            \begin{tabular}{|c|c|c|c|} \hline
+                $4$ & $6$ & $10$ & $11$ \\\hline
+            \end{tabular}
+        }
+        \caption{Die V2 Datenstrukturen für $R_0$ aus \autoref{v2datastructures}.}
+        \label{v2ruledatastructure}
+    \end{minipage}
+    \quad
+    \begin{minipage}{0.60\textwidth}
+        \centering
+        \subfloat[Die Baumstruktur von V3]{
+            \begin{tikzpicture}
+            
+                \node[draw] (6) at (0,0) {$6: R_1$};
+                \node[draw] (4) at (-1, -1) {$4: R_2$};
+                \node[draw] (0) at (-2, -2) {$0: R_1$};
+                \node[draw] (10) at (1, -1) {$10: c$};
+                
+                \draw[-] (6) -- (4);
+                \draw[-] (6) -- (10);
+                \draw[-] (0) -- (4);
+                
+            \end{tikzpicture}
+        }
+        \caption{Die V3 Datenstruktur für $R_0$ aus \autoref{v2datastructures}. Jeder Knoten enthält neben dem Symbol selbst den Startindex der voll expandierten Form des Symbols im Eingabetext.}
+        \label{v3ruledatastructure}
+    \end{minipage}
+    
 
-In V3 würden diese stattdessen etwa folgendermaßen dargestellt werden:
-
-\begin{figure}[H]
-	\centering
-	\begin{tikzpicture}
-		
-		\node[draw] (12) at (0,0) {$12: R_3$};
-		\node[draw] (6) at (-2, -1) {$6: a$};
-		\node[draw] (19) at (2, -1) {$19: d$};
-		\node[draw] (18) at (1, -2) {$18: R_2$}; 
-		\node[draw] (5) at (-3, -2) {$5: R_1$};
-		\node[draw] (7) at (-1, -2) {$7: b$};
-		
-		\draw[-] (12) -- (6);
-		\draw[-] (6) -- (5);
-		\draw[-] (6) -- (7);
-		\draw[-] (12) -- (19);
-		\draw[-] (19) -- (18);
-		
-	\end{tikzpicture}
 \end{figure}
 
 Sei also ein Baum mit $n$ Elementen gegeben, so wie ein Intervall $[i..j]$, $i <= j$. Liegen nun $k$ Elemente, im Intervall $[i..j]$, so können alle diese Elemente insgesamt in $\mathcal{O}(k \log n)$ Laufzeit entfernt werden, da immer $\mathcal{O}(\log n)$ Laufzeit benötigt wird, um ein Element zu finden.
 
+\subsection{Laufzeit}
+
+Das Erzeugen der Prioritätswarteschlange braucht nun nur noch $\mathcal{O}(n \log n)$ Laufzeit. Da die Prioritätswarteschlange auf einem binären Heap basiert, hat diese eine $\texttt{insert}$-Laufzeit von $\mathcal{O}(\log n)$. Wie in \autoref{lcpchoice} gezeigt, gibt es $\mathcal{O}(n)$ Abouelhoda-Intervalle. Aus diesem Grund kann die While-Schleife nur $\mathcal{O}(n)$ mal wiederholen.
+
+Das Berechnen der Positionen $positions$ der Vorkommen und Länge $len$ des Musters $p \in \Sigma^*$ sind insgesamt in $\mathcal{O}(n)$ möglich. 
+Das Prüfen, ob eine Substitution von $p$ an einem Index erlaubt ist, benötigt Anfragen an die \texttt{RuleIntervalIndex} Datenstruktur.
+Diese benötigen jeweils $\mathcal{O}(\log n)$ Laufzeit. Da die Anzahl an Vorkommen von $p$ $\mathcal{O}(n)$ ist, folgt eine $\mathcal{n \log n}$ Laufzeit um für alle Vorkommen zu entscheiden, ob eine Substitution erlaubt ist.
+
+In der eigentlichen Substitution wird für jedes Vorkommen bestimmt, in welcher Regel dieses Vorkommen in der Grammatik liegt ($\mathcal{O}(\log n)$) und in dieser Regel dann substituiert. Diese Substituierung benötigt $\mathcal{O}(len \log n)$ Laufzeit, da $len$ Elemente aus der Regel gelöscht werden müssen, und jede Löschung eine Laufzeit von $\mathcal{O}(\log n)$ hat. Dies ist der Fall, da die Länge der Regel $\mathcal{O}(n)$ ist.
+
+Dann muss das Intervall, das substituiert wurde, in der \texttt{RuleIntervalIndex} Datenstruktur als substituiert markiert werden.
+Dies erfordert mehrere \texttt{predecessor}-Aufrufe an die Predecessor-Datenstruktur und unter Anderem die Iteration durch alle Intervalle, die im Bereich des neuen Intervalls liegen. Die Iteration benötigt $\mathcal{O}(len \log n)$ Laufzeit, da für jeden Durchlauf potenziell ein Intervallteil in die Datenstruktur eingefügt werden muss. 
+
+Da durch die Bereinigung der Positionen nur noch nicht-überlappende Vorkommen in $positions$ vorkommen, ist die Anzahl der zu ersetzenden Regeln $\mathcal{O}(\tfrac{n}{len})$. Also folgt für die Gesamtlaufzeit der Substitution: $\mathcal{O}(\tfrac{n}{len} \cdot len \log n) = \mathcal{O}(n \log n)$.
+
+Da diese Funktion $\mathcal{O}(n)$-Mal aufgerufen wird, folgt eine Gesamtlaufzeit von $\mathcal{O}(n^2 \log n)$.
+
+
+
+
+
 \subsection{Probleme}
 \label{v3problems}
 
-Die Laufzeit ist durch die beschränkte Wahl der LCP-Intervalle, \texttt{RuleIntervalIndex} und die Verbesserte Regel-Datenstruktur, erheblich verbessert, aber es gibt trotzdem noch Probleme mit V3.
+Die Laufzeit ist durch die beschränkte Wahl der LCP-Intervalle, \texttt{RuleIntervalIndex} und die neue Regel-Datenstruktur verbessert, aber es gibt trotzdem noch Probleme mit V3. 
 
 \subsubsection{Speicherverbrauch}
-Da V3 als erste Version auch auf Datenmengen größer als 1MB tolerable Laufzeiten erzielt, stellt sich als nächstes das Problem des Speicherverbrauchs. Allein auf einer Datenmenge von 50MB, benötigte V3 schon etwa 6-8GB oder mehr.
+Da V3 als erste Version auch auf Datenmengen größer als 1MB tolerable Laufzeiten erzielt, stellt sich als nächstes das Problem des Speicherverbrauchs. Allein auf einer Datenmenge von 50MB benötigte V3 schon etwa 6-8GB oder mehr. Dies ist dominiert durch die \texttt{RuleIntervalIndex} Datenstruktur und das die Regeln an sich.
 
 \subsubsection{Effizienz von RuleInvervalIndex}
 
 Außerdem ist \texttt{RuleIntervalIndex} nicht optimal. Viele der Operationen benötigen noch mehrere Anfragen an die darunterligende Predecessor-Datenstruktur.\\
-Um etwa für einen Index $i$ den Intervall-Teil des Ersetzungsintervalls zu erhalten in dem $\texttt{i}$ liegt, muss zuerst ein $\texttt{predecessor(i)}$ Aufruf durchgeführt werden, um den Intervall-Teil $\texttt{part}$zu erhalten in dem $\texttt{i}$ liegt. Dann muss eine $\texttt{get(part.totalStart)}$ Anfrage durchgeführt werden, um den ersten Intervall-Teil zu erhalten.\\
+Um etwa für einen Index $i$ den Intervall-Teil des Ersetzungsintervalls zu erhalten in dem $i$ liegt, muss zuerst ein $\texttt{predecessor}(i)$ Aufruf durchgeführt werden, um den Intervall-Teil $\texttt{part}$zu erhalten in dem $i$ liegt. Dann muss eine $\texttt{get}(part.totalStart)$ Anfrage durchgeführt werden, um den ersten Intervall-Teil zu erhalten.\\
 Diese Anfrage kommt oft vor, da sie benötigt wird, um zu entscheiden, ob ein Vorkommen eines Musters ersetzt werden darf.
 
-Dazu ist das markieren, also das einfügen neuer Ersetzungsintervalle noch kostspielig. Dies benötigt ebenfalls mehrere Anfragen an die Predecessor-Struktur. Außerdem müssen für das neu einzufügende Intervall $[start, end]$ alle Intervalle mit Startpositionen im Bereich $[start, end]$ durchlaufen werden, um diese potentiell zu ersetzen, falls diese weniger tief verschachtelt sind, als das neu einzufügende Intervall. Dies kann im Worst-Case lineare Laufzeit in der Länge der Eingabe bedeuten.
+Dazu ist das Markieren, also das Einfügen neuer Ersetzungsintervalle noch kostspielig. Dies benötigt ebenfalls mehrere Anfragen an die Predecessor-Struktur. Außerdem müssen für das neu einzufügende Intervall $[start.. end]$ alle Intervalle mit Startpositionen im Bereich $[start.. end]$ durchlaufen werden, um diese potentiell zu ersetzen, falls diese weniger tief verschachtelt sind, als das neu einzufügende Intervall. Dies kann im Worst-Case lineare Laufzeit in der Länge der Eingabe bedeuten.
 
 \subsubsection{Zu strenge Entscheidung ob Vorkommen ersetzt werden dürfen}
 \label{strictdecision}

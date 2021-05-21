@@ -73,8 +73,13 @@ Im Laufe der Entwicklung von AreaComp sind vier Versionen des Algorithmus entsta
 \begin{itemize}
     \item[\emph{V1}] \emph{Naive Implementierung}\\
     In V1 werden keine laufzeitverbessernden Datenstrukturen oder Algorithmen angewendet.
-    Diese Version nutzt dieselbe Datenstruktur für Regeln wie Sequitur. (siehe \autoref{sequitur}) Diese Version hat eine $\mathcal{O}(n^4)$ Laufzeit.
-    \item[\emph{V2}] \emph{}
+    Diese Version nutzt dieselbe Datenstruktur für Regeln wie Sequitur. (siehe \autoref{sequitur}) Diese Version hat eine $\mathcal{O}(n^5 \log n)$ Laufzeit.
+    \item[\emph{V2}] \emph{Rudimentäre Datenstrukturen und Reduzierung von Suffix-Array Berechnungen}\\
+    Die Berechnungen von Suffix-Array und LCP-Array werden aus der Schleife ausgelagert und nur noch einmal erzeugt. Es kommen rudimentäre Datenstrukturen zum Einsatz, die bestimmen, ob die Ersetzung eines Musters an einem bestimmten Index erlaubt ist. Trotzdem hat der Algorithmus noch eine Laufzeit von $\mathcal{O}(n^4)$  
+    \item[\emph{V3}] \emph{Wahl der LCP-Intervalle} \texttt{RuleIntervalIndex} \emph{Datenstruktur}\\
+    Es kommen Abouelhoda-Intervalle zum Einsatz um die Anzahl der betrachteten LCP-Intervalle massiv zu reduzieren. Die \texttt{RuleIntervalIndex} Datenstruktur liefert nun effizienteres Bestimmen von tiefsten Intervallen. Die Laufzeit ist $\mathcal{O}(n^2 \log n)$.
+    \item[\emph{V4}] \emph{Finale Version}\\
+    Diese Version verbessert von \texttt{RuleIntervalIndex}, sodass weniger Aufwand für die Operationen benötigt wird. Regeln werden nun während der Berechnung nicht mehr  explizit gespeichert. Die Laufzeit ist $\mathcal{O}(n^2 \cdot (b + d))$, wobei $b$ die Größe der Buckets ist (siehe \autoref{bucketpredds}) und $d$ die Tiefe der erzeugten Grammatik.
 \end{itemize}
 
 \newpage
