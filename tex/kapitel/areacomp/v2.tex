@@ -66,7 +66,7 @@ Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und 
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
 	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste von Regeln enthält. Die Liste bei Index $i$ enthält dann genau die Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die Regeln in der Reihenfolge der Verschachtelung der Ersetzungsintervalle geordnet. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
-	Anders formuliert, beinhaltet die Liste die Indizes aller Regeln, die von der Startregel ausgehend in der Grammatik durchlaufen werden müssen, um das Zeichen an Index $i$ im Eingabestring zu erreichen, genau in der Reihenfolge in der sie durchlaufen wurden. Es ist also der letzte Index immer die Regel, die dem am tiefsten verschachtelten Ersetzungsintervall angehört. 
+	Anders formuliert, beinhaltet die Liste die Indizes aller Regeln, die von der Startregel ausgehend in der Grammatik durchlaufen werden müssen, um das Zeichen an Index $i$ im Eingabestring zu erreichen, genau in der Reihenfolge, in der sie durchlaufen wurden. Es ist also der letzte Index immer die Regel, die dem am tiefsten verschachtelten Ersetzungsintervall angehört. 
 	
 	Betrachte \autoref{v2datastructures}. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 1, 2]$, da wir die Regeln in der Reihenfolge $R_0 \rightarrow R_1 \rightarrow R_2$ durchlaufen müssen, um das $b$ an Index $1$ im Eingabestring zu erreichen.
 	
@@ -113,7 +113,7 @@ Es existiert aber ein weiteres Problem. Betrachten wir beispielsweise die Gramma
 	R_1 &\rightarrow a\ b\ c
 \end{align*}
 
-Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
+Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als Nächstes die beiden Vorkommen von $ab$ finden. 
 Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R_1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurden. Demnach darf $ab$ nicht nochmals ersetzt werden. 
 Es muss also möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \emph{in der Grammatik} mehrmals vorkommen.
 \begin{algorithm}[t]
@@ -143,7 +143,7 @@ Dies kann mit \autoref{diffOccAlgoV2} festgestellt werden.
 Wir iterieren durch die Indizes, an denen $p$ vorkommt und bestimmen die tiefste Regel an diesem Index. Wir speichern die erste solche Regel. Kommt in einer späteren Iteration eine andere Regel vor als die Gespeicherte, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
 Andererseits bestimmen wir den Anfangsindex des Ersetzungsintervalls. Wir verwalten eine Menge aller solcher Anfangsindizes, die bisher bestimmt wurden. 
 Falls dieser Anfangsindex noch nicht in der Menge gespeichert ist, speichern wir diesen in der Menge und springen zum nächsten Schritt der Iteration. Falls doch, brechen wir die Iteration ab und geben $\texttt{true}$ zurück. 
-Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, so dass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
+Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, sodass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
 
 \begin{enumerate}
 	\item[\textbf{Fall 1}] Die Regeln der beiden Intervalle sind gleich.\\
@@ -162,7 +162,7 @@ Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch
 Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabestring beschreiben. Es muss dieser Index also vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
 
 Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, 
-lässt sich also derjenige lokale Index $j$ in der rechten Seite der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
+lässt sich also derjenige lokale Index $j$ in der rechten Seite der Regel bestimmen, sodass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
 Von dort an kann dann durch Iterieren durch $\texttt{symbols}$ die erforderliche Anzahl an Symbolen durch das neue Nichtterminal ersetzt werden.
 Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, indem die neue Regel an den entsprechenden Stellen eingefügt wird.
 
@@ -202,7 +202,7 @@ Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}
 
 \subsubsection{Laufzeit}
 
-Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Auf einem Beispieltext von 887 Zeichen benötigte V1 1684ms und die Größe der resultierenden Grammatik war $232$. V2 hingegen benötigte 381ms aber die Größe der Grammatik war $383$. 
+Wie bei V1 ist auch bei V2 die Laufzeit noch unzureichend. Auf einem Beispieltext von $887$ Zeichen benötigte V1 1684ms und die Größe der resultierenden Grammatik war $232$. V2 hingegen benötigte 381ms, doch die Größe der resultierenden Grammatik war $383$. 
 
 Sei $s \in \Sigma^*$ mit $n := |s|$ der Eingabestring.
 

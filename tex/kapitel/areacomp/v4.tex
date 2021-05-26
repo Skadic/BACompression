@@ -34,7 +34,7 @@ Dies ist bis jetzt die finale Version dieses Algorithmus.
 Bisher verwendete \texttt{RuleIntervalIndex} Red-Black-Trees als zugrundeliegende Predecessor-Datenstruktur. Diese benötigen $\mathcal{O}(\log n)$ Laufzeit für jede Operation. Da aber etwa die $\texttt{get}$ und $\texttt{predecessor}$ Operation sehr oft aufgerufen werden, stellt dies ein Bottleneck für die Laufzeit dar.
 Die Idee ist nun, Red-Black-Trees durch eine für diese Zwecke effizientere Datenstruktur zu ersetzen.
 
-Dazu bietet sich die in Kapitel 4 von \cite{dinklage_engineering_2021} von Dinklage et al. beschriebene Predecessor-Datenstruktur an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante dieser Datenstruktur. Die ursprüngliche \texttt{BucketPred} Datenstruktur speichert nur die ganzzahligen Schlüssel. Wir erweitern \texttt{BucketPred} durch eine Hashtabelle. Diese bildet die in der Predecessor-Datenstruktur gespeicherten Schlüssel auf zugehörige Daten ab. Es gibt nur eine Hashtabelle für die gesamte Datenstruktur.   
+Dazu bietet sich die in Kapitel 4 von \cite{dinklage_engineering_2021} von Dinklage et al.\ beschriebene Predecessor-Datenstruktur an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante dieser Datenstruktur. Die ursprüngliche \texttt{BucketPred} Datenstruktur speichert nur die ganzzahligen Schlüssel. Wir erweitern \texttt{BucketPred} durch eine Hashtabelle. Diese bildet die in der Predecessor-Datenstruktur gespeicherten Schlüssel auf zugehörige Daten ab. Es gibt nur eine Hashtabelle für die gesamte Datenstruktur.   
 Eine lokale Hashtabelle für jeden Bucket, scheint bei Tests keine Vorteile zu bieten.\\
 Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ erwartete Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(\tfrac{u}{b})$ Worst-Case Laufzeit für $\texttt{insert}$ Operationen. (siehe \autoref{bucketpredds}) 
 
@@ -49,7 +49,7 @@ Allerdings wird $\texttt{predecessor}$ viel häufiger benötigt als $\texttt{ins
 Wie bereits beschrieben, hat die vorherige Version von \texttt{RuleIntervalIndex} das Problem, dass bestimmte Fälle, in denen eine Substitution legal ist, nicht korrekt erkannt werden. Außerdem ist das Markieren von Bereichen noch ineffizient.  
 
 Zu diesem Zweck verändern wir die Funktionsweise von \texttt{RuleIntervalIndex} etwas. In V3 wurden einzelne Teile von Intervallen gespeichert, sodass immer nur das tiefste Intervall an einem Index gespeichert wird.
-Stattdessen speichern wir jetzt alle existierenden Intervalle ganz. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenfalls weniger tief verschachtelte Intervalle. 
+Stattdessen speichern wir jetzt alle existierenden Intervalle ganz. Dies tun wir auf eine Art und Weise, die es uns trotzdem ermöglicht, effizient das tiefste verschachtelte Intervall an einem Index zu finden, aber auch gegebenenfalls weniger tief verschachtelte Intervalle. 
 
 \subsubsection{Beispiel}
 
@@ -97,7 +97,7 @@ In V3 waren \texttt{RuleInterval}s Teile von Ersetzungsintervallen. In V4 ist ei
 Die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ sind genau wie in \autoref{riiv3}. Die anderen Attribute werden durch die Folgenden ersetzt:
 
 \begin{itemize}[leftmargin=3cm]
-    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall umschließt. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. In \autoref{newrii} zeigt der \texttt{parent}-Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
+    \item[\texttt{parent}] Dies ist ein Pointer auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall umschließt. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. In \autoref{newrii} zeigt der \texttt{parent}-Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
     \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \emph{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
     \item[\texttt{nextAtStartIndex}] Ein Pointer auf das Ersetzungsintervall, das am selben Startindex beginnt und das nächst-tiefer verschachtelt ist
 \end{itemize}
@@ -112,7 +112,7 @@ Dies ist mithilfe von \autoref{intervalcontainingv4} möglich.
 \begin{algorithm}[t]
     \KwIn {$from, to$ Start- und Endindizes}
     \KwOut{Das tiefste Ersetzungsintervall, das sowohl $from$ als auch $to$ umschließt}
-    $current \leftarrow floorInterval(from)$\tcp*{\texttt{predecessor}-Anfrage um das Vorgänger-Intervall zu bestimmen}
+    $current \leftarrow floorInterval(from)$\tcp*{\texttt{predecessor}-Anfrage, um das Vorgänger-Intervall zu bestimmen}
     \While {$current \neq$ \KwNull} {
         \If {$current.start \leq from \textbf{ and } to \leq current.end$} {
             \KwRet{$current$}
@@ -137,7 +137,8 @@ Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$-Poin
 
 In dem Fall, dass selbst das am wenigsten verschachtelte Intervall an diesem Startindex (\texttt{firstAtStartIndex}) nicht die gegebenen Grenzen umschließt, so kann direkt zum Eltern-Intervall von \texttt{firstAtStartIndex} gesprungen werden, da somit keines der übersprungenen Intervalle die Grenzen umschließt.
 
-Die dominierenden Teile der Laufzeit von \autoref{intervalcontainingv4} bestehen aus dem $floorInterval$-Aufruf mit $\mathcal{O}(b)$ Laufzeit, wobei $b$ die Größe der Buckets von \texttt{BucketPred} ist. Dazu kommt die While-Schleife. Ist $d$ die Tiefe der Grammatik wenn AreaComp terminiert, so können maximal $d$ Wiederholungen stattfinden, da durch die \texttt{parent}-Pointer iteriert wird. Insgesamt folgt eine Laufzeit von $\mathcal{O}(b + d)$. 
+Die dominierenden Teile der Laufzeit von \autoref{intervalcontainingv4} bestehen aus dem $floorInterval$-Aufruf mit $\mathcal{O}(b)$ Laufzeit, wobei $b$ die Größe der Buckets von \texttt{BucketPred} ist. Dazu kommt die While-Schleife. 
+Ist $d$ die Tiefe der Grammatik, wenn AreaComp terminiert, so können maximal $d$ Wiederholungen stattfinden, da durch die \texttt{parent}-Pointer iteriert wird. Insgesamt folgt eine Laufzeit von $\mathcal{O}(b + d)$. 
 
 \subsubsection{Markieren von Ersetzungsintervallen}
 
@@ -187,7 +188,7 @@ Sei $k := end - start + 1$ also die Länge des Musters, für das wir das Interva
 In jedem Fall muss bestimmt werden, ob es ein Intervall in der Datenstruktur gibt, dass bei Index $start$ beginnt. Dies benötigt erwartete $\mathcal{O}(1)$ Laufzeit aufgrund der Hashtabelle der \texttt{BucketPred} Datenstruktur. 
 
 Im Fall, dass kein solches Intervall existiert, muss das tiefste verschachtelte Intervall bestimmt werden, dass $[start..end]$ enthält. Dies kann mit \texttt{BucketPred} in $\mathcal{O}(b + d)$ bestimmt werden, wobei $b$ die Bucketgröße und $d$ die Tiefe der Grammatik ist, wenn AreaComp terminiert. Das Setzen der Pointer benötigt ebenfalls $\mathcal{O}(1)$ Laufzeit. 
-Dann muss $R_{id}$-$[start..end]$ in \texttt{BucketPred} eingefügt werden, was eine erwartete Laufzeit von $\mathcal{O}(1)$ hat, wenn die Datenstruktur nicht sehr spärlich besetzt ist. Zuletzt muss noch durch die Teilintervalle von $[start..end]$ iteriert werden, um ihre \texttt{parent}-Pointer anzupassen. Es können nur $\mathcal{O}(k)$ viele von diesen Intervallen existieren. Da das bestimmen des Nachfolgers eines Intervalls $\mathcal{O}(b)$ Laufzeit benötigt, folgt hierfür eine Laufzeit von $\mathcal{O}(k \cdot b)$, was die Laufzeit dieses Falls dominiert.
+Dann muss $R_{id}$-$[start..end]$ in \texttt{BucketPred} eingefügt werden, was eine erwartete Laufzeit von $\mathcal{O}(1)$ hat, wenn die Datenstruktur nicht sehr spärlich besetzt ist. Zuletzt muss noch durch die Teilintervalle von $[start..end]$ iteriert werden, um ihre \texttt{parent}-Pointer anzupassen. Es können nur $\mathcal{O}(k)$ viele von diesen Intervallen existieren. Da das Bestimmen des Nachfolgers eines Intervalls $\mathcal{O}(b)$ Laufzeit benötigt, folgt hierfür eine Laufzeit von $\mathcal{O}(k \cdot b)$, was die Laufzeit dieses Falls dominiert.
 
 Falls ein anderes Intervall $[start..end']$ bereits existiert mit $end < end'$, dann müssen nur die $\texttt{parent}$- und $\texttt{firstAtStartIndex}$-Pointer von $R_{id}$-$[start..end]$ gesetzt werden und es in \texttt{BucketPred} eingefügt werden. Wieder muss durch die Teilintervalle von $[start..end]$ iteriert werden und es folgt wieder eine Laufzeit von $\mathcal{O}(k \cdot b)$.
 

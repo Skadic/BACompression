@@ -12,11 +12,11 @@ An den Indizes $I = \{SA[k]\ |\ k \in \{i-1, \dots, j\}\}$ befindet sich jeweils
 
 Intervalle mit großer Breite (viele Vorkommen) bzw. Höhe (langer Substring) bieten also eine besonders große Kompression, wenn diese Vorkommen durch ein Nichtterminal und eine entsprechende Produktionsregel ersetzt werden.
 
-Es ist hier also eine Art Gütefunktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \rightarrow \mathbb{N}_0$ denkbar, die Intervalle je nach potentieller Kompression bewertet. Diese Funktion nennen wir Flächenfunktion. Je größer der von der Funktion gelieferte Wert, desto nützlicher ist das Intervall.
+Es ist hier also eine Art Gütefunktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \rightarrow \mathbb{N}_0$ denkbar, die Intervalle je nach potenzieller Kompression bewertet. Diese Funktion nennen wir Flächenfunktion. Je größer der von der Funktion gelieferte Wert, desto nützlicher ist das Intervall.
 
-Die Idee von AreaComp ist, inkrementell eine Straight-Line-Grammatik zu erzeugen. Dies geschieht durch die wiederholte Wahl eines vielversprechenden Intervall im LCP-Array anhand der Flächenfunktion. Jedes Vorkommen des von dem Intervall bestimmten Substring wird durch ein neues Nichtterminal und eine entsprechende neue Produktionsregel der Grammatik ersetzt.
+Die Idee von AreaComp ist, inkrementell eine Straight-Line-Grammatik zu erzeugen. Dies geschieht durch die wiederholte Wahl eines vielversprechenden Intervalls im LCP-Array anhand der Flächenfunktion. Jedes Vorkommen des von dem Intervall bestimmten Substring wird durch ein neues Nichtterminal und eine entsprechende neue Produktionsregel der Grammatik ersetzt.
 
-Dies wird solange wiederholt, bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächefunktion liefern.
+Dies wird solange wiederholt, bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächenfunktion liefern.
 
 Die Priorisierung von Intervallen anhand der Flächenfunktion kann mithilfe einer Prioritätswarteschlange umgesetzt werden. Die Intervalle werden mit dem Gewicht $A(i, j)$ eingefügt. So kann in jedem Durchlauf ein Element in der richtigen Reihenfolge entnommen werden.
 
@@ -61,7 +61,7 @@ Es gibt nun keine wiederholten Zeichenfolgen mehr und der Algorithmus terminiert
 
 \subsubsection{Überlappungen}
 
-Es kann vorkommen, dass ein zu ersetzendes Muster überlappend vorkommt, wie etwa $aa$ im String $aaa$. In diesem Fall können die überlappenden Vorkommen nicht ersetzt werden. Hier muss also Acht gegeben werden. Gegebenfalls müssen also alle Positionen ignoriert werden, die sich überlappen.
+Es kann vorkommen, dass ein zu ersetzendes Muster überlappend vorkommt, wie etwa $aa$ im String $aaa$. In diesem Fall können die überlappenden Vorkommen nicht ersetzt werden. Hier muss also Acht gegeben werden. Gegebenenfalls müssen also alle Positionen ignoriert werden, die sich überlappen.
 
 \subsubsection{Überschneidende Substitutionen}
 
@@ -78,7 +78,7 @@ Im Laufe der Entwicklung von AreaComp sind vier Versionen des Algorithmus entsta
     \item[\emph{V2}] \emph{Rudimentäre Datenstrukturen und Reduzierung von Suffix-Array Berechnungen}\\
     Die Berechnungen von Suffix-Array und LCP-Array werden aus der Schleife ausgelagert und nur noch einmal erzeugt. Es kommen rudimentäre Datenstrukturen zum Einsatz, die bestimmen, ob die Ersetzung eines Musters an einem bestimmten Index erlaubt ist. Trotzdem hat der Algorithmus noch eine Laufzeit von $\mathcal{O}(n^4)$  
     \item[\emph{V3}] \emph{Wahl der LCP-Intervalle} \texttt{RuleIntervalIndex} \emph{Datenstruktur}\\
-    Es kommen Abouelhoda-Intervalle zum Einsatz um die Anzahl der betrachteten LCP-Intervalle massiv zu reduzieren. Die \texttt{RuleIntervalIndex} Datenstruktur liefert nun effizienteres Bestimmen von tiefsten Intervallen. Die Laufzeit ist $\mathcal{O}(n^2 \log n)$.
+    Es kommen Abouelhoda-Intervalle zum Einsatz, um die Anzahl der betrachteten LCP-Intervalle massiv zu reduzieren. Die \texttt{RuleIntervalIndex} Datenstruktur liefert nun effizienteres Bestimmen von tiefsten Intervallen. Die Laufzeit ist $\mathcal{O}(n^2 \log n)$.
     \item[\emph{V4}] \emph{Finale Version}\\
     Diese Version verbessert von \texttt{RuleIntervalIndex}, sodass weniger Aufwand für die Operationen benötigt wird. Regeln werden nun während der Berechnung nicht mehr  explizit gespeichert. Die Laufzeit ist $\mathcal{O}(n^2 \cdot (b + d))$, wobei $b$ die Größe der Buckets ist (siehe \autoref{bucketpredds}) und $d$ die Tiefe der erzeugten Grammatik.
 \end{itemize}

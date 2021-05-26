@@ -2,16 +2,16 @@
 
 Im Folgenden betrachten wir den Ablauf des Algorithmus genauer. Dies bezieht sich insbesondere auf V4 des Algorithmus.
 
-Die Ruleset-Klasse ist für die Kompression des Strings verantwortlich. Das Ruleset beinhaltet eine Instanz der \texttt{RuleIntervalIndex} Datenstruktur. Sei im Folgenden $s \in \Sigma^*$ ein Eingabestring mit $n := |s|$ Dazu sind folgende Teilschritte erforderlich:
+Die Ruleset-Klasse ist für die Kompression des Strings verantwortlich. Das Ruleset beinhaltet eine Instanz der \texttt{RuleIntervalIndex} Datenstruktur. Sei im Folgenden $s \in \Sigma^*$ ein Eingabestring mit $n := |s|$. Es sind folgende Teilschritte erforderlich:
 
 \subsection{Berechnen des Enhanced Suffix Array}
 
-Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorithmus \cite{larsson_faster_2007} wird in $\mathcal{O}(n \log n)$ Laufzeit das Suffix-Array berechnet. Für das LCP-Array wird der Linearzeit-Algorithmus aus \cite{kasai_linear-time_2001} verwendet. Zuletzt wird für die komprimierte Variante des Kind-Array der von Abouelhoda et al. beschriebene Algorithmus aus \cite{abouelhoda_optimal_2002} verwendet. Dieser berechnet das Kind-Array ebenfalls in $\mathcal{O}(n)$ Laufzeit.
+Zunächst werden die benötigten Arrays berechnet. Mithilfe des QSufSort Algorithmus \cite{larsson_faster_2007} wird in $\mathcal{O}(n \log n)$ Laufzeit das Suffix-Array berechnet. Für das LCP-Array wird der Linearzeit-Algorithmus aus \cite{kasai_linear-time_2001} verwendet. Zuletzt wird für die komprimierte Variante des Kind-Array der von Abouelhoda et al.\ beschriebene Algorithmus aus \cite{abouelhoda_optimal_2002} verwendet. Dieser berechnet das Kind-Array ebenfalls in $\mathcal{O}(n)$ Laufzeit.
 
 \subsection{Berechnen der Prioritätswarteschlange}
 \label{calcqueue}
 
-Nun, da das Kind-Array berechnet ist, kann für jedes Abouelhoda-Intervall mithilfe des von Abouelhoda et al. vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ Abouelhoda-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle Abouelhoda-Intervalle durch rekursive Aufrufe in $\mathcal{O}(n)$ berechnet werden. (siehe \autoref{lcpchoice})
+Nun, da das Kind-Array berechnet ist, kann für jedes Abouelhoda-Intervall mithilfe des von Abouelhoda et al.\ vorgestellten Algorithmus in $\mathcal{O}(1)$ die direkten Kind-Intervalle berechnet werden. Es existieren $\mathcal{O}(n)$ Abouelhoda-Intervalle, da ein Index $i = 0,\dots,n - 1$ nicht gleichzeitig Startindex und Endindex von verschiedenen Intervallen sein kann. Insgesamt können alle Abouelhoda-Intervalle durch rekursive Aufrufe in $\mathcal{O}(n)$ berechnet werden. (siehe \autoref{lcpchoice})
 
 Diese Intervalle werden nun in eine auf einem binären Heap \cite{williams_algorithm_1964} basierenden Prioritätswarteschlange eingefügt. Die benötigte Laufzeit, um ein Element einzufügen oder das minimale/maximale Element zu entfernen, ist $\mathcal{O}(\log n)$ im Worst-Case.
 
@@ -61,7 +61,9 @@ Somit sind sowohl die Vorkommen des Substrings, als auch dessen Länge berechnet
 
 \subsubsection{Bereinigen der Indizes}
 
-Es ist möglich, dass sich einige der Vorkommen nicht (mehr) für eine Ersetzung eignen. Etwa, weil diese sich mit dem vorhergehenden Vorkommen überlappen, oder weil dieses Vorkommen die anderen nötigen Vorraussetzung für eine Substitution nicht erfüllt. Dies wurde in \autoref{v3problems} und in der Beschreibung der neuen \texttt{RuleIntervalIndex} Datenstruktur genauer behandelt. Es werden nun mit den folgenden 2 Algorithmen diejenigen Indizes entfernt, die nicht für eine Substitution in Frage kommen.
+Es ist möglich, dass sich einige der Vorkommen nicht (mehr) für eine Ersetzung eignen. 
+Etwa, weil diese sich mit dem vorhergehenden Vorkommen überlappen, oder weil dieses Vorkommen die anderen nötigen Voraussetzung für eine Substitution nicht erfüllt. 
+Dies wurde in \autoref{v3problems} und in der Beschreibung der neuen \texttt{RuleIntervalIndex} Datenstruktur genauer behandelt. Es werden nun mit den folgenden 2 Algorithmen diejenigen Indizes entfernt, die nicht für eine Substitution in Frage kommen.
 
 \paragraph{substitutionAllowed}
 
@@ -91,7 +93,7 @@ Dazu prüft der Algorithmus, ob sich in genau einem Ersetzungsintervall zwei Sym
 In der Regel ist das Intervall das tiefste verschachtelte Intervall jeweils bei $from$ und $to$. 
 
 Liegen $from$ oder $to$ innerhalb des tiefsten Intervalls an ihrem jeweiligen Index (das heißt, $from$ ist ungleich des Startindex des Intervalls, beziehungsweise $to$ ist ungleich des Endindex), so dürfen für den jeweiligen Index keine weniger verschachtelten Intervalle berücksichtigt werden, da sonst beim späteren Substituieren die Grenzen der tieferen Intervalle verletzt würden.\\ 
-Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mit zu berücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \emph{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnet.
+Fällt $from$ genau auf den Anfangsindex des tiefsten Intervalls, bei Index $from$, so kann dies ebenfalls bedeuten, dass der Index $from$ das Vorkommen eines Nichtterminals im $\texttt{parent}$ bezeichnen. Ist das der Fall, so ist es erlaubt ebenfalls die Elternintervalle mitzuberücksichtigen, solange $from$ der erste Index des jetzigen Intervalls ist. Gleiches gilt, wenn $to$ genau auf den Endindex des Intervalls fällt. Dann kann $to$ das Vorkommen eines Nichtterminals am \emph{Ende} des zu ersetzenden Bereiches in einer $\texttt{parent}$ Regel bezeichnet.
 
 In diesen beiden Fällen gilt auch dasselbe wieder, falls $from$ auch im Elternintervall genau auf den Anfang fällt, beziehungsweise $to$ auch dort auf das Ende fällt.
 
@@ -106,8 +108,8 @@ Um dies besser zu veranschaulichen, hierzu drei Beispiele. Betrachten wir die fo
     A &\rightarrow aba
 \end{align*}
 \begin{enumerate}
-    \item Die Methode liefert \texttt{true} für $from=0$ und $to=3$. Hier beschreibt der Index $0$ hier entweder das erste $a$ aus dem ersten Ersetzungsintervall der Regel $A$, oder das erste $A$ in der Regel $S$. Letzteres ist möglich, da der Index $0$ genau auf den Anfang des Ersetzungsintervalls $[0..2]$ der Regel $A$ fällt. Der Index $3$ kann hier nur $c$ beschreiben.
-    Es lassen sich hier also das erste $A$ als Startsymbol, und das $c$ als Endsymbol finden, die beide in dem einen Ersetzungsintervall der Regel $S$ liegen. Damit ist die Ersetzung von $Ac$ in der Regel $S$ erlaubt.
+    \item Die Methode liefert \texttt{true} für $from=0$ und $to=3$. Hier beschreibt der Index $0$ hier entweder das erste $a$ aus dem ersten Ersetzungsintervall der Regel $A$ oder das erste $A$ in der Regel $S$. Letzteres ist möglich, da der Index $0$ genau auf den Anfang des Ersetzungsintervalls $[0..2]$ der Regel $A$ fällt. Der Index $3$ kann hier nur $c$ beschreiben.
+    Es lassen sich hier also das erste $A$ als Startsymbol und das $c$ als Endsymbol finden, die beide in dem einen Ersetzungsintervall der Regel $S$ liegen. Damit ist die Ersetzung von $Ac$ in der Regel $S$ erlaubt.
     \item Für $from=1$ und $to=3$ liefert die Methode allerdings \texttt{false}. Der Index $3$ liefert wie im vorhergehenden Fall wieder nur das $c$ aus Regel $S$.
     Index $1$ allerdings, liefert nur das $b$ aus dem ersten Ersetzungsintervall der Regel $A$. Hier dürfen keine weniger tiefen Ersetzungsintervalle (in diesem Fall nur das Eine der Regel $S$) berücksichtigt werden, da der Index $1$ nicht der Anfangsindex des Ersetzungsintervalls ist, in dem dieser Index liegt.
     Wir haben als Wahl für das Startsymbol nur $b$ aus Regel $A$ und als Endsymbol nur das $c$ aus Regel $S$. Hier lassen sich kein Paar von Start- und Endsymbolen finden, die in demselben Ersetzungsintervall liegen. Die Substitution ist als ungültig.
@@ -187,9 +189,9 @@ Dies leistet \autoref{diffoccv4}. Er liefert \texttt{true}, falls es mehrere tat
     \label{diffoccv4}
 \end{algorithm}
 
-Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle enthält, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel $firstRuleId$, die in der im Folgenden beschriebenen for-Schleife gefunden wird.
+Der Algorithmus verwaltet eine zunächst leere Menge, die die Startindizes derjenigen Ersetzungsintervalle enthält, in denen bereits ein Vorkommen des Musters gefunden wurde. Hierbei werden nur jeweils die tiefsten Intervalle berücksichtigt. Außerdem speichert der Algorithmus die ID der ersten Regel $firstRuleId$, die in der im Folgenden beschriebenen For-Schleife gefunden wird.
 
-Die for-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positionen und berechnet jeweils das tiefste Intervall an dem gegebenen Index, sowie dessen ID und Startindex. Ist die $firstRuleId$ noch nicht gesetzt, so wird diese auf die ID des berechneten Intervalls gesetzt. Andernfalls wird geprüft, ob die ID des soeben berechneten Intervalls mit $firstRuleId$ übereinstimmt. Stimmen diese nicht überein, so sind bereits zwei Vorkommen in unterschiedlichen Regeln gefunden worden. Diese müssen zwangsweise unterschiedlich sein. Also gibt der Algorithmus dann \texttt{true} zurück.
+Die For-Schleife iteriert durch die vom vorherigen Schritt noch übrigen Positionen und berechnet jeweils das tiefste Intervall an dem gegebenen Index, sowie dessen ID und Startindex. Ist die $firstRuleId$ noch nicht gesetzt, so wird diese auf die ID des berechneten Intervalls gesetzt. Andernfalls wird geprüft, ob die ID des soeben berechneten Intervalls mit $firstRuleId$ übereinstimmt. Stimmen diese nicht überein, so sind bereits zwei Vorkommen in unterschiedlichen Regeln gefunden worden. Diese müssen zwangsweise unterschiedlich sein. Also gibt der Algorithmus dann \texttt{true} zurück.
 
 Ist dies nicht der Fall, so wird geprüft ob der Startindex des jetzigen Intervalls bereits in der Menge zu finden ist, also schon ein Vorkommen in einem Intervall mit diesem Startindex gefunden wurde. Wenn ja, dann muss das aktuell betrachtete Vorkommen zwangsweise unterschiedlich zu dem bereits gefundenen sein. Denn es gibt hier zwei Fälle:
 \begin{itemize}
@@ -257,7 +259,7 @@ Beginnen bei Index $i$ neue Ersetzungsintervalle, so füge diese Intervalle und 
 
 Zuletzt wird das Zeichen im Eingabestring bei Index $i$ in die Liste oben auf dem $\texttt{symbolStack}$ an das Ende eingefügt. Gehe nun zur nächsten Iteration.\\\\
 
-Ist der gesamte Eingabestring durchlaufen, so sind alle Regel explizit gespeichert und der Eingabestring wird nicht mehr benötigt um den String aus der Grammatik wiederherzustellen.
+Ist der gesamte Eingabestring durchlaufen, so sind alle Regel explizit gespeichert und der Eingabestring wird nicht mehr benötigt, um den String aus der Grammatik wiederherzustellen.
 
 \paragraph{Laufzeit}
 
@@ -268,9 +270,9 @@ An jedem Index können maximal $d$ Ersetzungsintervalle beginnen, beziehungsweis
 
 Damit können also in jedem Durchlauf jeweils maximal $d$ Intervalle von den Stacks entfernt und eingefügt werden.
 
-Um zu bestimmen ob ein \texttt{RuleInterval} existiert, das an einem Index beginnt ist nur eine Anfrage an $\texttt{BucketPred}$ nötig, die eine erwartete $\mathcal{O}(1)$ Laufzeit besitzt.
+Um zu bestimmen, ob ein \texttt{RuleInterval} existiert, das an einem Index beginnt ist nur eine Anfrage an $\texttt{BucketPred}$ nötig, die eine erwartete $\mathcal{O}(1)$ Laufzeit besitzt.
 
-Das Einfügen eines Symbols in die oberste Liste in $\texttt{symbolStack}$ ist eben falls in erwarteter $\mathcal{O}(1)$ Laufzeit möglich, da sowohl die Stacks als auch die Listen in \texttt{symbolStack} als dynamische Arrays implementiert sind.
+Das Einfügen eines Symbols in die oberste Liste in $\texttt{symbolStack}$ ist ebenfalls in erwarteter $\mathcal{O}(1)$ Laufzeit möglich, da sowohl die Stacks als auch die Listen in \texttt{symbolStack} als dynamische Arrays implementiert sind.
 
 Insgesamt folgt dann eine Worst-Case Laufzeit von $\mathcal{O}(n \cdot d)$.
 
@@ -304,7 +306,7 @@ Wie betrachten nun die Laufzeit für \autoref{compressNextv4}.
 Zuerst wird das LCP-Intervall $LCP[i..j]$ mit $0 < i \leq j < n$mit dem größten Flächenwert aus der Prioritätswarteschlange entnommen. Dies benötigt $\mathcal{O}(\log n)$ Laufzeit, da sie durch einen binären Heap implementiert ist.
 Sei im Folgenden $p \in \Sigma^*$ das durch $LCP[i..j]$ bestimmte zu ersetzende Muster, $occ_p := j - i + 2$ die Anzahl Vorkommen von $p$ in $s$.  
 
-Wir bestimmen nun die Positionen $positions$, an denen $p$ vorkommt indem wir $SA[i-1..j]$ bestimmen. Dies ist in $\mathcal{O}(occ_p)$ möglich.
+Wir bestimmen nun die Positionen $positions$, an denen $p$ vorkommt, indem wir $SA[i-1..j]$ bestimmen. Dies ist in $\mathcal{O}(occ_p)$ möglich.
 Die Länge des Musters $len$ lässt sich durch die Eigenschaften der Abouelhoda-Intervalle in $\mathcal{O}(1)$ bestimmen, durch $up[i-1]$ oder $down[j+1]$ im Kind-Array. (siehe \autoref{childtree})
 Das Sortieren von $positions$ ist in erwarteter $\mathcal{O}(occ_p \log occ_p)$ Laufzeit etwa durch Quicksort möglich.
 
@@ -317,6 +319,6 @@ Also folgt insgesamt eine Laufzeit von $\mathcal{O}(n \cdot (b + d))$ für einen
 
 \subsection{Gesamtlaufzeit}
 
-Da also $\mathcal{O}(n)$-Mal \autoref{compressNextv4} aufgerufen wird, folgt eine Gesamtlaufzeit von $\mathcal{O}(n^2 \cdot (b + d))$. Wenn $b$ als konstant angesehen wird ist die Laufzeit $\mathcal{O}(n^2 \cdot d)$.
+Da also $\mathcal{O}(n)$-Mal \autoref{compressNextv4} aufgerufen wird, folgt eine Gesamtlaufzeit von $\mathcal{O}(n^2 \cdot (b + d))$. Wenn $b$ als konstant angesehen wird, ist die Laufzeit $\mathcal{O}(n^2 \cdot d)$.
 
 

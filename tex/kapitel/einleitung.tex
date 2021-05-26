@@ -1,7 +1,7 @@
 % einleitung.tex
 \chapter{Einleitung}
 
-Grammatikbasierte Kompression erzeugt eine kontextfreie Grammatik, dessen Sprache nur aus einem Wort besteht: Eine Straight-Line-Grammatik \cite{benz_effective_2013}. Die Kompression geschieht, indem zu einem String eine Straight-Line-Grammatik erzeugt wird, die effizienter zu speichern ist als der String selbst.
+Grammatikbasierte Kompression erzeugt eine kontextfreie Grammatik, dessen Sprache nur aus dem zu komprimierenden Wort besteht: Eine Straight-Line-Grammatik \cite{benz_effective_2013}. Die Kompression geschieht, indem zu einem String eine Straight-Line-Grammatik erzeugt wird, die effizienter zu speichern ist als der String selbst.
 
 Diese Arbeit stellt den AreaComp-Algorithmus vor, der sich des Enhanced Suffix Arrays bedient, um wiederholte Substrings zu ermitteln und diese durch Produktionsregeln der Grammatik zu ersetzen.
 Dieser Algorithmus wird mit ähnlichen Algorithmen in Bezug auf die Größe der erzeugten Grammatik evaluiert.
@@ -18,8 +18,10 @@ Ebenfalls gibt es Kodierer, die mithilfe von Wörterbuchkompression arbeiten. Hi
 Mithilfe des Wörterbuches und dieser Pointer-Symbole lässt sich dann der Eingabetext rekonstruieren.
 Eines der bekannteren Beispiele ist die LZ77-Kodierung von Lempel und Ziv \cite{ziv_universal_1977}.
 
-Diese Arbeit befasst sich besonders mit grammatikbasierten Kodierern. Diese erzeugen eine Straight Line Grammatik, die einen Eingabetext in kompakter Weise beschreibt \cite{kieffer_grammar-based_2000}. 
-Eine Straight Line Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Re-Pair \cite{larsson_offline_1999} und Sequitur \cite{nevill-manning_identifying_1997}.
+Diese Arbeit befasst sich besonders mit grammatikbasierten Kodierern. Diese erzeugen eine Straight-Line-Grammatik, die einen Eingabetext in kompakter Weise beschreibt \cite{kieffer_grammar-based_2000}. 
+Eine Straight-Line-Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Re-Pair \cite{larsson_offline_1999} und Sequitur \cite{nevill-manning_identifying_1997}.
+
+\section{Inhalt der Arbeit}
 
 Es wird der AreaComp-Algorithmus vorgestellt, der mithilfe von Suffix-Arrays und LCP-Arrays \cite{manber_suffix_1993} eine Straight-Line-Grammatik berechnet. Es werden mithilfe einer Kostenfunktion Intervalle im LCP-Array bestimmt, die den möglichst günstigsten zu ersetzenden Substring beschreiben, und diesen Substring durch ein neues Symbol und eine entsprechende Produktionsregel ersetzt.
 Der Algorithmus arbeitet dabei Off-Line. Das heißt, dass die gesamte Eingabe zur Zeit der Ausführung des Algorithmus im Speicher vorliegt.

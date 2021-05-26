@@ -2,9 +2,20 @@
 \label{ausblick}
 
 Wir haben gesehen, dass AreaComp Grammatiken produzieren kann, die auf manchen Datensätzen mit Sequitur, der die kleinsten Grammatiken produziert hat, fast gleichauf sind. Obwohl die Laufzeit von AreaComp in der Praxis linear scheint, ist AreaComp doch um ein Vielfaches langsamer als Sequitur. 
-Hier ist etwa eine Verbesserung der \texttt{RuleIntervalIndex} Datenstruktur denkbar, da Anfragen an diese Datenstruktur sehr oft stattfinden und diese viel Speicher verbraucht, da für jedes Ersetzungsintervall ein Objekt in der Datenstruktur existiert.
 
-Das Konzept der Flächenfunktion bietet Verbesserungsmöglichkeiten. Es ist durchaus möglich, dass Flächenfunktionen existieren, die kleinere Grammatiken oder bessere Laufzeit etc. liefern. 
+Das Konzept der Flächenfunktion bietet Verbesserungsmöglichkeiten. Es ist durchaus möglich, dass Flächenfunktionen existieren, die etwa kleinere Grammatiken liefern. 
 
-Außerdem kann möglicherweise durch die Wahl einer anderen Implementation einer Prioritätswarteschlange ein kleiner Laufzeitgewinn erzielt werden. Die Operationen der Prioritätswarteschlange machten hier etwa $10$\% der Laufzeit aus. 
+In \autoref{runtimeeval} haben wir gesehen, dass das Bereinigen der Positionen eines Vorkommens (\autoref{cleanpositionsv4}) den größten Teil der Laufzeit ausmacht. Da sich die Laufzeit der Bereinigung auf die Effizienz der \texttt{RuleIntervalIndex} Datenstruktur stützt, ist eine Verbesserung der \texttt{RuleIntervalIndex} Datenstruktur denkbar.
 
+Wie in \autoref{datasets} erwähnt, ist der Speicherverbrauch von AreaComp immer noch problematisch. Ein Aufruf auf $100$ MB Präfixe führte zu einem \texttt{OutOfMemoryError} in dieser Implementation in Java. 
+\texttt{RuleIntervalIndex} verbraucht eine große Menge an Speicher, da für jedes Ersetzungsintervall ein Objekt gespeichert wird. 
+Es allerdings durchaus möglich, dass der hohe Speicherverbrauch auch teilweise durch Eigenarten der Java Virtual Machine verursacht wird.
+
+Abgesehen von einer Verbesserung der Datenstruktur selbst, könnte eine Implementierung in einer systemnäheren Sprache wie C++ oder Rust hier helfen.
+Einerseits kann dies zu einer besseren Laufzeit führen, andererseits steht in solchen Programmiersprachen Werkzeuge zum kontrollierteren Umgang mit Heap-Allokationen zur Verfügung.
+
+Wahrscheinlich lässt sich so auch das Problem der hohen \emph{Self-Time} lösen, die fast die Hälfte der Laufzeit von \emph{cleanPositions} einnimmt. (siehe \autoref{runtimeeval})
+
+Außerdem kann möglicherweise durch die Wahl einer anderen Implementation einer Prioritätswarteschlange ein kleiner Laufzeitgewinn erzielt werden. Die Operationen der Prioritätswarteschlange machten hier etwa $10$\% der Laufzeit aus. (siehe \autoref{runtimeeval})
+
+Eine der größten offenen Fragen ist noch, wie die resultierenden Grammatiken kodiert werden können. Erst dann kann wirklich verglichen werden, wie gut die tatsächliche Kompression der Algorithmen und der Flächenfunktionen sind. Möglicherweise sind hier sogar die Eigenschaften der größeren, etwa von \texttt{WidthFirstArea} produzierten Grammatiken interessant. 

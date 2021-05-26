@@ -60,7 +60,7 @@ Dieses Problem ist allerdings $\mathcal{NP}$-vollständig \cite{charikar_smalles
 Die grundlegende Idee ist, für wiederholte Vorkommen von Substrings $x[i..j]$ in $x$ eine Produktion $A \rightarrow x[i..j]$ zu erzeugen und alle Vorkommen dieses Substrings durch das neue Nichtterminal $A \notin \Sigma$ zu ersetzen.
 
 Es gibt Online-Algorithmen, die die Eingabe von links nach rechts einlesen und schrittweise während des Lesens eine Grammatik aufbauen und anpassen. Ein Vertreter von Online-Algorithmen ist etwa Sequitur \cite{nevill-manning_identifying_1997} (siehe \autoref{sequitur}). 
-Andererseits gibt es Offline-Algorithmen, die die gesamte Eingabe in den Speicher laden und ganz betrachten um zu ersetzende Substrings auszuwählen. Ein Beispiel wäre Re-Pair \cite{larsson_offline_1999} (siehe \autoref{repair}).
+Andererseits gibt es Offline-Algorithmen, die die gesamte Eingabe in den Speicher laden und ganz betrachten, um zu ersetzende Substrings auszuwählen. Ein Beispiel wäre Re-Pair \cite{larsson_offline_1999} (siehe \autoref{repair}).
 
 Im Bereich der Grammatikkompression wurde schon zahlreich geforscht \cite{benz_effective_2013, carrascosa_choosing_2010, charikar_smallest_2005}. 
 
@@ -72,7 +72,7 @@ Es sei nun $x = x_0 x_1 \dots x_{n-1}\in \Sigma^*$ ein String mit $|x| = n$ übe
 
 \subsection{Suffix-Array}
 
-Das \emph{Suffix-Array} ist ein Array $SA$ mit $n$ Indizes $0 \leq i < n$, so dass 
+Das \emph{Suffix-Array} ist ein Array $SA$ mit $n$ Indizes $0 \leq i < n$, sodass 
 \begin{equation*}
 	x[SA[0]..], x[SA[1]..], \dots, x[SA[n-1]..]
 \end{equation*}
@@ -86,7 +86,7 @@ Dieses Suffix repräsentiert dann das leere Suffix. In dieser Arbeit wird $\$$ a
 \subsection{Inverses Suffix-Array}
 
 Das \emph{Inverse Suffix-Array} zu einem Suffix-Array $SA$ ist ein Array $ISA$ mit $n$ Indizes \\
-$0 \leq i < n$ so dass $SA[ISA[i]] = i$.
+$0 \leq i < n$ sodass $SA[ISA[i]] = i$.
 Ein Eintrag $ISA[i]$ beschreibt also den Suffix-Array-Index des Suffixes $S_i$ von $x$.
 
 $ISA$ kann trivial in Laufzeit $\mathcal{O}(n)$ nach der obigen Vorschrift berechnet werden \cite{abouelhoda_replacing_2004}.
@@ -123,7 +123,7 @@ Die Datenstruktur besteht aus zwei Ebenen. Die \emph{Top-Level-Ebene}, bestehend
 
 \subsubsection{Top-Level}
 
-Wir speichern aktive Buckets in einem Array $\texttt{buckets}$ der Größe $\lceil \tfrac{u}{b} \rceil$. Falls der Bucket mit Index $i$ aktiv ist, so zeigt $\texttt{buckets}[i]$ auf diesen Bucket. Falls der Bucket mit Index $i$ nicht aktiv ist, so zeigt $\texttt{buckets}[i]$ auf den aktiven Bucket mit Index $j < i$, so dass $j$ maximal ist, falls solch ein Bucket existiert.
+Wir speichern aktive Buckets in einem Array $\texttt{buckets}$ der Größe $\lceil \tfrac{u}{b} \rceil$. Falls der Bucket mit Index $i$ aktiv ist, so zeigt $\texttt{buckets}[i]$ auf diesen Bucket. Falls der Bucket mit Index $i$ nicht aktiv ist, so zeigt $\texttt{buckets}[i]$ auf den aktiven Bucket mit Index $j < i$, sodass $j$ maximal ist, falls solch ein Bucket existiert.
 
 \subsubsection{Bucket-Level}
 
@@ -181,7 +181,7 @@ Die Operationen werden folgendermaßen umgesetzt:
 
     Sonst setze das Bit $x \mod b$ im Bucket auf $0$. Sind alle Bits des Bitvektors $0$, so wird dieser Bucket entfernt. Dazu werden alle Einträge in $\texttt{buckets}$ von $i$ bis zum nächsten aktiven Bucket so aktualisiert, dass sie auf den vorherigen aktiven Bucket \textit{vor} Index $i$ zeigen.
 
-    Ähnlich wie bei der \texttt{insert(x)} Operation ist die Worst-Case Laufzeit der Operation $\mathcal{O}(\tfrac{u}{b})$, wenn die Datenstruktur dünn besetzt it. Wenn (fast) alle Buckets aktiv sind, so hat diese Operation ebenfalls eine erwartete $\mathcal{O}(1)$ Laufzeit.
+    Ähnlich wie bei der \texttt{insert(x)} Operation ist die Worst-Case Laufzeit der Operation $\mathcal{O}(\tfrac{u}{b})$, wenn die Datenstruktur dünn besetzt ist. Wenn (fast) alle Buckets aktiv sind, so hat diese Operation ebenfalls eine erwartete $\mathcal{O}(1)$ Laufzeit.
 
     \item[\texttt{predecessor(x)}]
     Wieder bestimmen wir den Index $i$, in dem sich $x$ befindet. Ist der Bucket an diesem Index inaktiv, so bestimme den größten Index, an dem im Bucket $\texttt{buckets[i]}$ ein $1$-Bit liegt (dieser Eintrag zeigt ja auf den letzten aktiven Bucket vor $i$). Daraus lässt sich dann der Vorgänger von $x$ bestimmen.
@@ -194,7 +194,7 @@ Die Operationen werden folgendermaßen umgesetzt:
 \section{LCP-Intervallbaum}
 \label{lcpintervals}
 
-In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werden die beschriebenen Intervalle als Abouelhoda-Intervalle bezeichnet, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
+In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al.\ \emph{lcp intervals}. In dieser Arbeit werden die beschriebenen Intervalle als Abouelhoda-Intervalle bezeichnet, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
 
 Die vorgestellten Intervalle erlauben es \emph{alle} Suffixe mit einem bestimmten gemeinsamen Präfix einer Länge von mindestens $\ell \in \mathbb{N}$ in einem String zu gruppieren.
 

@@ -69,7 +69,7 @@
 
 Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewandt.
 
-Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz). Der Java Virtual Machine wurden 8GB RAM zugewiesen.
+Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz). Der Java Virtual Machine wurden 8 GB RAM zugewiesen.
 
 \subsection{Implementationen}
 
@@ -83,7 +83,7 @@ Die Implementation von AreaCompV4 sowie die Sequitur- und RePair-Implementation 
 \subsection{Datensätze}
 \label{datasets}
 
-Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf $10$, $20$, $30$, $40$ und $50$MB Präfixe folgender Datensätze angewandt:
+Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf $10$, $20$, $30$, $40$ und $50$ MB Präfixe folgender Datensätze angewandt:
 
 \begin{itemize}[leftmargin=2cm]
     \item[\emph{dna}] DNA Sequenzen von Project Gutenberg\footnote{\label{footnotegutenberg}\url{https://www.gutenberg.org}}. Jedes Basenpaar wird jeweils durch einen der Großbuchstaben \emph{A}, \emph{G}, \emph{C} und \emph{T} dargestellt. Zudem kommen einige Sonderzeichen vor. Das Alphabet besteht aus 16 Zeichen.
@@ -92,7 +92,7 @@ Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\u
     \item[\emph{xml}] Eine XML-Datei mit Informationen über große Informatik-Zeitschriften etc. von der Universität Trier\footnote{\url{https://dblp.uni-trier.de}}. Das Alphabet besteht aus 97 Zeichen.
 \end{itemize}
 
-Es wurde zunächst versucht, $100$MB Präfixe ebenfalls in die Evaluation miteinzubeziehen, jedoch war dies aufgrund des Speicherverbrauchs von AreaComp nicht möglich.  
+Es wurde zunächst versucht, $100$ MB Präfixe ebenfalls in die Evaluation miteinzubeziehen, jedoch war dies aufgrund des Speicherverbrauchs von AreaComp nicht möglich.  
 
 \subsection{Flächenfunktion}
 
@@ -122,7 +122,7 @@ Im Folgenden sei $I := [i..j]$ ein Abouelhoda-Intervall. Dann ist $LCP[i+1..j]$ 
     Die Lösung ist also  logarithmisch die Breite in die Berechnung miteinzubringen und diesen Wert auf maximal $9$ zu begrenzen. Dies sorgt dafür, dass die Breite des Intervalls ebenfalls in den Flächenwert miteingeht. Zudem wird aber gesichert, dass nie ein bestimmtes Intervall über ein anderes Intervall mit größerer Höhe priorisiert werden kann. 
     
     Für diese Flächenfunktion können anstatt $10$ und $9$ im Grunde beliebige Zahlen $k$ und $k - 1$ für $k \geq 2$ gewählt werden. Ebenfalls kann der Algorithmus zu einer beliebigen Basis gewählt werden.
-    Abhängig von $k$ kann die Flächenfunktion dann entscheiden, in welchen der $k$ durch den Logarithmus gegebenen Bereichen $w$ liegt. Ist $b$ die Basis des Logarithmus, sind diese Bereiche sind jeweils $[1..b^1), [b^1..b^2), \dots [b^{k-1}..\infty)$. 
+    Abhängig von $k$ kann die Flächenfunktion dann entscheiden, in welchen der $k$ durch den Logarithmus gegebenen Bereichen $w$ liegt. Ist $b$ die Basis des Logarithmus, so sind diese Bereiche jeweils $[1..b^1), [b^1..b^2), \dots [b^{k-1}..\infty)$. 
 
     In der Implementierung von AreaComp wird hierzu der natürliche Logarithmus und $k = 10$ gewählt.
     So ist die Grenze, bis zu der die Flächenfunktion Breitenwerte unterscheiden kann, $e^9 \approx 8103$. Da es nicht anzunehmen ist, dass es sehr viele größere Muster gibt, die öfter als $e^9$-Mal vorkommen, ist dies eine angemessene Wahl für diese Datensätze.
@@ -188,7 +188,7 @@ Zuletzt, zeigen die Abbildungen $e)$ die durchschnittliche Länge der rechten Se
 
 \subsection{Laufzeit}
 
-Auf allen Datensätzen ist Sequitur der schnellste Algorithmus. Wie in \autoref{resultsenglishruntime} zu sehen ist, hat Sequitur auf dem \emph{english} Datensatz einen besonders großen Abstand zu den anderen Algorithmen. Der nächstschnellste Algorithmus ist hier RePair, der auf dem \emph{english} Datensatz etwa $4,3$-Mal so viel Zeit benötigt wie Sequitur. Auf anderen Datensätzen ist der Abstand allerdings geringer.
+Auf allen Datensätzen ist Sequitur der schnellste Algorithmus. Wie in \autoref{resultsenglishruntime} zu sehen ist, hat Sequitur auf dem \emph{english} Datensatz einen besonders großen Abstand zu den anderen Algorithmen. Der nächst-schnellste Algorithmus ist hier RePair, der auf dem \emph{english} Datensatz etwa $4,3$-Mal so viel Zeit benötigt wie Sequitur. Auf anderen Datensätzen ist der Abstand allerdings geringer.
 Im Vergleich zu Sequitur und Repair erzielte AreaComp weitaus schlechtere Laufzeiten.
 
 Die Wahl der Flächenfunktion schien in manchen Fällen keine große Auswirkung auf die Laufzeit zu haben. In \autoref{resultsproteinsruntime} und \autoref{resultsxmlruntime} sehen wir, dass es auf den Datensätzen \emph{proteins} und \emph{xml} nur einen sehr kleinen Unterschied zwischen den Flächenfunktionen gibt. 
@@ -204,7 +204,7 @@ Auf diesen Datensätzen RePair produzierte RePair die größten und tiefsten Gra
 Der Grund für die Größe der von RePair produzierten Grammatiken ist wahrscheinlich, dass RePair nur Produktionsregeln der Länge $2$ besitzt, die Startregel ausgeschlossen. Da viele solcher Regeln rekursiv erstellt werden, ist die Grammatik auch sehr tief. Allerdings können diese Eigenschaften möglicherweise Vorteile bei der Kodierung liefern. \cite{tabei_succinct_2013}
 
 Abgesehen von der zuvor erwähnten Ausnahmen, produziert AreaComp mit der\\
-\texttt{WidthFirstArea} die nächstkleinere Grammatik. AreaComp mit \texttt{ChildArea} produziert wiederum die nächstkleinere Grammatik. Allerdings variiert der Unterschied zwischen diesen beiden auf den verschiedenen Datensätzen. Während auf dem \emph{xml} \texttt{WidthFirstArea} eine $120$\% größere Grammatik produziert als \texttt{ChildArea} (siehe \autoref{resultsxmlsize}), ist die Größe auf dem \emph{dna} Datensatz fast identisch (siehe \autoref{resultsdnasize}).
+\texttt{WidthFirstArea} die nächst-kleinere Grammatik. AreaComp mit \texttt{ChildArea} produziert wiederum die nächst-kleinere Grammatik. Allerdings variiert der Unterschied zwischen diesen beiden auf den verschiedenen Datensätzen. Während auf dem \emph{xml} \texttt{WidthFirstArea} eine $120$\% größere Grammatik produziert als \texttt{ChildArea} (siehe \autoref{resultsxmlsize}), ist die Größe auf dem \emph{dna} Datensatz fast identisch (siehe \autoref{resultsdnasize}).
 
 Weitaus bessere Ergebnisse erzielt AreaComp mit den Flächenfunktionen \\
 \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
@@ -229,7 +229,7 @@ Auf dem \emph{dna} Datensatz sind diese Grammatiken mit einer Tiefe von $49$ bis
 Auf \emph{proteins} hingegen sind die Unterschiede am kleinsten.\\
 Die Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} liegen im Bereich $50$ bis $64$, die Grammatiken von \texttt{ChildArea} im Bereich $36$ bis $50$. Die Grammatiken mit einer Tiefe im Bereich $20$ bis $24$ noch etwas flacher (siehe \autoref{resultsproteinsdepth}). 
 
-Die von RePair produzierten Grammatiken sind bei Weitem die tiefsten Grammatiken, wie schon in \autoref{grammarsize} beschrieben. Während die Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} auf keinem der Datensätze die Tiefe $100$ erreichen, so überschreiten die Grammatiken von RePair auf \emph{dna} und \emph{proteins} eine Tiefe von $1000$ (siehe \autoref{resultsdnadepth} und \autoref{resultsproteinsdepth}) und erreichen auf dem $50$MB Präfix von \emph{english} sogar eine Tiefe von über $13000$, wie wir in \autoref{resultsenglishdepth} sehen.
+Die von RePair produzierten Grammatiken sind bei Weitem die tiefsten Grammatiken, wie schon in \autoref{grammarsize} beschrieben. Während die Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} auf keinem der Datensätze die Tiefe $100$ erreichen, so überschreiten die Grammatiken von RePair auf \emph{dna} und \emph{proteins} eine Tiefe von $1000$ (siehe \autoref{resultsdnadepth} und \autoref{resultsproteinsdepth}) und erreichen auf dem $50$ MB Präfix von \emph{english} sogar eine Tiefe von über $13000$, wie wir in \autoref{resultsenglishdepth} sehen.
 
 \subsection{Regelanzahl}
 
@@ -239,13 +239,13 @@ Der größte Unterschied ist hier im \emph{proteins} Datensatz zu finden mit ein
 Der Abstand zu Sequitur, der die Grammatiken mit der nächst-größeren Anzahl an Regeln produziert, ist dabei vergleichsweise sehr groß. Die von Sequitur produzierten Grammatiken für \emph{proteins}, \emph{xml}und \emph{english} besitzen dabei jeweils $72$, $11$ und $21$-mal so viele Regeln, wie die entsprechende Grammatik von \texttt{ChildArea}, wie in den Abbildungen \autoref{resultsproteinsrulenum}, \autoref{resultsxmlrulenum} und \autoref{resultsenglishrulenum} zu sehen ist.
 Der mit Abstand größte Unterschied ist in den Grammatiken des \emph{dna} Datensatz zu finden. Hier hat Sequiturs Grammatik $2686$-mal so viele Regeln wie die Grammatik von \texttt{ChildArea}. 
 
-Der Algorithmus der die Grammatik mit der nächst-größeren Regelanzahl produziert ist abhängig von dem betrachteten Datensatz. 
+Der Algorithmus, der die Grammatik mit der nächst-größeren Regelanzahl produziert ist abhängig von dem betrachteten Datensatz. 
 
 Die von \texttt{HeightFirstArea}, \texttt{HeightAdvantageArea} und RePair erzeugten Grammatiken haben für den \emph{xml} Datensatz zu einander eine sehr ähnliche Anzahl an Regeln, wie in \autoref{resultsxmlrulenum} zu sehen ist. Diese Grammatiken bestehen aus etwa $38$\% mehr Regeln als die Grammatik von Sequitur.
 
-Im \emph{dna} Datensatz ist die Grammatik mit der nächst-größeren Regelanzahl die von RePair erzeugte Grammatik. Diese ist besteht aus etwa $32$\% mehr Regeln. In etwas größerem Abstand liegen die Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. Diese enthalten etwa $4.9$-mal so viele Regeln wie die Grammatik von Sequitur (siehe \autoref{resultsdnarulenum}).
+Im \emph{dna} Datensatz ist die Grammatik mit der nächst-größeren Regelanzahl die von RePair erzeugte Grammatik. Diese besteht aus etwa $32$\% mehr Regeln. In etwas größerem Abstand liegen die Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. Diese enthalten etwa $4.9$-mal so viele Regeln wie die Grammatik von Sequitur (siehe \autoref{resultsdnarulenum}).
 
-In \autoref{resultsproteinsrulenum} sehen wir, dass die Regelanzahl der RePair Grammatik auf dem \emph{proteins} Datensatz von $30$MB auf $40$MB sogar sinkt. Bis einschließlich $30$MB enthält die RePair Grammatik etwa $50$\% mehr Regeln als die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. Ab $40$MB sinkt die Anzahl der Regeln in der RePair Grammatik unter die Anzahl der Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
+In \autoref{resultsproteinsrulenum} sehen wir, dass die Regelanzahl der RePair Grammatik auf dem \emph{proteins} Datensatz von $30$ MB auf $40$ MB sogar sinkt. Bis einschließlich $30$ MB enthält die RePair Grammatik etwa $50$\% mehr Regeln als die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. Ab $40$ MB sinkt die Anzahl der Regeln in der RePair Grammatik unter die Anzahl der Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
 
 Auf dem \emph{english} Datensatz produzierten \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} Grammatiken mit etwa doppelt so vielen Regeln wie die von Sequitur.
 RePair produziert hier mit Abstand die Grammatik mit den meisten Regeln. Die RePair Grammatik enthält etwa $4.2$-mal so viele Regeln wie die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
@@ -258,7 +258,7 @@ Wie in \autoref{resultsdnaavglen} und \autoref{resultsxmlavglen} zu sehen, ist f
 
 Auf \emph{xml} hingegen, produziert \texttt{HeightFirstArea} die Grammatik mit den kürzesten Regeln und \texttt{WidthFirstArea} die mit den längsten Regeln.
 
-Auf \emph{proteins} und \emph{english} produziert \texttt{ChildArea} Grammatiken mit durchschnittlichen Regellängen von über $10$ (siehe \autoref{resultsproteinsavglen}). Auf dem \emph{english} Datensatz sogar bis zu $96$.
+\emph{proteins} und \emph{english} produziert mit \texttt{ChildArea} Grammatiken mit durchschnittlichen Regellängen von über $10$ (siehe \autoref{resultsproteinsavglen}). Auf dem \emph{english} Datensatz sogar bis zu $96$.
 Hier produziert auch \texttt{WidthFirstArea} eine Grammatik mit einer durchschnittlichen Regellänge von bis zu $40$ (siehe \autoref{resultsenglishavglen}).
 
 
@@ -797,8 +797,8 @@ In \autoref{areacompruntimesplit} ist abgebildet, welchen Anteil die Operationen
 
 Besonders auffällig ist dabei der Laufzeitanteil des Bereinigens des $positions$ Array (\autoref{cleanpositionsv4}). Dieser ist mit $57$\% bei Weitem am größten. 
 Dieser große Laufzeitanteil wird durch die Anfragen dieser Methode an die \texttt{RuleIntervalIndex} Datenstruktur verursacht.
-Es sei allerdings erwähnt, dass etwa $24$\% davon von einer unbekannten Quelle stammen. Die Methode $floorIntervals$ von \texttt{RuleIntervalIndex} stellt nur eine Predecessor-Anfrage an die zugrundeliegende \texttt{BucketPred} Datenstruktur. Die eigentliche Anfrage macht dabei $14$\% von den $57$\% aus, während $24$\% in dem hier benutzten Profiler VisualVM\footnote{\url{https://visualvm.github.io}} nur als \emph{Self Time} angezeigt wird.
-Self Time beschreibt normalerweise die Zeit, die in der Methode selbst verbracht wird, abgesehen von weiteren Methodenaufrufen. Allerdings besteht die Methode lediglich aus der Anfrage an die Predecessor-Struktur.
+Es sei allerdings erwähnt, dass etwa $24$\% davon von einer unbekannten Quelle stammen. Die Methode $floorIntervals$ von \texttt{RuleIntervalIndex} stellt nur eine Predecessor-Anfrage an die zugrundeliegende \texttt{BucketPred} Datenstruktur. Die eigentliche Anfrage macht dabei $14$\% von den $57$\% aus, während $24$\% in dem hier benutzten Profiler VisualVM\footnote{\url{https://visualvm.github.io}} nur als \emph{Self-Time} angezeigt wird.
+Self-Time beschreibt normalerweise die Zeit, die in der Methode selbst verbracht wird, abgesehen von weiteren Methodenaufrufen. Allerdings besteht die Methode lediglich aus der Anfrage an die Predecessor-Struktur.
 Für dieses Problem ist bislang keine Lösung gefunden worden.
 
 \section{Fazit}
@@ -806,7 +806,7 @@ Für dieses Problem ist bislang keine Lösung gefunden worden.
 Wir sehen, dass von den hier vorgestellten Flächenfunktionen \texttt{HeightFirstArea} und\\
 \texttt{HeightAdvantageArea} die kleinsten Grammatiken erzeugen. Diese benötigen auch in der Regel etwas mehr Laufzeit als die anderen Flächenfunktionen, allerdings ist der Unterschied hier sehr klein im Vergleich zu dem Unterschied in der Grammatikgröße. Die von diesen beiden Flächenfunktionen erzeugten Grammatiken haben fast identische Eigenschaften.
 
-Allerdings scheint \texttt{HeightAdvantageArea} marginal kleinere Grammatiken zu erzeugen, doch der Unterschied zu \texttt{HeightFirstArea} ist sehr gering. AreaComp scheint in der Praxis eine linear steigende Laufzeit zu besitzen. Trotzdem ist AreaComp langsamer als RePair und insbesondere Sequitur. Letzterer erzeugt die kleinsten Grammatik unter all den betrachteten Algorithmen und hat zudem die beste Laufzeit auf allen betrachteten Datensätzen.
+Allerdings scheint \texttt{HeightAdvantageArea} marginal kleinere Grammatiken zu erzeugen, doch der Unterschied zu \texttt{HeightFirstArea} ist sehr gering. AreaComp scheint in der Praxis eine linear steigende Laufzeit zu besitzen. Trotzdem ist AreaComp langsamer als RePair und insbesondere Sequitur. Letzterer erzeugt die kleinste Grammatik unter all den betrachteten Algorithmen und hat zudem die beste Laufzeit auf allen betrachteten Datensätzen.
 
 Auf manchen Datensätzen kommt die Größe der von \texttt{HeightFirstArea} und\\
 \texttt{HeightAdvantageArea} der von Sequitur erzeugten Grammatiken sehr nahe. So zum Beispiel auf den Datensätzen \emph{english} und \emph{xml}.
