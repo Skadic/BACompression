@@ -163,7 +163,9 @@ public interface UnifiedCompressor {
 
         // I am very sorry
         final int datasetsize;
-        if(inputFileName.contains("50")) {
+        if(inputFileName.contains("100")) {
+            datasetsize = 100;
+        } else if(inputFileName.contains("50")) {
             datasetsize = 50;
         } else if(inputFileName.contains("40")) {
             datasetsize = 40;

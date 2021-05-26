@@ -14,7 +14,6 @@ import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.*;
 
@@ -79,7 +78,6 @@ class Ruleset implements ToUnifiedRuleset {
 
         Benchmark.stopTimer(ALGORITHM_NAME, "queue");
         while (!queue.isEmpty()) {
-
             Benchmark.startTimer(ALGORITHM_NAME, "positions");
             // Poll the best interval
             var areaData = queue.remove();
@@ -122,6 +120,8 @@ class Ruleset implements ToUnifiedRuleset {
         }
         Benchmark.stopTimer(ALGORITHM_NAME, "total time");
     }
+
+
 
     /**
      * Factorizes a repeated sequence. All occurrences of the pattern in the grammar will be replaced with a new rule

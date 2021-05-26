@@ -1,48 +1,73 @@
 \BOOKMARK [0][-]{chapter.1}{Einleitung}{}% 1
-\BOOKMARK [0][-]{chapter.2}{Theoretischer Hintergrund}{}% 2
-\BOOKMARK [1][-]{section.2.1}{Notation}{chapter.2}% 3
-\BOOKMARK [1][-]{section.2.2}{Verlustfreie Datenkompression}{chapter.2}% 4
-\BOOKMARK [1][-]{section.2.3}{Straight-Line-Grammatiken}{chapter.2}% 5
-\BOOKMARK [1][-]{section.2.4}{Grammatikbasierte Kompression}{chapter.2}% 6
-\BOOKMARK [1][-]{section.2.5}{Enhanced Suffix-Array}{chapter.2}% 7
-\BOOKMARK [2][-]{subsection.2.5.1}{Suffix-Array}{section.2.5}% 8
-\BOOKMARK [2][-]{subsection.2.5.2}{Inverses Suffix-Array}{section.2.5}% 9
-\BOOKMARK [2][-]{subsection.2.5.3}{LCP-Array}{section.2.5}% 10
-\BOOKMARK [1][-]{section.2.6}{Predecessor Datenstrukturen}{chapter.2}% 11
-\BOOKMARK [2][-]{subsection.2.6.1}{Predecessor-Problem}{section.2.6}% 12
-\BOOKMARK [2][-]{subsection.2.6.2}{Bucket-Predecessor-Struktur}{section.2.6}% 13
-\BOOKMARK [1][-]{section.2.7}{Kind-Array}{chapter.2}% 14
-\BOOKMARK [2][-]{subsection.2.7.1}{Maximale LCP-Intervalle}{section.2.7}% 15
-\BOOKMARK [2][-]{subsection.2.7.2}{Eingebettete und umschlie\337ende maximale LCP-Intervalle}{section.2.7}% 16
-\BOOKMARK [2][-]{subsection.2.7.3}{Kind-Intervallbaum und Kind-Array}{section.2.7}% 17
-\BOOKMARK [0][-]{chapter.3}{Andere Algorithmen}{}% 18
-\BOOKMARK [1][-]{section.3.1}{Sequitur}{chapter.3}% 19
-\BOOKMARK [2][-]{subsection.3.1.1}{Eigenschaften der erzeugten Grammatik}{section.3.1}% 20
-\BOOKMARK [2][-]{subsection.3.1.2}{Implementation}{section.3.1}% 21
-\BOOKMARK [2][-]{subsection.3.1.3}{Beispiel}{section.3.1}% 22
-\BOOKMARK [1][-]{section.3.2}{Re-Pair}{chapter.3}% 23
-\BOOKMARK [2][-]{subsection.3.2.1}{Implementation}{section.3.2}% 24
-\BOOKMARK [2][-]{subsection.3.2.2}{Beispiel}{section.3.2}% 25
-\BOOKMARK [0][-]{chapter.4}{AreaComp}{}% 26
-\BOOKMARK [1][-]{section.4.1}{Konzept}{chapter.4}% 27
-\BOOKMARK [2][-]{subsection.4.1.1}{Beispiel}{section.4.1}% 28
-\BOOKMARK [2][-]{subsection.4.1.2}{\334berlegungen}{section.4.1}% 29
-\BOOKMARK [1][-]{section.4.2}{AreaComp V1}{chapter.4}% 30
-\BOOKMARK [2][-]{subsection.4.2.1}{Probleme}{section.4.2}% 31
-\BOOKMARK [1][-]{section.4.3}{AreaComp V2}{chapter.4}% 32
-\BOOKMARK [2][-]{subsection.4.3.1}{Datenstrukturen}{section.4.3}% 33
-\BOOKMARK [2][-]{subsection.4.3.2}{Suffix- und LCP-Array}{section.4.3}% 34
-\BOOKMARK [2][-]{subsection.4.3.3}{Neue Datenstrukturen}{section.4.3}% 35
-\BOOKMARK [2][-]{subsection.4.3.4}{Substitution}{section.4.3}% 36
-\BOOKMARK [2][-]{subsection.4.3.5}{Probleme}{section.4.3}% 37
-\BOOKMARK [1][-]{section.4.4}{AreaComp V3}{chapter.4}% 38
-\BOOKMARK [2][-]{subsection.4.4.1}{Wahl der LCP-Intervalle}{section.4.4}% 39
-\BOOKMARK [2][-]{subsection.4.4.2}{RuleIntervalIndex}{section.4.4}% 40
-\BOOKMARK [2][-]{subsection.4.4.3}{Kleinere Verbesserungen in der Rule Datenstruktur}{section.4.4}% 41
-\BOOKMARK [2][-]{subsection.4.4.4}{Probleme}{section.4.4}% 42
-\BOOKMARK [1][-]{section.4.5}{AreaComp V4}{chapter.4}% 43
-\BOOKMARK [2][-]{subsection.4.5.1}{Bessere Predecessor-Datenstruktur}{section.4.5}% 44
-\BOOKMARK [2][-]{subsection.4.5.2}{Verbesserung von RuleIntervalIndex}{section.4.5}% 45
-\BOOKMARK [2][-]{subsection.4.5.3}{Ruleset}{section.4.5}% 46
-\BOOKMARK [0][-]{chapter.5}{Evaluation}{}% 47
-\BOOKMARK [0][-]{chapter*.69}{Literaturverzeichnis}{}% 48
+\BOOKMARK [1][-]{section.1.1}{Motivation und Hintergrund}{chapter.1}% 2
+\BOOKMARK [1][-]{section.1.2}{Inhalt der Arbeit}{chapter.1}% 3
+\BOOKMARK [1][-]{section.1.3}{Aufbau der Arbeit}{chapter.1}% 4
+\BOOKMARK [0][-]{chapter.2}{Theoretischer Hintergrund}{}% 5
+\BOOKMARK [1][-]{section.2.1}{Notation}{chapter.2}% 6
+\BOOKMARK [1][-]{section.2.2}{Verlustfreie Datenkompression}{chapter.2}% 7
+\BOOKMARK [1][-]{section.2.3}{Straight-Line-Grammatiken}{chapter.2}% 8
+\BOOKMARK [1][-]{section.2.4}{Grammatikbasierte Kompression}{chapter.2}% 9
+\BOOKMARK [1][-]{section.2.5}{Enhanced Suffix-Array}{chapter.2}% 10
+\BOOKMARK [2][-]{subsection.2.5.1}{Suffix-Array}{section.2.5}% 11
+\BOOKMARK [2][-]{subsection.2.5.2}{Inverses Suffix-Array}{section.2.5}% 12
+\BOOKMARK [2][-]{subsection.2.5.3}{LCP-Array}{section.2.5}% 13
+\BOOKMARK [1][-]{section.2.6}{Predecessor Datenstrukturen}{chapter.2}% 14
+\BOOKMARK [2][-]{subsection.2.6.1}{Predecessor-Problem}{section.2.6}% 15
+\BOOKMARK [2][-]{subsection.2.6.2}{Bucket-Predecessor-Struktur}{section.2.6}% 16
+\BOOKMARK [1][-]{section.2.7}{LCP-Intervallbaum}{chapter.2}% 17
+\BOOKMARK [2][-]{subsection.2.7.1}{Abouelhoda-Intervalle}{section.2.7}% 18
+\BOOKMARK [2][-]{subsection.2.7.2}{Eingebettete und umschlie\337ende Abouelhoda-Intervalle}{section.2.7}% 19
+\BOOKMARK [2][-]{subsection.2.7.3}{Kind-Intervallbaum und Kind-Array}{section.2.7}% 20
+\BOOKMARK [0][-]{chapter.3}{Bekannte Grammatikkompressionsalgorithmen}{}% 21
+\BOOKMARK [1][-]{section.3.1}{Sequitur}{chapter.3}% 22
+\BOOKMARK [2][-]{subsection.3.1.1}{Eigenschaften der erzeugten Grammatik}{section.3.1}% 23
+\BOOKMARK [2][-]{subsection.3.1.2}{Implementation}{section.3.1}% 24
+\BOOKMARK [2][-]{subsection.3.1.3}{Beispiel}{section.3.1}% 25
+\BOOKMARK [1][-]{section.3.2}{Re-Pair}{chapter.3}% 26
+\BOOKMARK [2][-]{subsection.3.2.1}{Implementation}{section.3.2}% 27
+\BOOKMARK [2][-]{subsection.3.2.2}{Beispiel}{section.3.2}% 28
+\BOOKMARK [0][-]{chapter.4}{AreaComp}{}% 29
+\BOOKMARK [1][-]{section.4.1}{Konzept}{chapter.4}% 30
+\BOOKMARK [2][-]{subsection.4.1.1}{Beispiel}{section.4.1}% 31
+\BOOKMARK [2][-]{subsection.4.1.2}{\334berlegungen}{section.4.1}% 32
+\BOOKMARK [2][-]{subsection.4.1.3}{\334bersicht}{section.4.1}% 33
+\BOOKMARK [1][-]{section.4.2}{AreaComp V1}{chapter.4}% 34
+\BOOKMARK [2][-]{subsection.4.2.1}{Probleme}{section.4.2}% 35
+\BOOKMARK [1][-]{section.4.3}{AreaComp V2}{chapter.4}% 36
+\BOOKMARK [2][-]{subsection.4.3.1}{Datenstrukturen}{section.4.3}% 37
+\BOOKMARK [2][-]{subsection.4.3.2}{Suffix- und LCP-Array}{section.4.3}% 38
+\BOOKMARK [2][-]{subsection.4.3.3}{Neue Datenstrukturen}{section.4.3}% 39
+\BOOKMARK [2][-]{subsection.4.3.4}{Substitution}{section.4.3}% 40
+\BOOKMARK [2][-]{subsection.4.3.5}{Probleme}{section.4.3}% 41
+\BOOKMARK [1][-]{section.4.4}{AreaComp V3}{chapter.4}% 42
+\BOOKMARK [2][-]{subsection.4.4.1}{Wahl der LCP-Intervalle}{section.4.4}% 43
+\BOOKMARK [2][-]{subsection.4.4.2}{RuleIntervalIndex}{section.4.4}% 44
+\BOOKMARK [2][-]{subsection.4.4.3}{Kleinere Verbesserungen in der Rule Datenstruktur}{section.4.4}% 45
+\BOOKMARK [2][-]{subsection.4.4.4}{Laufzeit}{section.4.4}% 46
+\BOOKMARK [2][-]{subsection.4.4.5}{Probleme}{section.4.4}% 47
+\BOOKMARK [1][-]{section.4.5}{AreaComp V4}{chapter.4}% 48
+\BOOKMARK [2][-]{subsection.4.5.1}{Bessere Predecessor-Datenstruktur}{section.4.5}% 49
+\BOOKMARK [2][-]{subsection.4.5.2}{Verbesserung von RuleIntervalIndex}{section.4.5}% 50
+\BOOKMARK [1][-]{section.4.6}{Ablauf}{chapter.4}% 51
+\BOOKMARK [2][-]{subsection.4.6.1}{Berechnen des Enhanced Suffix Array}{section.4.6}% 52
+\BOOKMARK [2][-]{subsection.4.6.2}{Berechnen der Priorit\344tswarteschlange}{section.4.6}% 53
+\BOOKMARK [2][-]{subsection.4.6.3}{Kompression}{section.4.6}% 54
+\BOOKMARK [2][-]{subsection.4.6.4}{Abschluss des Algorithmus}{section.4.6}% 55
+\BOOKMARK [1][-]{section.4.7}{Laufzeit}{chapter.4}% 56
+\BOOKMARK [2][-]{subsection.4.7.1}{Laufzeit f\374r compressNext}{section.4.7}% 57
+\BOOKMARK [2][-]{subsection.4.7.2}{Gesamtlaufzeit}{section.4.7}% 58
+\BOOKMARK [0][-]{chapter.5}{Evaluation}{}% 59
+\BOOKMARK [1][-]{section.5.1}{Methodik}{chapter.5}% 60
+\BOOKMARK [2][-]{subsection.5.1.1}{Implementationen}{section.5.1}% 61
+\BOOKMARK [2][-]{subsection.5.1.2}{Datens\344tze}{section.5.1}% 62
+\BOOKMARK [2][-]{subsection.5.1.3}{Fl\344chenfunktion}{section.5.1}% 63
+\BOOKMARK [1][-]{section.5.2}{Ergebnisse}{chapter.5}% 64
+\BOOKMARK [2][-]{subsection.5.2.1}{Laufzeit}{section.5.2}% 65
+\BOOKMARK [2][-]{subsection.5.2.2}{Grammatikgr\366\337e}{section.5.2}% 66
+\BOOKMARK [2][-]{subsection.5.2.3}{Grammatiktiefe}{section.5.2}% 67
+\BOOKMARK [2][-]{subsection.5.2.4}{Regelanzahl}{section.5.2}% 68
+\BOOKMARK [2][-]{subsection.5.2.5}{Durchschnittliche Regell\344nge}{section.5.2}% 69
+\BOOKMARK [2][-]{subsection.5.2.6}{Laufzeitanteile}{section.5.2}% 70
+\BOOKMARK [1][-]{section.5.3}{Fazit}{chapter.5}% 71
+\BOOKMARK [0][-]{chapter.6}{Ausblick}{}% 72
+\BOOKMARK [0][-]{chapter*.76}{Literaturverzeichnis}{}% 73

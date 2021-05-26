@@ -11,7 +11,7 @@ public class AreaCompV4 implements UnifiedCompressor {
     /**
      * The {@link AreaFunction} which this algorithm should use to prioritize intervals in the LCP array
      */
-    private AreaFunction area;
+    private final AreaFunction area;
 
     /**
      * Creates a new instance with a given {@link AreaFunction}

@@ -8,7 +8,6 @@ import compression.repair.RePair;
 import compression.sequitur.Sequitur;
 import compression.unified.interfaces.UnifiedCompressor;
 import compression.utils.Benchmark;
-import org.reflections.Reflections;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -19,9 +18,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -31,12 +27,13 @@ public class Main {
         run(args);
     }
 
-    private static void benchmarkOnFiles(String[] args) throws IOException {
+    private static void benchmarkOnFiles(String[] args) throws IOException, InterruptedException {
         if(args.length < 1) {
             System.out.println("Please specify an input file. The input file should be in a folder called \"input\" and the given path should be relative to that folder.");
             return;
         }
 
+        Thread.sleep(2000);
         for (String file : args) {
             benchmark(file);
             System.gc();
@@ -45,12 +42,12 @@ public class Main {
 
     private static void benchmark(String fileName) throws IOException {
         final List<UnifiedCompressor> compressors = List.of(
-                new Sequitur(),
-                new RePair(),
-                new AreaCompV4(new HeightFirstArea()),
-                new AreaCompV4(new HeightAdvantageArea()),
-                new AreaCompV4(new ChildArea()),
-                new AreaCompV4(new WidthFirstArea())
+                //new Sequitur(),
+                new AreaCompV4(new HeightFirstArea())
+                //new AreaCompV4(new HeightAdvantageArea()),
+                //new AreaCompV4(new ChildArea()),
+                //new AreaCompV4(new WidthFirstArea()),
+                //new RePair()
                 //,new AreaCompV1(area)
                 //new AreaCompV4(new PotentialCompressionArea()),
                 //new AreaCompV2(new NaiveArea()),
@@ -96,11 +93,11 @@ public class Main {
     }
 
     private static void run(String[] args) throws Exception {
-        Reflections reflections = new Reflections("compression.areacomp");
-        Map<String, Class<? extends AreaFunction>> areaFunctionClasses = reflections.getSubTypesOf(AreaFunction.class)
-                .stream()
-                .filter(c -> !c.getSimpleName().equals("NaiveArea"))
-                .collect(Collectors.toMap(c -> c.getSimpleName().toLowerCase(), Function.identity(), (c1, c2) -> c2, TreeMap::new));
+        Map<String, Class<? extends AreaFunction>> areaFunctionClasses = Map.of(
+                "childarea", ChildArea.class,
+                "heightadvantagearea", HeightAdvantageArea.class,
+                "heightfirstarea", HeightFirstArea.class,
+                "widthfirstarea", WidthFirstArea.class);
 
         if(args.length < 3) {
             System.out.println("Usage: [input file] [print grammar] [algorithm] <area function if AreaComp> \n" +
