@@ -17,10 +17,10 @@ Dann gilt für die Produktionsregel $A$:
 \end{align*}
 
 \subsection{Suffix- und LCP-Array}
-Im Gegensatz zu Version 1 wird in Version 2 das Suffix- und LCP-Array, und damit auch die Prioritätswarteschlange, nur einmal zu Anfang des Algorithmus global für den Eingabestring berechnet. Damit wird die wiederholte Berechnung in jedem Durchlauf gespart. 
-Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen, die nicht in derselben Regel liegen, nicht erfasst.
+Im Gegensatz zu Version 1 wird in Version 2 das Suffix- und LCP-Array, und damit auch die Prioritätswarteschlange, nur einmal zu Anfang des Algorithmus global für den Eingabestring berechnet. Damit ist die wiederholte Berechnung in jedem Durchlauf nicht mehr nötig. 
+Dadurch wird ebenfalls das Problem behoben, dass V1 wiederholte Vorkommen eines Musters nicht erfasst, die nicht in derselben Regel liegen.
 
-Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich das Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
+Dies hat allerdings auch Auswirkungen auf den Algorithmus, die neue Probleme schaffen. Im Gegensatz zu den in V1 berechneten Suffix- und LCP-Arrays, ändern sich Suffix- und LCP-Array in V2 nicht, wenn Substitutionen stattfinden. 
 
 Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und $p \in \Sigma^*$ mit $\ell := |p|$  ein zu substituierendes Muster und $id_p \in \mathbb{N}$ die Regel, die auf $p$ abbildet. Zusätzlich sei $i \in \mathbb{N}, 0 \leq i \leq n - \ell$ ein Index in $s$. Wird nun ein Vorkommen von $p$ in $s$ bei Index $i$ ersetzt, so heißt das Intervall $[i.. i + \ell - 1]$ \emph{Ersetzungsintervall} der Regel $id_p$ bei Index $i$. Dabei wird das Intervall $[0, n-1]$ zu Beginn des Algorithmus als Ersetzungsintervall der Regel $R_0$ erzeugt, wobei $R_0$ die Startregel ist.
 
@@ -65,14 +65,14 @@ Sei $s = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |s|$ der Eingabestring und 
 
 Wir führen nun zwei Datenstrukturen ein: 
 \begin{itemize}[leftmargin=10em]
-	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste derjeniger Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die Regeln in der Reihenfolge der Verschachtelung der Ersetzungsintervalle. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
+	\item[\texttt{ruleIntervals}] ist eine Liste, die für jeden Index $i \in \{0, \dots, n - 1\}$ eine Liste von Regeln enthält. Die Liste bei Index $i$ enthält dann genau die Regeln, für die ein Ersetzungsintervall existiert, das diesen Index einschließt. Dabei sind die Regeln in der Reihenfolge der Verschachtelung der Ersetzungsintervalle geordnet. Je tiefer verschachtelt das Ersetzungsintervall ist, desto höher der Index in der Liste.\\ 
 	Anders formuliert, beinhaltet die Liste die Indizes aller Regeln, die von der Startregel ausgehend in der Grammatik durchlaufen werden müssen, um das Zeichen an Index $i$ im Eingabestring zu erreichen, genau in der Reihenfolge in der sie durchlaufen wurden. Es ist also der letzte Index immer die Regel, die dem am tiefsten verschachtelten Ersetzungsintervall angehört. 
 	
 	Betrachte \autoref{v2datastructures}. Der Eintrag in \texttt{ruleIntervals} für den Index $1$ ist dann also $[0, 1, 2]$, da wir die Regeln in der Reihenfolge $R_0 \rightarrow R_1 \rightarrow R_2$ durchlaufen müssen, um das $b$ an Index $1$ im Eingabestring zu erreichen.
 	
 	\item[\texttt{ruleIntervalStarts}] ist eine Hashtabelle, die von einem Index $i \in \{0, \dots, n - 1\}$ auf eine Menge von Regeln abbildet. Dabei befindet sich eine Regel $r$ genau dann in \texttt{ruleIntervalStarts}$[i]$, wenn ein Ersetzungsintervall der Regel $r$ existiert, das an Index $i$ beginnt.
 	
-	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinander folgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
+	Diese Datenstruktur dient dem Zweck, bestimmen zu können an welchem Index ein Ersetzungsintervall beginnt. Falls zwei Ersetzungsintervalle der gleichen Regel ohne Lücke aufeinanderfolgen, dann kann aus \texttt{ruleIntervals} allein nicht mehr bestimmt werden, an welchem Index dieses Intervall nun beginnt. In diesem Fall sind diese zwei aufeinanderfolgenden Intervalle nicht von einem großen Intervall zu unterscheiden.
 
     Betrachte wieder \autoref{v2datastructures}. Der Inhalt von\\
     $\texttt{ruleIntervalStarts}$ bei Index $0$ ist $\{0, 1\}$, da sowohl das Ersetzungsintervall $[0..10]$ der Regel $0$ als auch das Ersetzungsintervall $[0..3]$ der Regel $1$ an diesem Index beginnen. 
@@ -114,7 +114,7 @@ Es existiert aber ein weiteres Problem. Betrachten wir beispielsweise die Gramma
 \end{align*}
 
 Da das Suffix- und LCP-Array global sind, könnte der Algorithmus als nächstes die beiden Vorkommen von $ab$ finden. 
-Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R_1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurde. Demnach darf $ab$ nicht nochmals ersetzt werden. 
+Allerdings fällt hier auf, dass diese Vorkommen schon durch die Substitution von $R_1$ auf ein einziges Vorkommen innerhalb der Grammatik reduziert wurden. Demnach darf $ab$ nicht nochmals ersetzt werden. 
 Es muss also möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächlich auch \emph{in der Grammatik} mehrmals vorkommen.
 \begin{algorithm}[t]
     \KwIn{$positions:$ Liste von Startindizes der Vorkommen eines Musters}
@@ -140,7 +140,7 @@ Es muss also möglich sein zu überprüfen, ob es Vorkommen gibt, die tatsächli
 \end{algorithm}
 
 Dies kann mit \autoref{diffOccAlgoV2} festgestellt werden.
-Wir iterieren durch die Indizes, an denen $p$ vorkommt bestimmen die tiefste Regel an diesem Index. Wir speichern die erste solche Regel. Kommt in einer späteren Iteration eine andere Regel vor als die Gespeicherte, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
+Wir iterieren durch die Indizes, an denen $p$ vorkommt und bestimmen die tiefste Regel an diesem Index. Wir speichern die erste solche Regel. Kommt in einer späteren Iteration eine andere Regel vor als die Gespeicherte, so müssen die Vorkommen von $p$ zwangsweise unterschiedlich sein und der Algorithmus gibt $\texttt{true}$ zurück.
 Andererseits bestimmen wir den Anfangsindex des Ersetzungsintervalls. Wir verwalten eine Menge aller solcher Anfangsindizes, die bisher bestimmt wurden. 
 Falls dieser Anfangsindex noch nicht in der Menge gespeichert ist, speichern wir diesen in der Menge und springen zum nächsten Schritt der Iteration. Falls doch, brechen wir die Iteration ab und geben $\texttt{true}$ zurück. 
 Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfangsindex des Ersetzungsintervalls ist $i < j$. Es gelte auch, dass wir $i$ als bereits gespeichert vorfinden. Dann gibt es also einen Index $k$ mit $i \leq k < j$, so dass $k$ und $j$ in Ersetzungsintervallen liegen, die denselben Anfangsindex besitzen. Dann sind zwei Fälle möglich:
@@ -149,23 +149,22 @@ Dies ist korrekt, denn angenommen, wir befinden uns bei Index $j$ und der Anfang
 	\item[\textbf{Fall 1}] Die Regeln der beiden Intervalle sind gleich.\\
 	In diesem Fall sind die Intervalle gleich. Da $k < j$ gilt, gibt es also in derselben Regel mindestens zwei Vorkommen von dem Muster $p$. Damit kann der Algorithmus also terminieren und $\texttt{true}$ zurückgeben.
 	\item[\textbf{Fall 2}] Die Regeln sind unterschiedlich.\\
-	Dieser Fall wird durch die Bedingung $ruleId \neq firstRuleId$ bemerkt und der Algorithmus gibt korrekterweise $\texttt{true}$ zurück.
+	Dieser Fall wird durch die Bedingung $ruleId \neq firstRuleId$ abgedeckt und der Algorithmus gibt korrekterweise $\texttt{true}$ zurück.
 \end{enumerate}
 
 Falls kein Startindex eines Intervalls doppelt gefunden wird und alle gefundenen Ersetzungsintervalle dieselbe Regel besitzen, gibt der Algorithmus $\texttt{false}$ zurück.
-
-Ist $k := |positions|$, so läuft \autoref{diffOccAlgoV2} in $\mathcal{O}(k)$ Laufzeit. Die Menge $set$ kann als Hashtabelle implementiert werden, sodass die benötigten $\texttt{insert}$ und $\texttt{contains}$ Operationen eine erwartete Laufzeit von $\mathcal{O}(1)$ besitzen. $ruleId$ und $startIndex$ können zusammen mit einer Anfrage an die $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ Datenstrukturen berechnet werden. Dieser Aufruf hat allerdings eine erwartete $\mathcal{O}(n)$ Laufzeit. Insgesamt folgt also eine erwartete $\mathcal{O}(n \cdot k)$ Laufzeit für den Algorithmus.
+Die Menge $set$ kann als Hashtabelle implementiert werden, sodass die benötigten $\texttt{insert}$ und $\texttt{contains}$ Operationen eine erwartete Laufzeit von $\mathcal{O}(1)$ besitzen. $ruleId$ und $startIndex$ können zusammen mit einer Anfrage an die $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ Datenstrukturen berechnet werden. Dieser Aufruf hat allerdings eine erwartete $\mathcal{O}(n)$ Laufzeit. Insgesamt folgt also eine erwartete $\mathcal{O}(n \cdot k)$ Laufzeit für \autoref{diffOccAlgoV2}.
 
 \subsubsection{Substitution}
 
-Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ Produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
+Nach der Vorbearbeitung durch die beschriebenen Vorgänge müssen jetzt nur noch eine neue Produktionsregel erstellt werden, die $p$ produziert, und die Vorkommen durch das zugehörige Nichtterminal ersetzt werden.
 
-Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabestring beschreiben. Es muss dieser Index also so vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
+Hierzu wird ein Index $i$, an dem $p$ vorkommt, aus dem Array entnommen. Es ist wichtig zu beachten, dass diese Indizes Positionen im Eingabestring beschreiben. Es muss dieser Index also vorverarbeitet werden, um den tatsächlichen lokalen Index des Startsymbols in der Regel zu erhalten, in der das Vorkommen ersetzt werden muss.
 
 Um dies zu lösen, kommt eine binäre Suche auf der \texttt{cumulativeLength} Liste zum Einsatz. Da dort die Präfixsumme über die Längen der einzelnen Symbole in \texttt{symbols} gespeichert ist, 
-lässt sich also derjenige lokale Index $j$ in der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
+lässt sich also derjenige lokale Index $j$ in der rechten Seite der Regel bestimmen, so dass in der voll expandierten Form des Symbols $\texttt{symbols}[j]$ das Terminal $s_{i}$ zu finden ist.
 Von dort an kann dann durch Iterieren durch $\texttt{symbols}$ die erforderliche Anzahl an Symbolen durch das neue Nichtterminal ersetzt werden.
-Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, in dem die neue Regel an die entsprechenden Stellen eingefügt wird.
+Ebenfalls wird dann in $\texttt{ruleIntervals}$ und $\texttt{ruleIntervalStarts}$ der Bereich markiert, der nun von der Regel ersetzt wurde, indem die neue Regel an den entsprechenden Stellen eingefügt wird.
 
 \begin{algorithm}[t]
     \KwIn{$s:$ String}

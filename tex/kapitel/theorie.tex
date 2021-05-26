@@ -117,7 +117,7 @@ Eine Predecessor-Datenstruktur ist eine Datenstruktur, die das Predecessor-Probl
 
 In der finalen Version des in dieser Arbeit vorgestellten Algorithmus kommt eine Version der Predecessor-Datenstruktur aus Kapitel 4 in \cite{dinklage_engineering_2021} zum Einsatz.
 
-Diese basiert darauf, ein Universum $U$ der Größe $u := |U|$, in $\lceil \tfrac{u}{b} \rceil$ Buckets der Größe $b \ll u$ zu partitionieren. Dabei ist $b = 2^k$ für ein $k \in \mathbb{N}$. Für ein $i \in \{0, \dots, \lceil \tfrac{u}{b} \rceil - 1 \}$ erhält dann der Bucket an Index $i$ nur Schlüssel im Interval $[bi, b(i + 1) - 1]$. Ein Bucket heißt \emph{aktiv}, wenn er mindestens einen Schlüssel aus $S$ enthält.
+Diese basiert darauf, ein Universum $U$ der Größe $u := |U|$, in $\lceil \tfrac{u}{b} \rceil$ Buckets der Größe $b \ll u$ zu partitionieren. Dabei ist $b = 2^k$ für ein $k \in \mathbb{N}$. Für ein $i \in \{0, \dots, \lceil \tfrac{u}{b} \rceil - 1 \}$ erhält dann der Bucket an Index $i$ nur Schlüssel im Intervall $[bi.. b(i + 1) - 1]$. Ein Bucket heißt \emph{aktiv}, wenn er mindestens einen Schlüssel aus $S$ enthält.
 
 Die Datenstruktur besteht aus zwei Ebenen. Die \emph{Top-Level-Ebene}, bestehend aus einem Array $\texttt{buckets}$ von Buckets, und die \emph{Bucket-Ebene}, bestehend aus den Buckets selbst.
 
@@ -139,7 +139,11 @@ Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist
 		\matrix (toparr) [matrix of nodes, nodes={draw, minimum width=25mm, minimum height=7mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth] at (7, 0) {
 			$[0, 7]$ & $[8, 15]$ & $[16, 23]$ & $[24, 31]$ \\
 		};
-		
+
+        \node[draw=none, above=0.1cm of toparr-1-1] (0) {$0$};
+		\node[draw=none, above=0.1cm of toparr-1-2] (1) {$1$};
+        \node[draw=none, above=0.1cm of toparr-1-3] (2) {$2$};
+        \node[draw=none, above=0.1cm of toparr-1-4] (3) {$3$};
 		
 		\matrix (bucketsarr) [matrix of nodes, nodes={draw, minimum width=25mm, minimum height=7mm, anchor=center}, nodes in empty cells, column sep=-\pgflinewidth] at (7, -1.5) {
 			$10010100$ & $00001100$ & |[draw=none]| & |[draw=none]| \\
@@ -163,42 +167,41 @@ Hier implementieren wir Buckets mit jeweils einem Bitvektor der Größe $b$. Ist
 
 Die Operationen werden folgendermaßen umgesetzt:
 
-\paragraph{\texttt{insert(x)}}
+\begin{itemize}[leftmargin=3cm]
+    \item[\texttt{insert(x)}] 
+    Zuerst wird der Index $i$ bestimmt, in dessen Bucket sich $x$ befinden muss. Dabei gilt $i = \lfloor \tfrac{x}{b} \rfloor$. Falls der Bucket bei Index $i$ inaktiv ist, muss ein neuer Bucket erzeugt werden. Dieser wird dann in $\texttt{buckets[i]}$ eingefügt.
+    Jetzt müssen noch die Einträge in $\texttt{buckets}$ bis zum nächsten aktiven Bucket so aktualisiert werden, dass sie ebenfalls auf $\texttt{buckets[i]}$ zeigen.
+    
+    Ist dies geschehen, oder war der Bucket bereits aktiv, kann das Bit an Index $x \mod b$ im Bucket auf $1$ gesetzt.
+    
+    Beim Einfügen eines Schlüssels müssen möglicherweise $\mathcal{O}(\tfrac{u}{b})$ Pointer verändert werden, wenn ein Bucket aktiviert werden muss. Also hat die \texttt{insert(x)} Operation eine Worst-Case Laufzeit von $\mathcal{O}(b)$. Doch je mehr Buckets bereits aktiv sind, desto weniger ist dies der Fall und die Laufzeit der Operation ist nur noch ein Lookup in einem Bucket und damit $\mathcal{O}(1)$ Laufzeit.
 
-Zuerst wird der Index $i$ bestimmt, in dessen Bucket sich $x$ befinden muss. Dabei gilt $i = \lfloor \tfrac{x}{b} \rfloor$. Falls der Bucket bei Index $i$ inaktiv ist, muss ein neuer Bucket erzeugt werden. Dieser wird dann in $\texttt{buckets[i]}$ eingefügt.
-Jetzt müssen noch die Einträge in $\texttt{buckets}$ bis zum nächsten aktiven Bucket so aktualisiert werden, dass sie ebenfalls auf $\texttt{buckets[i]}$ zeigen.
+    \item[\texttt{delete(x)}]
+    Wieder wird der Index $i$ des Buckets bestimmt, in dem sich $x$ befinden müsste. Ist der Bucket bei Index $i$ inaktiv, oder ist der Index $x \mod b$ in diesem Bucket nicht $1$, so geschieht nichts, denn $x$ war nicht in der Datenstruktur vorhanden.
 
-Ist dies geschehen, oder war der Bucket bereits aktiv, kann das Bit an Index $x \mod b$ im Bucket auf $1$ gesetzt.
+    Sonst setze das Bit $x \mod b$ im Bucket auf $0$. Sind alle Bits des Bitvektors $0$, so wird dieser Bucket entfernt. Dazu werden alle Einträge in $\texttt{buckets}$ von $i$ bis zum nächsten aktiven Bucket so aktualisiert, dass sie auf den vorherigen aktiven Bucket \textit{vor} Index $i$ zeigen.
 
-Beim Einfügen eines Schlüssels müssen möglicherweise $\mathcal{O}(\tfrac{u}{b})$ Pointer verändert werden, wenn ein Bucket aktiviert werden muss. Also hat die \texttt{insert(x)} Operation eine Worst-Case Laufzeit von $\mathcal{O}(b)$. Doch je mehr Buckets bereits aktiv sind, desto weniger ist dies der Fall und die Laufzeit der Operation ist nur noch ein Lookup in einem Bucket und damit $\mathcal{O}(1)$ Laufzeit.
+    Ähnlich wie bei der \texttt{insert(x)} Operation ist die Worst-Case Laufzeit der Operation $\mathcal{O}(\tfrac{u}{b})$, wenn die Datenstruktur dünn besetzt it. Wenn (fast) alle Buckets aktiv sind, so hat diese Operation ebenfalls eine erwartete $\mathcal{O}(1)$ Laufzeit.
 
-\paragraph{\texttt{delete(x)}}
+    \item[\texttt{predecessor(x)}]
+    Wieder bestimmen wir den Index $i$, in dem sich $x$ befindet. Ist der Bucket an diesem Index inaktiv, so bestimme den größten Index, an dem im Bucket $\texttt{buckets[i]}$ ein $1$-Bit liegt (dieser Eintrag zeigt ja auf den letzten aktiven Bucket vor $i$). Daraus lässt sich dann der Vorgänger von $x$ bestimmen.
 
-Wieder wird der Index $i$ bestimmt, in dessen Bucket dem sich $x$ befinden müsste. Ist der Bucket bei Index $i$ inaktiv, oder ist der Index $x \mod b$ in diesem Bucket nicht $1$, so geschieht nichts, denn $x$ war nicht in der Datenstruktur vorhanden.
+    Ist der Bucket aktiv, so bestimme den höchsten Index im Bucket vor oder bei $x \mod b$, dessen Bit $1$ ist. Gibt es solch ein Bit nicht, so ist der Vorgänger stattdessen das höchste $1$-Bit in dem vorhergehenden aktiven Bucket.
 
-Sonst setze das Bit $x \mod b$ im Bucket auf $0$. Sind alle Bits des Bitvektors $0$, so wird dieser Bucket entfernt. Dazu werden alle Einträge in $\texttt{buckets}$ von $i$ bis zum nächsten aktiven Bucket so aktualisiert, dass sie auf den vorherigen aktiven Bucket \textit{vor} Index $i$ zeigen.
-
-Ähnlich wie bei der \texttt{insert(x)} Operation ist die Worst-Case Laufzeit der Operation $\mathcal{O}(\tfrac{u}{b})$, wenn die Datenstruktur dünn besetzt it. Wenn (fast) alle Buckets aktiv sind, so hat diese Operation ebenfalls eine erwartete $\mathcal{O}(1)$ Laufzeit.
-
-\paragraph{\texttt{predecessor(x)}}
-
-Wieder bestimmen wir den Index $i$, in dem sich $x$ befindet. Ist der Bucket an diesem Index inaktiv, so bestimme den Index des höchsten $1$-Bits im Bucket $\texttt{buckets[i]}$ (dieser Eintrag zeigt ja auf den letzten aktiven Bucket vor $i$). Daraus lässt sich dann der Vorgänger von $x$ bestimmen.
-
-Ist der Bucket aktiv, so bestimme den höchsten Index im Bucket vor oder bei $x \mod b$, dessen Bit $1$ ist. Gibt es solch ein Bit nicht, so ist der Vorgänger stattdessen das höchste $1$-Bit in dem vorhergehenden aktiven Bucket.
-
-Da der Bucket, in dem das gesuchte Bit liegt, in $\mathcal{O}(1)$ Laufzeit bestimmt werden kann und innerhalb des Buckets in $\mathcal{O}(b)$ das Bit bestimmt werden kann, so folgt eine Laufzeit von $\mathcal{O}(b)$.
+    Da der Bucket, in dem das gesuchte Bit liegt, in $\mathcal{O}(1)$ Laufzeit bestimmt werden kann und innerhalb des Buckets in $\mathcal{O}(b)$ das Bit bestimmt werden kann, so folgt eine Laufzeit von $\mathcal{O}(b)$.
+\end{itemize}
 
 \section{LCP-Intervallbaum}
 \label{lcpintervals}
 
-In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werde ich diese beschriebenen Intervalle als Abouelhoda-Intervalle bezeichnen, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
+In \cite{abouelhoda_optimal_2002} beschreiben Abouelhoda et al. \textit{lcp intervals}. In dieser Arbeit werden die beschriebenen Intervalle als Abouelhoda-Intervalle bezeichnet, um Verwechslung mit \textit{LCP-Intervallen} zu verhindern, die in dieser Arbeit beliebige Intervalle im LCP-Array bezeichnen.
 
 Die vorgestellten Intervalle erlauben es \emph{alle} Suffixe mit einem bestimmten gemeinsamen Präfix einer Länge von mindestens $\ell \in \mathbb{N}$ in einem String zu gruppieren.
 
 \subsection{Abouelhoda-Intervalle}
 \label{abouelhodaintervals}
 
-Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{Abouelhoda-Intervall} mit LCP-Wert $\ell$ (im Paper \textit{l-value} genannt), wenn gilt:
+Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \emph{Abouelhoda-Intervall} mit LCP-Wert $\ell$ (im Paper $\ell$\emph{-value} genannt), wenn gilt:
 
 \begin{enumerate}
 	\item $LCP[i] < \ell$
@@ -207,7 +210,7 @@ Ein Intervall $[i..j], 0 \leq i < j \leq n$ heißt \textit{Abouelhoda-Intervall}
 	\item $LCP[j + 1] < \ell$
 \end{enumerate}
 
-Wir bezeichnen $[i..j]$ dann auch als $\ell$-Intervall oder als $\ell-[i..j]$. Zudem bezeichnen wir jeden Index $k$ mit $i < k \leq j$ und $LCP[k] = \ell$ als $\ell$-Index.
+Wir bezeichnen $[i..j]$ dann auch als $\ell$-Intervall oder als $\ell$-$[i..j]$. Zudem bezeichnen wir jeden Index $k$ mit $i < k \leq j$ und $LCP[k] = \ell$ als $\ell$-Index.
 
 \subsection{Eingebettete und umschließende Abouelhoda-Intervalle}
 \label{embeddedlcpintervals}
@@ -216,25 +219,28 @@ Ein $m$-Intervall $[a..b]$ heißt \textit{eingebettet} in ein $\ell$-Intervall $
 
 Falls zusätzlich gilt, dass es kein anderes in $[i..j]$ eingebettetes Intervall gibt, das auch $[a..b]$ umschließt, dann heißt $[a..b]$ \textit{Kind-Intervall} von $[i..j]$.
 
-Die Kind-Intervalle von $[i..j]$ lassen sich durch die $l$-Indizes bestimmen. Seien $i_1 < i_2 < \dots < i_k$ die $\ell$-Indizes von $[i..j]$ in aufsteigender Reihenfolge, so sind die 
+Die Kind-Intervalle von $[i..j]$ lassen sich durch die $\ell$-Indizes bestimmen. Seien $i_1 < i_2 < \dots < i_k$ die $\ell$-Indizes von $[i..j]$ in aufsteigender Reihenfolge, so sind die 
 Kind-Intervalle gerade $[i.. i_1 - 1], [i_1.. i_2 - 1], \dots [i_k..j]$.
 
 \subsection{Kind-Intervallbaum und Kind-Array}
 \label{childtree}
 
 Mithilfe dieser Definitionen lassen sich die Beziehungen der Kind-Intervalle mit ihren jeweiligen Eltern-Intervallen als Baum beschreiben.
-Doch dieser Baum muss nicht explizit gespeichert weden. Hierbei kommt das Kind-Array zum Einsatz. Dieses ist ein $n + 1$ großes Array, dessen Einträge jeweils 3 Werte besitzen.
+Doch dieser Baum muss nicht explizit gespeichert werden. Hier kommt das \emph{Kind-Array} zum Einsatz. Dieses ist ein $n + 1$ großes Array, dessen Einträge jeweils 3 Werte besitzen.
 
 Diese Einträge sind folgendermaßen definiert:
 \begin{align*}
-	up[i] &:= \min\{q \in [0..i-1] \ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [q + 1..i - 1] : LCP[k] \geq LCP[q]\}\\
-	down[i] &:= \max\{q \in [i+1..n] \ |\ LCP[q] > LCP[i] \text{ und } \forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\\
-	nextlIndex[i] &:= \min\{q \in [i+1..n] \ |\ LCP[q] = LCP[i] \text{ und } \forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\}
+	up[i] &:= \min\{q \in [0..i-1] \ |\ LCP[q] > LCP[i] \text{ und }\\ 
+    &\forall k \in [q + 1..i - 1] : LCP[k] \geq LCP[q]\}\\
+	down[i] &:= \max\{q \in [i+1..n] \ |\ LCP[q] > LCP[i] \text{ und }\\
+    &\forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\\
+	next \ell Index[i] &:= \min\{q \in [i+1..n] \ |\ LCP[q] = LCP[i] \text{ und }\\
+    &\forall k \in [i + 1 .. q - 1] : LCP[k] > LCP[q]\}\}
 \end{align*}
 
-Für ein $\ell-$Intervall $[i..j]$ mit $\ell-$Indizes $i_1 < i_2 < \dots < i_k$ enthalten $down[i]$ und $up[j+1]$ den ersten $\ell-$Index von $[i..j]$, also $i_1$. Für die anderen $\ell-$Indizes gilt $nextlIndex[m] = i_{m+1},\ m=1,\dots,k-1$.
+Für ein $\ell$-Intervall $[i..j]$ mit $\ell$-Indizes $i_1 < i_2 < \dots < i_k$ enthalten $down[i]$ und $up[j+1]$ den ersten $\ell-$Index von $[i..j]$, also $i_1$. Für die anderen $\ell$-Indizes gilt $next \ell Index[m] = i_{m+1},\ m=1,\dots,k-1$.
 
-Hiermit lässt sich der LCP-Intervallbaum traversieren. Es kann mit $down[i]$ oder $up[j+1]$ der erste $\ell$-Index bestimmt werden. Dann kann mithilfe der $nextLIndex[i]$ Einträge, die restlichen $\ell$-Indizes von $[i..j]$ bestimmen. Wie in \autoref{embeddedlcpintervals} beschrieben, lassen sich so alle Kind-Intervalle bestimmen. Dies kann rekursiv fortgesetzt und somit der gesamte Baum traversiert werden.
+Hiermit lässt sich der LCP-Intervallbaum traversieren. Es kann mit $down[i]$ oder $up[j+1]$ der erste $\ell$-Index bestimmt werden. Dann kann mithilfe der $next \ell Index[i]$ Einträge, die restlichen $\ell$-Indizes von $[i..j]$ bestimmen. Wie in \autoref{embeddedlcpintervals} beschrieben, lassen sich so alle Kind-Intervalle bestimmen. Dies kann rekursiv fortgesetzt und somit der gesamte Baum traversiert werden.
 
 Dieses Array lässt sich mit den Algorithmen aus \cite{abouelhoda_optimal_2002} Kapitel 5 in einer Laufzeit berechnen, die linear in der Länge des Eingabestring ist.
 
@@ -261,12 +267,12 @@ Der zugehörige Baum von Kind-Intervallen sieht dann folgendermaßen aus (Interv
 \begin{figure}[H]
 	\centering
 	\begin{tikzpicture}
-		\node[draw] (root) at (0,0) {$0-[0..7]$};
+		\node[draw] (root) at (0,0) {$0$-$[0..7]$};
 		
-		\node[draw] (1) at (-1,-1) {$1-[0..3]$};
-		\node[draw] (2) at (1,-1) {$2-[4..5]$};
+		\node[draw] (1) at (-1,-1) {$1$-$[0..3]$};
+		\node[draw] (2) at (1,-1) {$2$-$[4..5]$};
 		
-		\node[draw] (1-1) at (-2, -2) {$3-[0..1]$};
+		\node[draw] (1-1) at (-2, -2) {$3$-$[0..1]$};
 		
 		\draw[->] (root) -- (1);
 		\draw[->] (root) -- (2);

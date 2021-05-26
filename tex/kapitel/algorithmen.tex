@@ -1,12 +1,12 @@
 \chapter{Bekannte Grammatikkompressionsalgorithmen}
 \label{algorithmen}
 
-Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, stelle ich hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und Re-Pair \cite{larsson_offline_1999} vor.
+Grammatikbasierte Textkompression wurde schon mehrmals erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, werden hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und Re-Pair \cite{larsson_offline_1999} vorgestellt.
 
 \section{Sequitur}
 \label{sequitur}
 
-Sequitur\cite{nevill-manning_identifying_1997} ist ein Grammatikkompressions-Algorithmus, der On-line arbeitet. Das heißt, dass der Eingabestring nicht vollständig zu Anfang des Algorithmus im Speicher vorhanden sein muss, sondern auch stückweise eingelesen werden kann. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
+Sequitur \cite{nevill-manning_identifying_1997} ist ein Grammatikkompressions-Algorithmus, der On-line arbeitet. Das heißt, dass der Eingabestring nicht vollständig zu Anfang des Algorithmus im Speicher vorhanden sein muss, sondern auch stückweise eingelesen werden kann. Der Eingabestring wird zeichenweise eingelesen und wiederholt vorkommende Zeichenpaare (Digramme) durch Nichtterminale ersetzt.
 
 \subsection{Eigenschaften der erzeugten Grammatik}
 
@@ -26,7 +26,7 @@ Falls nicht, erzeuge eine neue Regel mit einem neuen Nichtterminal, die dieses D
 
 \subsubsection{Rule-Utility}
 
-Es kann vorkommen, dass durch Substitutionen ein Nichtterminal nur einmal in der Grammatik vorkommt. In diesem Fall ist Rule-Utility verletzt. Ersetze nun dieses eine Vorkommen des Nichtterminals durch die rechte Seite der zugehörigen Produktionsregel, und lösche diese. So können auch Produktionsregeln mit rechten Seiten länger als 2 entstehen.
+Es kann vorkommen, dass durch Substitutionen ein Nichtterminal nur noch einmal in der Grammatik vorkommt. In diesem Fall ist Rule-Utility verletzt. Ersetze nun dieses eine Vorkommen des Nichtterminals durch die rechte Seite der zugehörigen Produktionsregel, und lösche diese. So können auch Produktionsregeln mit rechten Seiten länger als 2 entstehen.
 
 \subsection{Implementation}
 
@@ -44,10 +44,10 @@ Die Optimale Datenstruktur für zu diesem Zweck muss folgende Operationen effizi
 \subsubsection{Datenstruktur für Regeln und Index}
 
 Sequitur nutzt eine Art doppelt verkettete Ringstruktur zur Implementation von Produktionsregeln. 
-Jede Regel besitzt ein sogenanntes \emph{Guard}-Symbol, das den Startpunkt, beziehungsweise den Endpunkt, der Ringstruktur darstellt. Der Nachfolger, des Guard-Symbols ist also das erste Symbol der rechten Seite einer Regel und der Vorgänger ist dem entsprechend das letzte Symbol.
+Jede Regel besitzt ein sogenanntes \emph{Guard}-Symbol, das den Startpunkt, beziehungsweise den Endpunkt, der Ringstruktur darstellt. Der Nachfolger des Guard-Symbols ist also das erste Symbol der rechten Seite einer Regel und der Vorgänger ist dem entsprechend das letzte Symbol.
 Zudem besitzt jedes Vorkommen eines Nichtterminal eine Referenz auf das Guard Symbol der Produktionsregel, die das Nichtterminal repräsentiert. 
 
-\autoref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur für die Grammatik:
+\autoref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur.
 
 
 \begin{figure}[H]
@@ -96,7 +96,7 @@ Zudem besitzt jedes Vorkommen eines Nichtterminal eine Referenz auf das Guard Sy
             \draw [ <-> ] (G2) to[out=45, in=90] (b1);
         \end{tikzpicture}
     }
-	\caption{Hier sehen wir die Sequitur-Datenstruktur für die beiden Regeln der dargestellten Grammatik. Rautenförmig dargestellt sind dabei die \emph{Guard}-Knoten der jeweiligen Produktionsregeln. Rechts daran angehängt sind die Symbole der Regel in der doppelt verketteten Ringstruktur. Die Nichtterminale besitzen einen Pointer auf den Guard-Knoten der zugehörigen Regel.}
+	\caption{Hier sehen wir die Sequitur-Datenstruktur für die beiden Regeln der dargestellten Grammatik. Rautenförmig dargestellt sind dabei die \emph{Guard}-Symbole der jeweiligen Produktionsregeln. Rechts daran angehängt sind die Symbole der Regel in der doppelt verketteten Ringstruktur. Die Nichtterminale besitzen einen Pointer auf den Guard-Knoten der zugehörigen Regel.}
 	\label{seqLinkedDataStructure}
 \end{figure}
 
@@ -110,7 +110,7 @@ Zuerst generiere eine leere Startregel $S$. Dieser Anfangszustand ist in \autore
 
 \begin{figure}
 	\centering
-	\subfloat[Die leere Anfangsdatenstruktur. Die Startregel $S$ ist noch leer.]{
+	\subfloat[Die Anfangsdatenstruktur. Die Startregel $S$ ist noch leer.]{
         \parbox[c]{5cm}{
             \centering
             \begin{tikzpicture}[
@@ -155,7 +155,7 @@ Zuerst generiere eine leere Startregel $S$. Dieser Anfangszustand ist in \autore
         \label{seqex2}
     }
 
-    \subfloat[$ab$ wurde durch das Nichtterminal $A$ ersetzt. Die $A$ besitzen einen Pointer auf das Guard-Symbol der Regel $A$.]{
+    \subfloat[$ab$ wurde durch das Nichtterminal $A$ ersetzt. Die Nichtterminale $A$ besitzen einen Pointer auf das Guard-Symbol der Regel $A$.]{
         \begin{tikzpicture}[
             scale=.9, transform shape,
             normalnode/.style={rectangle, draw=black!60, thick, minimum size=5mm},
@@ -330,7 +330,7 @@ Nun ist keine Eigenschaft mehr verletzt und wir lesen das Zeichen $a$. Digram-Un
 Wir verfahren wieder wie vorher um die Verletzung dieser Eigenschaft zu beheben und fügen die Regel $B \rightarrow Aa$ ein.
 
 Die Verletzung von Digram-Uniqueness ist behoben, aber nun ist Rule-Utility verletzt, da die Produktionsregel von $A$ nur einmal (in der Regel $B$) verwendet wird.
-Um dies zu beheben, wird das eine Vorkommen von $A$ gelöscht, und die zugehörige Produktionsregel entfernt. Die rechte Seite von $A \rightarrow ab$ wird eingefügt, wo vorher das eine Vorkommen von $A$ war. Danach sieht die Grammatik wie in \autoref{seqex4} aus.
+Um dies zu beheben, wird das eine Vorkommen von $A$ gelöscht und die zugehörige Produktionsregel entfernt. Die rechte Seite von $A \rightarrow ab$ wird eingefügt, wo vorher das eine Vorkommen von $A$ war. Danach sieht die Grammatik wie in \autoref{seqex4} aus.
 
 Damit sind alle Verletzungen behoben und wir lesen nacheinander die Zeichen $a$ und $b$.
 Wieder ist Digram-Uniqueness verletzt, da $ab$ doppelt in der Grammatik vorkommt und wir erzeugen eine Regel $C \rightarrow ab$, um die Verletzung zu beheben. Nun sind alle Zeichen aus dem Eingabestring eingefügt und der Algorithmus terminiert. Die resultierende Grammatik ist also:
@@ -363,7 +363,7 @@ Wieder ist Digram-Uniqueness verletzt, da $ab$ doppelt in der Grammatik vorkommt
 
 Im Gegensatz zu Sequitur ist Re-Pair \cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
 
-Ähnlich wie Sequitur ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln, um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt es durch eine neue Regel.
+Ähnlich wie Sequitur ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln, um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt jedes Vorkommen des Paars durch eine neue Regel.
 
 \subsection{Implementation}
 
@@ -389,7 +389,7 @@ Das \emph{Symbolarray} speichert alle Symbole der Startregel. Zu Anfang sind das
 			\draw [<->] (B-1-5) to[out=90, in=90] (B-1-7);
 		\end{scope}
 	\end{tikzpicture}
-	\caption{Ein Beispiel für das Symbolarray für den String $abcabcd$ und die Ersetzung des Digramms $bc$. Abgebildet ist das Symbolarrays, bevor und nachdem $bc$ durch $A$ ersetzt wurde. Die leeren Einträge werden durch Pointer überbrückt. Es existieren auch Pointer zwischen Einträgen, falls keine leeren Einträge dazwischen liegen. Diese sind hier aber nicht abgebildet.}
+	\caption{Ein Beispiel für das Symbolarray für den String $abcabcd$ und die Ersetzung des Digramms $bc$. Abgebildet ist das Symbolarray, bevor und nachdem $bc$ durch $A$ ersetzt wurde. Die leeren Einträge werden durch Pointer überbrückt. Es existieren auch Pointer zwischen Einträgen, falls keine leeren Einträge dazwischen liegen. Diese sind hier aus Gründen der Leserlichkeit nicht abgebildet.}
     \label{symbarr}
 \end{figure}
 \autoref{symbarr} zeigt ein Beispiel für den String $abcabcd$ und die Ersetzung des Paars $bc$.

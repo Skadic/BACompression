@@ -8,7 +8,7 @@ Sei $S = s_0, \dots, s_{n-1} \in \Sigma^*$ mit $n := |S|$ ein String über ein A
 
 Ein Intervall $LCP[i..j]$ mit $0 \leq i \leq j < n$ im LCP-Array beschreibt wiederholte Vorkommen von Substrings. (siehe \autoref{lcpintervals}) Aus diesem Intervall lässt sich schließen, wie oft dieser Substring vorkommt, wie lang dieser ist, und mithilfe des Suffix-Arrays lässt sich feststellen, wo dieser vorkommt. Jeder Eintrag $LCP[k], k = 1,\dots,n-1$ im LCP-Array ist die Länge des längsten gemeinsamen Präfixes der beiden Suffixe, die bei $SA[k-1]$ und $SA[k]$ beginnen. Daher gilt dann folgendes:
 
-An den Indizes $I = \{SA[i]\ |\ i \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die \emph{Breite} von $LCP[i..j]$ und $H(i, j) := l$ die \emph{Höhe} von $LCP[i..j]$.
+An den Indizes $I = \{SA[k]\ |\ k \in \{i-1, \dots, j\}\}$ befindet sich jeweils ein Vorkommen eines Substrings der Länge $l = \min_{k = i, \dots, j} LCP[k]$. Wir nennen dann $W(i, j) := |I| = j - i + 2$ die \emph{Breite} von $LCP[i..j]$ und $H(i, j) := \ell$ die \emph{Höhe} von $LCP[i..j]$.
 
 Intervalle mit großer Breite (viele Vorkommen) bzw. Höhe (langer Substring) bieten also eine besonders große Kompression, wenn diese Vorkommen durch ein Nichtterminal und eine entsprechende Produktionsregel ersetzt werden.
 
@@ -16,19 +16,19 @@ Es ist hier also eine Art Gütefunktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \ri
 
 Die Idee von AreaComp ist, inkrementell eine Straight-Line-Grammatik zu erzeugen. Dies geschieht durch die wiederholte Wahl eines vielversprechenden Intervall im LCP-Array anhand der Flächenfunktion. Jedes Vorkommen des von dem Intervall bestimmten Substring wird durch ein neues Nichtterminal und eine entsprechende neue Produktionsregel der Grammatik ersetzt.
 
-Dies wird solange wiederholt, bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächefunktion liefern. Etwa müssen Intervalle der Fläche $0$ bei der oben vorgeschlagenen Flächenfunktion nicht betrachtet werden.
+Dies wird solange wiederholt, bis keine Intervalle mehr übrig sind, die einen nützlichen Wert der Flächefunktion liefern.
 
 Die Priorisierung von Intervallen anhand der Flächenfunktion kann mithilfe einer Prioritätswarteschlange umgesetzt werden. Die Intervalle werden mit dem Gewicht $A(i, j)$ eingefügt. So kann in jedem Durchlauf ein Element in der richtigen Reihenfolge entnommen werden.
 
 \subsection{Beispiel}
 
 Zunächst ein Beispiel für einen Durchlauf: Wir wählen die Flächenfunktion
-\begin{equation}
-	A[i, j] := \min \{ lcp[x]\ |\ i \leq x \leq j\} \cdot (j - i)
-\end{equation} 
-und betrachten den String $S =$ \enquote{ababcaba\$}. Dann gilt:
+\begin{equation*}
+	A(i, j) := W(i,j) \cdot H(i,j)
+\end{equation*} 
+und betrachten den String $ababcaba\$$. Suffix- und LCP-Array sind in \autoref{suflcpexample} abgebildet.
 
-\begin{figure}[H]
+\begin{figure}
 	\centering
 	\begin{tabular}{|c|c|c|l|} \hline
 		$i$ & $SA$ & $LCP$ & Suffix\\ \hline
@@ -42,6 +42,8 @@ und betrachten den String $S =$ \enquote{ababcaba\$}. Dann gilt:
 		$7$ & $3$ & $1$ & bcaba\$ \\\hline
 		$7$ & $4$ & $0$ & caba\$ \\\hline
 	\end{tabular}
+    \caption{Suffix- und LCP-Array für den String $ababcaba\$$.}
+    \ref{suflcpexample}
 \end{figure}
 
 Wir beginnen mit der leeren Grammatik $S \rightarrow ababcaba\$$. Die Intervalle mit maximalem $A$ sind $LCP[2..3]$ und $LCP[3..3]$: $A(2, 3) = A(3, 3) = 6$.\\
@@ -63,16 +65,15 @@ Es kann vorkommen, dass ein zu ersetzendes Muster überlappend vorkommt, wie etw
 
 \subsubsection{Überschneidende Substitutionen}
 
-Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall $I_1 := LCP[i_1..j_1]$ durchgeführt worden sein, die sich mit einer späteren Substitution durch ein LCP-Intervall $I_2 := LCP[i_2..j_2]$ überschneiden. In diesem Fall kann der tatsächliche Nutzen der Substitution sinken. Es muss auch dafür gesorgt werden, dass bereits ersetzte Teile des Strings nicht nochmals ersetzt werden.
+Es können aber auch in einem Schritt eine Substitution durch ein LCP-Intervall $I_1 := LCP[i_1..j_1]$ durchgeführt worden sein, die sich mit einer späteren Substitution durch ein LCP-Intervall $I_2 := LCP[i_2..j_2]$ überschneiden. In diesem Fall kann der tatsächliche Nutzen der Substitution sinken, da von $I_2$ bestimmte Vorkommen nicht mehr substituierbar sein könnten. Es muss auch dafür gesorgt werden, dass bereits ersetzte Teile des Strings nicht nochmals ersetzt werden.
 
 \subsection{Übersicht}
 
 Im Laufe der Entwicklung von AreaComp sind vier Versionen des Algorithmus entstanden. Jede der Versionen verbessert Aspekte der vorhergehenden Version. Daraus resultiert die finale vierte Version des Algorithmus.
 
-% TODO AreaComp Zusammenfassung
 \begin{itemize}
     \item[\emph{V1}] \emph{Naive Implementierung}\\
-    In V1 werden keine laufzeitverbessernden Datenstrukturen oder Algorithmen angewendet.
+    In V1 werden keine laufzeitverbessernden Datenstrukturen oder Algorithmen angewandt.
     Diese Version nutzt dieselbe Datenstruktur für Regeln wie Sequitur. (siehe \autoref{sequitur}) Diese Version hat eine $\mathcal{O}(n^5 \log n)$ Laufzeit.
     \item[\emph{V2}] \emph{Rudimentäre Datenstrukturen und Reduzierung von Suffix-Array Berechnungen}\\
     Die Berechnungen von Suffix-Array und LCP-Array werden aus der Schleife ausgelagert und nur noch einmal erzeugt. Es kommen rudimentäre Datenstrukturen zum Einsatz, die bestimmen, ob die Ersetzung eines Musters an einem bestimmten Index erlaubt ist. Trotzdem hat der Algorithmus noch eine Laufzeit von $\mathcal{O}(n^4)$  

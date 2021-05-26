@@ -12,6 +12,16 @@
     orange!80!black,every mark/.append style={solid,fill=orange},mark=*\\%
 }
 
+\pgfplotscreateplotcyclelist{algso}{%
+    lime!80!black,fill=lime\\%
+    red,fill=red\\%
+    teal,fill=teal!80\\%
+    black,fill=black!80\\%
+    purple!30!blue,fill=purple!30!blue\\%
+    orange!80!black,fill=orange\\%
+    cyan!80!black,fill=cyan\\%
+}
+
 \pgfplotsset{
     dataplot/.style={
         xtick={1,2,3,4,5},
@@ -19,7 +29,7 @@
         xticklabel style={align=center},
         xlabel={Größe der Eingabe},
         x unit={MB},
-        width=70mm,
+        width=65mm,
         height=6cm,,
         legend style={at={(1.1,0.5)}, anchor=west},
         cycle list name=algs
@@ -57,22 +67,23 @@
 
 \section{Methodik}
 
-Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewendet.
+Bei der Evaluation der Algorithmen werden Sequitur (siehe \autoref{sequitur}), RePair (siehe \autoref{repair}) und AreaComp V4 (siehe \autoref{v4}) mit verschiedenen Flächenfunktionen auf verschiedene Datensätze angewandt.
 
-Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz) und 16GB RAM.
+Die Algorithmen werden auf einem Windows 10 Gerät ausgeführt mit einem AMD Ryzen 5 2600X Prozessor (6 physische Kerne bei 3.6GHz). Der Java Virtual Machine wurden 8GB RAM zugewiesen.
 
 \subsection{Implementationen}
 
 Die hier gewählte Implementation von Sequitur ist die Java-Implementation von Eibe Frank\footnote{\url{http://www.sequitur.info/java}}. 
 
 Für RePair wird eine eigene Implementation benutzt. Die meisten bestehenden Implementationen waren in nicht JVM-kompatiblen Programmiersprachen geschrieben. 
-Die einzige auffindbare JVM-kompatible Implementation war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $2^16$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar, weil die auf den hier verwendeten Datensätzen erzeugten Grammatiken größer sind.
+Die einzige auffindbare JVM-kompatible Implementation war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $2^{16}$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar, weil die auf den hier verwendeten Datensätzen erzeugten Grammatiken größer sind.
 
 Die Implementation von AreaCompV4 sowie die Sequitur- und RePair-Implementation sind in Java 16 programmiert.
 
 \subsection{Datensätze}
+\label{datasets}
 
-Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf $10$, $20$, $30$, $40$ und $50$MB Präfixe folgender Datensätze angewendet:
+Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\url{http://pizzachili.dcc.uchile.cl}}. Die Algorithmen werden jeweils auf $10$, $20$, $30$, $40$ und $50$MB Präfixe folgender Datensätze angewandt:
 
 \begin{itemize}[leftmargin=2cm]
     \item[\emph{dna}] DNA Sequenzen von Project Gutenberg\footnote{\label{footnotegutenberg}\url{https://www.gutenberg.org}}. Jedes Basenpaar wird jeweils durch einen der Großbuchstaben \emph{A}, \emph{G}, \emph{C} und \emph{T} dargestellt. Zudem kommen einige Sonderzeichen vor. Das Alphabet besteht aus 16 Zeichen.
@@ -81,6 +92,8 @@ Die hier gewählten Datensätzen stammen aus dem Pizza\&Chili Corpus\footnote{\u
     \item[\emph{xml}] Eine XML-Datei mit Informationen über große Informatik-Zeitschriften etc. von der Universität Trier\footnote{\url{https://dblp.uni-trier.de}}. Das Alphabet besteht aus 97 Zeichen.
 \end{itemize}
 
+Es wurde zunächst versucht, $100$MB Präfixe ebenfalls in die Evaluation miteinzubeziehen, jedoch war dies aufgrund des Speicherverbrauchs von AreaComp nicht möglich.  
+
 \subsection{Flächenfunktion}
 
 Wir betrachten vier Flächenfunktionen. Diese machen sich die Eigenschaften der \\
@@ -88,7 +101,7 @@ Abouelhoda-Intervalle zunutze.
 Wie in \cite{abouelhoda_optimal_2002} beschrieben, lässt sich der minimale LCP-Wert eines Abouelhoda-Intervalls $[i..j]$ durch $down[i]$ oder $up[j+1]$ im Kind-Array bestimmen. 
 So muss nicht in Linearzeit durch das Intervall iteriert werden, um das Minimum zu bestimmen. Es kann stattdessen durch eine Konstantzeit-Anfrage an das Kind-Array bestimmt werden. 
 
-Da AreaComp V1 und V2 beliebige LCP-Intervalle verwenden, funktioniert dieses Vorgehen für diese Versionen von AreaComp nicht. Dieses Vorgehen ist also erst ab V3 möglich, da erst ab V3 ausschießlich Abouelhoda-Intervalle benutzt werden.
+Da AreaComp V1 und V2 beliebige LCP-Intervalle verwenden, funktioniert dieses Vorgehen für diese Versionen von AreaComp nicht. Dieses Vorgehen ist also erst ab V3 möglich, da erst ab V3 ausschließlich Abouelhoda-Intervalle benutzt werden.
 
 Für alle folgenden Flächenfunktionen gilt, dass wenn $H(i+1, j) \leq 1$ gilt(siehe \autoref{areacompconcept} für die Definition von $H$ und $W$), als resultierender Flächenwert automatisch $0$ zurückgegeben wird. Da LCP-Intervalle mit Höhe $\leq 1$ einen Substring einer Länge von maximal $1$ beschreiben, sind diese für unsere Zwecke unnütz.  
 
@@ -235,7 +248,7 @@ Im \emph{dna} Datensatz ist die Grammatik mit der nächst-größeren Regelanzahl
 In \autoref{resultsproteinsrulenum} sehen wir, dass die Regelanzahl der RePair Grammatik auf dem \emph{proteins} Datensatz von $30$MB auf $40$MB sogar sinkt. Bis einschließlich $30$MB enthält die RePair Grammatik etwa $50$\% mehr Regeln als die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}. Ab $40$MB sinkt die Anzahl der Regeln in der RePair Grammatik unter die Anzahl der Grammatiken von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
 
 Auf dem \emph{english} Datensatz produzierten \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} Grammatiken mit etwa doppelt so vielen Regeln wie die von Sequitur.
-RePair produziert hier mit Abstand die Grammatik mit den meisten Regeln. Die RePair Grammatik enthät etwa $4.2$-mal so viele Regeln wie die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
+RePair produziert hier mit Abstand die Grammatik mit den meisten Regeln. Die RePair Grammatik enthält etwa $4.2$-mal so viele Regeln wie die von \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}.
 
 \subsection{Durchschnittliche Regellänge}
 
@@ -735,6 +748,58 @@ Hier produziert auch \texttt{WidthFirstArea} eine Grammatik mit einer durchschni
     \caption{Die Ergebnisse für die Kompression des \emph{english} Datensatzes aus dem Pizza\&Chili Corpus. Siehe \autoref{results} für weitere Erläuterungen.}
     \label{resultsenglish}
 \end{figure}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar stacked, 
+            xtick={0}, 
+            xticklabels={ },
+            width=3cm,
+            height=6cm,
+            y unit={\%},
+            ymin=0,
+            ymax=100,
+            ylabel={Laufzeitanteil},
+            xticklabel style={align=center},
+            legend style={at={(1.1,0.5)}, anchor=west},
+            cycle list name=algso
+            ]
+            \addplot coordinates { (0,9.4) };
+            \addplot coordinates { (0,9.8) };
+            \addplot coordinates { (0,5.5) };
+            \addplot coordinates { (0,5) };
+            \addplot coordinates { (0,57.7) };
+            \addplot coordinates { (0,8.1) };
+            \addplot coordinates { (0,4.5) };
+
+
+            \addlegendentry{Enhanced Suffix Array};
+            \addlegendentry{Prioritätswarteschlange-Operationen};
+            \addlegendentry{Sortieren von $positions$};
+            \addlegendentry{Substituieren von Vorkommen};
+            \addlegendentry{Bereinigen von $positions$};
+            \addlegendentry{Einheitliche Repräsentation};
+            \addlegendentry{Rest};
+        \end{axis}
+    \end{tikzpicture}
+
+
+    \caption{Der prozentuale Anteil der Laufzeit der verschiedenen Operationen von AreaComp. Siehe \autoref{runtimeeval} für eine genauere Beschreibung.}
+    \label{areacompruntimesplit}
+\end{figure}
+
+\subsection{Laufzeitanteile}
+\label{runtimeeval}
+
+In \autoref{areacompruntimesplit} ist abgebildet, welchen Anteil die Operationen des Algorithmus an der Gesamtlaufzeit haben. \emph{Enhanced Suffix Array} bezeichnet die Zeit, die für die Berechnung des Suffix-, LCP- und Kind-Array benötigt wird. \emph{Prioritätswarteschlange-Operationen} bezeichnet sowohl die Konstruktion der Prioritätswarteschlange, also auch das Entfernen der Intervalle aus Dieser. \emph{Substituieren von Vorkommen} bezeichnet nur die Aufrufe von \autoref{substitutev4}. \emph{Einheitliche Repräsentation} bezeichnet das Übertragen der Grammatik in die explizite Darstellung, wie in \autoref{unify} beschrieben.
+
+Besonders auffällig ist dabei der Laufzeitanteil des Bereinigens des $positions$ Array (\autoref{cleanpositionsv4}). Dieser ist mit $57$\% bei Weitem am größten. 
+Dieser große Laufzeitanteil wird durch die Anfragen dieser Methode an die \texttt{RuleIntervalIndex} Datenstruktur verursacht.
+Es sei allerdings erwähnt, dass etwa $24$\% davon von einer unbekannten Quelle stammen. Die Methode $floorIntervals$ von \texttt{RuleIntervalIndex} stellt nur eine Predecessor-Anfrage an die zugrundeliegende \texttt{BucketPred} Datenstruktur. Die eigentliche Anfrage macht dabei $14$\% von den $57$\% aus, während $24$\% in dem hier benutzten Profiler VisualVM\footnote{\url{https://visualvm.github.io}} nur als \emph{Self Time} angezeigt wird.
+Self Time beschreibt normalerweise die Zeit, die in der Methode selbst verbracht wird, abgesehen von weiteren Methodenaufrufen. Allerdings besteht die Methode lediglich aus der Anfrage an die Predecessor-Struktur.
+Für dieses Problem ist bislang keine Lösung gefunden worden.
 
 \section{Fazit}
 

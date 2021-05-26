@@ -27,23 +27,22 @@
 \section{AreaComp V4}
 \label{v4}
 
-Dies ist die finale Version dieses Algorithmus. 
+Dies ist bis jetzt die finale Version dieses Algorithmus. 
 
 \subsection{Bessere Predecessor-Datenstruktur}
 
 Bisher verwendete \texttt{RuleIntervalIndex} Red-Black-Trees als zugrundeliegende Predecessor-Datenstruktur. Diese benötigen $\mathcal{O}(\log n)$ Laufzeit für jede Operation. Da aber etwa die $\texttt{get}$ und $\texttt{predecessor}$ Operation sehr oft aufgerufen werden, stellt dies ein Bottleneck für die Laufzeit dar.
 Die Idee ist nun, Red-Black-Trees durch eine für diese Zwecke effizientere Datenstruktur zu ersetzen.
 
-Dazu bietet sich die in Kapitel 4 von \cite{dinklage_engineering_2021} beschriebene  Predecessor-Datenstruktur an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante dieser Datenstruktur. Die ursprüngliche \texttt{BucketPred} Datenstruktur speichert nur die ganzzahligen Schlüssel. Wir erweitern \texttt{BucketPred} durch eine Hashtabelle. Diese bildet die in der Predecessor-Datenstruktur gespeicherten Schlüssel auf zugehörige Daten ab. Es gibt nur eine Hashtabelle für die gesamte Datenstruktur.   
+Dazu bietet sich die in Kapitel 4 von \cite{dinklage_engineering_2021} von Dinklage et al. beschriebene Predecessor-Datenstruktur an. Im weiteren Verlauf nennen wir diese \texttt{BucketPred}. Im Code für AreaComp ist sie unter demselben Namen zu finden. Wir nutzen allerdings hier eine assoziative Variante dieser Datenstruktur. Die ursprüngliche \texttt{BucketPred} Datenstruktur speichert nur die ganzzahligen Schlüssel. Wir erweitern \texttt{BucketPred} durch eine Hashtabelle. Diese bildet die in der Predecessor-Datenstruktur gespeicherten Schlüssel auf zugehörige Daten ab. Es gibt nur eine Hashtabelle für die gesamte Datenstruktur.   
 Eine lokale Hashtabelle für jeden Bucket, scheint bei Tests keine Vorteile zu bieten.\\
-Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ erwartete Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(\tfrac{u}{b})$ Laufzeit für $\texttt{insert}$ Operationen. 
+Durch diese Hashtabelle erhalten wir $\mathcal{O}(1)$ erwartete Laufzeit für $\texttt{get}$ Operationen, $\mathcal{O}(b)$ Worst-Case Laufzeit für $\texttt{predecessor}$ Operationen und $\mathcal{O}(\tfrac{u}{b})$ Worst-Case Laufzeit für $\texttt{insert}$ Operationen. (siehe \autoref{bucketpredds}) 
 
 Wie in \cite{dinklage_engineering_2021} beschrieben, ist es ebenfalls möglich, das hier verwendete Array von Buckets durch eine Hashtabelle zu ersetzen. Dies würde für $\texttt{insert}$ Operationen eine erwartete $\mathcal{O}(1)$ Laufzeit bedeuten, da nun nicht mehr im Array die $\mathcal{O}(\tfrac{u}{b})$ Pointer verändert werden müssen. Allerdings würde dies auch eine Laufzeit von $\mathcal{O}(\tfrac{u}{b})$ für $\texttt{predecessor}$ Operationen bedeuten, da potenziell $\mathcal{O}(\tfrac{u}{b})$ Anfragen an die Hashtabelle gestellt werden müssen, um einen aktiven Bucket zu finden. 
 
 Allerdings wird $\texttt{predecessor}$ viel häufiger benötigt als $\texttt{insert}$ Operationen. Daher ist es von größerer Bedeutung, dass $\texttt{predecessor}$ Aufrufe performant sind. Daher eignet sich hier das Bucket-Array besser.
 
 %Da $u = |s|$ durch den Eingabestring $s$ gegeben ist, ist also die Wahl von $b = 2^k$, für ein $k \in \mathbb{N}$, interessant. Dieser widmen wir uns bei der Evaluation.
-% TODO DAS AUCH MACHEN 
 
 \subsection{Verbesserung von \texttt{RuleIntervalIndex}}
 
@@ -98,7 +97,7 @@ In V3 waren \texttt{RuleInterval}s Teile von Ersetzungsintervallen. In V4 ist ei
 Die Attribute $\texttt{ruleId}$, $\texttt{start}$ und $\texttt{end}$ sind genau wie in \autoref{riiv3}. Die anderen Attribute werden durch die Folgenden ersetzt:
 
 \begin{itemize}[leftmargin=3cm]
-    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall enthält. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. In \autoref{newrii} zeigt der \texttt{parent}-Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
+    \item[\texttt{parent}] Dies ist ein Pointer auf auf das am tiefsten verschachtelte Ersetzungsintervall, das dieses Intervall umschließt. Dabei muss das $\texttt{parent}$ Intervall nicht unbedingt an demselben Startindex beginnen, wie das Intervall selbst. In \autoref{newrii} zeigt der \texttt{parent}-Pointer der beiden $R_1$ Intervalle auf das $R_0$ Intervall.
     \item[\texttt{firstAtStartIndex}] Ein Pointer auf das am \emph{wenigsten} verschachtelte Ersetzungsintervall, das an demselben Startindex beginnt, wie das Intervall selbst. Im Fall des Beispiels zeigen die \texttt{firstAtStartIndex} aller Intervalle jeweils auf sich selbst, da keine zwei Intervalle an demselben Index beginnen.
     \item[\texttt{nextAtStartIndex}] Ein Pointer auf das Ersetzungsintervall, das am selben Startindex beginnt und das nächst-tiefer verschachtelt ist
 \end{itemize}
@@ -132,7 +131,7 @@ Dies ist mithilfe von \autoref{intervalcontainingv4} möglich.
     \label{intervalcontainingv4}
 \end{algorithm}
 
-Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$ ($floorInterval(from)$). 
+Zuerst bestimmen wir mithilfe der zugrundeliegenden Predecessor Struktur das tiefste verschachtelte Vorgänger-Intervall des Startingindex $from$ (Zeile $1$). 
 In der While-Schleife wird nun geprüft, ob das jetzige Intervall auch beide Grenzen einschließt. Ist dies der Fall, so haben wir das tiefste Intervall, das das Intervall $[from..to]$ einschießt, gefunden.\\
 Ist dies nicht der Fall, so wird nacheinander entlang der $\texttt{parent}$-Pointer iteriert, bis ein Intervall gefunden wird, das beide Grenzen enthält. Da das Intervall der Startregel $R_0$ die ganze Länge des Eingabestring einnimmt, ist es also garantiert, dass solch ein Intervall auch existiert. Diese Methode kann auch das tiefste Intervall an einem Index $i$ bestimmen, indem $\texttt{intervalContaining(i, i)}$ aufgerufen wird.
 
@@ -165,8 +164,8 @@ Die dominierenden Teile der Laufzeit von \autoref{intervalcontainingv4} bestehen
     \label{markv4}
 \end{algorithm}
 
-
-Beim Markieren der Ersetzungsintervalle wird ein neues $\texttt{RuleInterval}$ $R_i$-$[start..end]$ in die Datenstruktur eingefügt. 
+In \autoref{markv4} ist der Algorithmus zum Markieren von Ersetzungsintervallen beschrieben.
+Hier  wird ein neues $\texttt{RuleInterval}$ $R_i$-$[start..end]$ in die Datenstruktur eingefügt. 
 Zunächst wird geprüft, ob es bereits ein Intervall gibt, das bei Startindex $start$ beginnt.
 Hier muss zwischen verschiedenen Fällen unterschieden werden.
 
@@ -193,6 +192,4 @@ Dann muss $R_{id}$-$[start..end]$ in \texttt{BucketPred} eingefügt werden, was 
 Falls ein anderes Intervall $[start..end']$ bereits existiert mit $end < end'$, dann müssen nur die $\texttt{parent}$- und $\texttt{firstAtStartIndex}$-Pointer von $R_{id}$-$[start..end]$ gesetzt werden und es in \texttt{BucketPred} eingefügt werden. Wieder muss durch die Teilintervalle von $[start..end]$ iteriert werden und es folgt wieder eine Laufzeit von $\mathcal{O}(k \cdot b)$.
 
 Falls aber ein anderes Intervall $[start..end']$ bereits existiert mit $end > end'$, dann ist $R_{id}$-$[start..end]$ nicht das tiefste Intervall an diesem Index. Dann wird eine Laufzeit von $\mathcal{O}(d)$ benötigt, um die Stelle in der verketteten Struktur zu finden, an die $R_{id}$-$[start..end]$ eingefügt werden muss. Dann muss wieder durch die Teilintervalle iteriert werden.
-Es folgt eine Laufzeit von ${O}(d + k \cdot b)$.
-
-Insgesamt folgt, dass die Markieroperation eine erwartete Laufzeit von ${O}(k \cdot b + d)$ besitzt.
+Es folgt eine Gesamtlaufzeit von ${O}(k \cdot b + d)$.
