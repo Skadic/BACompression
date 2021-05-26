@@ -4,7 +4,7 @@ Das Ziel dieser Arbeit soll die Umsetzung und Evaluierung des AreaComp-Algorithm
 lcpcomp sucht nach den zwei längsten wiederholten Substrings und ersetzt eines der Vorkommen durch eine Referenz auf das jeweils andere Vorkommen.
 Hierbei bedient er sich des Suffix-Arrays, des inversen Suffix-Arrays und des LCP-Arrays \cite{manber_suffix_1993} um diese Substrings zu bestimmen, da große Werte im LCP-Array lange wiederholte Substrings bedeuten. Dies ähnelt der LZ77-Faktorisierung \cite{ziv_universal_1977}, allerdings sind bei dem lcpcomp-Algorithmus auch Vorwärtsverweise erlaubt.
 
-Der AreaComp-Algorithmus erzeugt eine Straight Line Grammatik und beginnt mit nur einer Produktionsregel, die ein Startsymbol auf den gesamten String abbildet.
+Der AreaComp-Algorithmus erzeugt eine Straight-Line-Grammatik und beginnt mit nur einer Produktionsregel, die ein Startsymbol auf den gesamten String abbildet.
 Nun werden Intervalle im LCP-Array gesucht, die eine Kostenfunktion maximieren. 
 
 Das gemeinsame Präfix der Suffixe in solch einem Intervall soll bei jedem Vorkommen durch ein neues Symbol ersetzt werden. Für dieses wird eine Produktionsregel erstellt, die das neue Symbol auf den ursprünglichen Substring abbildet. Die Kostenfunktion soll dabei als Heuristik dazu dienen, zu entscheiden, welche Substrings am günstigsten zu ersetzen sind.

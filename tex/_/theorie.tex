@@ -75,7 +75,7 @@ Es sei nun $x = x_0 x_1 \dots x_{n-1}\in \Sigma^*$ ein String mit $|x| = n$ übe
 
 \subsection{Suffix-Array}
 
-Das Suffix-Array ist ein Array $SA$ mit $n$ Indizes $0 \leq i < n$, so dass 
+Das Suffix-Array ist ein Array $SA$ mit $n$ Indizes $0 \leq i < n$, sodass 
 \begin{equation*}
     S_{SA[0]}, S_{SA[1]}, \dots, S_{SA[n-1]}
 \end{equation*}
@@ -88,7 +88,7 @@ Oftmals (etwa \cite{fischer_inducing_2011, nong_two_2011}) wird an $x$ noch ein 
 \subsection{Inverses Suffix-Array}
 
 Das Inverse Suffix-Array zu einem Suffix-Array $SA$ ist ein Array $ISA$ mit $n$ Indizes \\
-$0 \leq i < n$ so dass $SA[ISA[i]] = i$.
+$0 \leq i < n$ sodass $SA[ISA[i]] = i$.
 Ein Eintrag $ISA[i]$ beschreibt also den Suffix-Array Index des Suffixes $S_i$ von $x$.
 
 $ISA$ kann trivial in Laufzeit $\mathcal{O}(n)$ nach der obigen Vorschrift berechnet werden \cite{abouelhoda_replacing_2004}.
