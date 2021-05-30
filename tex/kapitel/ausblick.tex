@@ -5,14 +5,14 @@ Wir haben gesehen, dass AreaComp Grammatiken produzieren kann, die auf manchen D
 
 Das Konzept der Flächenfunktion bietet Verbesserungsmöglichkeiten. Es ist durchaus möglich, dass Flächenfunktionen existieren, die etwa kleinere Grammatiken liefern. 
 
-In \autoref{runtimeeval} haben wir gesehen, dass das Bereinigen der Positionen eines Vorkommens (\autoref{cleanpositionsv4}) den größten Teil der Laufzeit ausmacht. Da sich die Laufzeit der Bereinigung auf die Effizienz der \texttt{RuleIntervalIndex} Datenstruktur stützt, ist eine Verbesserung der \texttt{RuleIntervalIndex} Datenstruktur denkbar.
+In \autoref{runtimeeval} haben wir gesehen, dass das Bereinigen der Positionen eines Vorkommens (\autoref{cleanpositionsv4}) den größten Teil der Laufzeit ausmacht. Da sich die Laufzeit der Bereinigung auf die Effizienz der \texttt{RuleIntervalIndex} Datenstruktur stützt, wäre eine Verbesserung der \texttt{RuleIntervalIndex} Datenstruktur von Nutzen.
 
-Wie in \autoref{datasets} erwähnt, ist der Speicherverbrauch von AreaComp immer noch problematisch. Ein Aufruf auf $100$ MB Präfixe führte zu einem \texttt{OutOfMemoryError} in dieser Implementation in Java. 
+Wie in \autoref{datasets} erwähnt, ist der Speicherverbrauch von AreaComp immer noch problematisch. Ein Aufruf auf $100$ MB Präfixen führte zu einem \texttt{OutOfMemoryError} in dieser Implementation in Java. 
 \texttt{RuleIntervalIndex} verbraucht eine große Menge an Speicher, da für jedes Ersetzungsintervall ein Objekt gespeichert wird. 
-Es allerdings durchaus möglich, dass der hohe Speicherverbrauch auch teilweise durch Eigenarten der Java Virtual Machine verursacht wird.
+Es ist allerdings durchaus möglich, dass der hohe Speicherverbrauch auch teilweise durch Eigenarten der Java Virtual Machine verursacht wird.
 
 Abgesehen von einer Verbesserung der Datenstruktur selbst, könnte eine Implementierung in einer systemnäheren Sprache wie C++ oder Rust hier helfen.
-Einerseits kann dies zu einer besseren Laufzeit führen, andererseits steht in solchen Programmiersprachen Werkzeuge zum kontrollierteren Umgang mit Heap-Allokationen zur Verfügung.
+Einerseits kann dies zu einer besseren Laufzeit führen, andererseits stehen in solchen Programmiersprachen Werkzeuge zum kontrollierteren Umgang mit Heap-Allokationen zur Verfügung.
 
 Wahrscheinlich lässt sich so auch das Problem der hohen \emph{Self-Time} lösen, die fast die Hälfte der Laufzeit von \emph{cleanPositions} einnimmt. (siehe \autoref{runtimeeval})
 

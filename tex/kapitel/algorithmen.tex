@@ -1,7 +1,7 @@
 \chapter{Bekannte Grammatikkompressionsalgorithmen}
 \label{algorithmen}
 
-Grammatikbasierte Textkompression wurde schon mehrfach erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, werden hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und Re-Pair \cite{larsson_offline_1999} vorgestellt.
+Grammatikbasierte Textkompression wurde schon mehrfach erforscht, etwa in \cite{nevill-manning_identifying_1997, larsson_offline_1999, apostolico_off-line_2000}. Um einen Vergleich mit anderen Algorithmen zu bieten, werden hier die Algorithmen Sequitur \cite{nevill-manning_identifying_1997} und RePair \cite{larsson_offline_1999} vorgestellt.
 
 \section{Sequitur}
 \label{sequitur}
@@ -49,8 +49,7 @@ Zudem besitzt jedes Vorkommen eines Nichtterminal eine Referenz auf das Guard-Sy
 
 \autoref{seqLinkedDataStructure} zeigt ein Beispiel für solch eine Datenstruktur.
 
-
-\begin{figure}[H]
+\begin{figure}
 	\centering
 
     \subfloat[6cm][Eine Grammatik für den String $aabcdabe$]{%
@@ -358,16 +357,16 @@ Wieder ist Digram-Uniqueness verletzt, da $ab$ doppelt in der Grammatik vorkommt
     }
 }
 
-\section{Re-Pair}
+\section{RePair}
 \label{repair}
 
-Im Gegensatz zu Sequitur ist Re-Pair \cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
+Im Gegensatz zu Sequitur ist RePair \cite{larsson_off-line_2000} ein Off-line Algorithmus. Es liegt also zur Ausführung bereits der gesamte Eingabestring im Speicher vor.
 
-Ähnlich wie Sequitur ersetzt Re-Pair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln, um den Text zu komprimieren. Allerdings wählt Re-Pair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt jedes Vorkommen des Paars durch eine neue Regel.
+Ähnlich wie Sequitur ersetzt RePair wiederholt vorkommende Paare von Zeichen durch Produktionsregeln, um den Text zu komprimieren. Allerdings wählt RePair in jedem Schritt das am häufigsten vorkommende Symbolpaar und ersetzt jedes Vorkommen des Paars durch eine neue Regel.
 
 \subsection{Implementation}
 
-Re-Pair nutzt drei Datenstrukturen:
+RePair nutzt drei Datenstrukturen:
 
 \subsubsection{Symbolarray}
 
@@ -396,7 +395,7 @@ Das \emph{Symbolarray} speichert alle Symbole der Startregel. Zu Anfang sind das
 
 \subsubsection{Prioritätswarteschlange}
 
-Re-Pair benutzt eine spezialisierte Prioritätswarteschlange, um die Wahl des günstigsten zu ersetzenden Paars effizient zu ermöglichen. Diese besteht aus einem Array von etwa $\sqrt{n}$ verketteten Listen, wobei $n$ die Länge der Eingabe ist. In der Liste an Index $i$ befinden sich alle Paare, die $i$-mal im String vorkommen. Zusätzlich enthalten die Einträge auch  einen Pointer auf das erste Vorkommen des Paares im String.
+RePair benutzt eine spezialisierte Prioritätswarteschlange, um die Wahl des günstigsten zu ersetzenden Paars effizient zu ermöglichen. Diese besteht aus einem Array von etwa $\sqrt{n}$ verketteten Listen, wobei $n$ die Länge der Eingabe ist. In der Liste an Index $i$ befinden sich alle Paare, die $i$-mal im String vorkommen. Zusätzlich enthalten die Einträge auch  einen Pointer auf das erste Vorkommen des Paares im String.
 
 Eine Besonderheit ist dabei die Liste bei Index $0$. Diese enthält alle Paare, die öfter als $\sqrt{n}$-mal vorkommen. Außerdem werden keine Elemente in der Liste mit Index $1$ gespeichert, da diese nie zum Ersetzen in Betracht bezogen werden können.
  
@@ -505,7 +504,7 @@ Dies ist eine Hashtabelle, die einen Eintrag für jedes aktive Symbolpaar besitz
 
 \subsection{Beispiel}
 
-Als Beispiel wenden wir nun den Re-Pair Algorithmus auf $abcabcd$ an. Der Aufruf ist in \autoref{repairexample} abgebildet. Die Datenstrukturen zu Anfang sind in \autoref{repairex1} zu sehen.
+Als Beispiel wenden wir nun den RePair Algorithmus auf $abcabcd$ an. Der Aufruf ist in \autoref{repairexample} abgebildet. Die Datenstrukturen zu Anfang sind in \autoref{repairex1} zu sehen.
 Wir entnehmen ein Symbolpaar aus der Prioritätswarteschlange, das am häufigsten vorkommt und ersetzen es im Text. In unserem Fall ist das zum Beispiel $ab$. Die Datenstrukturen nach dieser Ersetzung sind in \autoref{repairex2} abgebildet.
 
 Nun ist das einzige übrige Symbolpaar, das neu entstandene $Ac$. Dies entnehmen wir aus der Prioritätswarteschlange und ersetzen es ebenfalls.

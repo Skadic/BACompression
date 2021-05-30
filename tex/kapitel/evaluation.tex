@@ -78,7 +78,7 @@ Die hier gewählte Implementation von Sequitur ist die Java-Implementation von E
 Für RePair wird eine eigene Implementation benutzt. Die meisten bestehenden Implementationen waren in nicht JVM-kompatiblen Programmiersprachen geschrieben. 
 Die einzige auffindbare JVM-kompatible Implementation war eine Kotlin-Implementierung von Dale King \footnote{\url{https://gitlab.com/NobleworksSoftware/RePair}}. Allerdings ist diese für größere Grammatiken nicht verwendbar, da sie UTF-16 Codepoints als Nichtterminale verwendet. Da Diese auf Zahlen unter $2^{16}$ begrenzt sind, ist diese Implementation nicht auf die hier verwendeten Testdaten anwendbar, weil die auf den hier verwendeten Datensätzen erzeugten Grammatiken größer sind.
 
-Die Implementation von AreaCompV4 sowie die Sequitur- und RePair-Implementation sind in Java 16 programmiert.
+Die Implementation von AreaCompV4 sowie die Sequitur- und RePair-Implementation sind in Java 16 programmiert. Der Quellcode ist im zugehörigen \href{https://github.com/Skadic/BACompression/tree/master/compression}{Repository} zu finden.
 
 \subsection{Datensätze}
 \label{datasets}

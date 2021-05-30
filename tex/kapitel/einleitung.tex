@@ -19,14 +19,15 @@ Mithilfe des Wörterbuches und dieser Pointer-Symbole lässt sich dann der Einga
 Eines der bekannteren Beispiele ist die LZ77-Kodierung von Lempel und Ziv \cite{ziv_universal_1977}.
 
 Diese Arbeit befasst sich besonders mit grammatikbasierten Kodierern. Diese erzeugen eine Straight-Line-Grammatik, die einen Eingabetext in kompakter Weise beschreibt \cite{kieffer_grammar-based_2000}. 
-Eine Straight-Line-Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Re-Pair \cite{larsson_offline_1999} und Sequitur \cite{nevill-manning_identifying_1997}.
+Eine Straight-Line-Grammatik ist eine kontextfreie Grammatik, die einen bestimmten String (in diesem Fall, den Eingabetext) eindeutig erzeugt. Die Sprache dieser Grammatik besteht also nur aus dem entsprechenden String. Bekannte Beispiele hierfür sind etwa Sequitur \cite{nevill-manning_identifying_1997} und RePair \cite{larsson_offline_1999}.
 
 \section{Inhalt der Arbeit}
 
-Es wird der AreaComp-Algorithmus vorgestellt, der mithilfe von Suffix-Arrays und LCP-Arrays \cite{manber_suffix_1993} eine Straight-Line-Grammatik berechnet. Es werden mithilfe einer Kostenfunktion Intervalle im LCP-Array bestimmt, die den möglichst günstigsten zu ersetzenden Substring beschreiben, und diesen Substring durch ein neues Symbol und eine entsprechende Produktionsregel ersetzt.
+Es wird der AreaComp-Algorithmus vorgestellt, der mithilfe von Suffix-Arrays und LCP-Arrays \cite{manber_suffix_1993} eine Straight-Line-Grammatik berechnet. Mithilfe einer Kostenfunktion werden Intervalle im LCP-Array bestimmt, die den möglichst günstigsten zu ersetzenden Substring beschreiben, und dieser Substring durch ein neues Symbol und eine entsprechende Produktionsregel ersetzt.
 Der Algorithmus arbeitet dabei Off-Line. Das heißt, dass die gesamte Eingabe zur Zeit der Ausführung des Algorithmus im Speicher vorliegt.
 
-Dieser erzeugt in der Praxis kleine Grammatiken in Linearzeit, die mit bekannten Grammatikkompressionsalgorithmen mithalten können.
+Die erzeugten Grammatiken und die Laufzeit werden mit denen von Sequitur und RePair verglichen. Die Kodierung der erzeugten Grammatik ist nicht Teil dieser Arbeit. 
+AreaComp erzeugt in der Praxis kleine Grammatiken, die mit bekannten Grammatikkompressionsalgorithmen mithalten können und läuft in der Praxis in Linearzeit.
 
 \section{Aufbau der Arbeit}
 
