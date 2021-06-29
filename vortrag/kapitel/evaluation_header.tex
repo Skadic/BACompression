@@ -1,0 +1,87 @@
+\pgfplotscreateplotcyclelist{algs}{%
+    lime!80!black,every mark/.append style={fill=lime},mark=square*\\%
+    red,every mark/.append style={fill=red},mark=triangle*\\%
+    teal,every mark/.append style={fill=teal!80},mark=pentagon*\\%
+    black,mark=star\\%
+    purple!30!blue,every mark/.append style={fill=purple!30!blue},mark=diamond*\\%
+    orange!80!black,every mark/.append style={solid,fill=orange},mark=*\\%
+}
+
+\pgfplotscreateplotcyclelist{algso}{%
+    lime!80!black,fill=lime\\%
+    red,fill=red\\%
+    teal,fill=teal!80\\%
+    black,fill=black!80\\%
+    purple!30!blue,fill=purple!30!blue\\%
+    orange!80!black,fill=orange\\%
+    cyan!80!black,fill=cyan\\%
+}
+
+\pgfplotsset{every tick label/.append style={font=\tiny}}
+
+\pgfplotsset{
+    dataplot/.style={
+        xtick={1,2,3,4,5},
+        xticklabels={10,20,30,40,50},
+        xticklabel style={align=center},
+        %xlabel={Größe der Eingabe},
+        %x unit={MB},
+        width=37mm,
+        height=45mm,
+		y label style={at={(axis description cs:0,.5)}, anchor=south},
+		x label style={at={(axis description cs:1.2,-0.2)},anchor=north},
+        legend style={at={(2.5,-0.4)}, anchor=north},
+        cycle list name=algs,
+		legend columns=3, 
+		legend style={
+			font=\tiny,
+			% the /tikz/ prefix is necessary here...
+			% otherwise, it might end-up with `/pgfplots/column 2`
+			% which is not what we want. compare pgfmanual.pdf
+			/tikz/column 2/.style={
+				column sep=5pt,
+			},
+			/tikz/column 3/.style={
+				column sep=5pt,
+			},
+		}
+    },
+    runtimeplot/.style={
+        dataplot,
+        %y unit={s},
+        %ylabel={Laufzeit},
+        ytick distance=100
+    },
+    sizeplot/.style={
+        dataplot,
+        %y unit={outputsize/inputsize},
+        %ylabel={Größenverhältnis},
+        ytick distance=0.1
+    },
+    depthplot/.style={
+        dataplot,
+        %y unit={\#Schritte zur tiefsten Regel},
+        %ylabel={Tiefe}
+    },
+    countplot/.style={
+        dataplot,
+        %ylabel={Regeln}
+    },
+    lengthplot/.style={
+        dataplot,
+        %y unit={\#Zeichen},
+        %ylabel={Durchschnittslänge}
+    },
+	noylabel/.style={
+		ylabel={},
+        y unit={},
+		ytick style={draw=none}
+	},
+	sizexlabel/.style={
+		xlabel={Größe der Eingabe},
+		x unit={MB}
+	},
+	rightdist/.style={
+		anchor=west, xshift=6mm,
+	}
+}

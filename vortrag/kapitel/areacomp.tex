@@ -1,0 +1,463 @@
+% !TEX root = ../main.tex
+\section{AreaComp}
+
+\subsection{Prinzip}
+
+\begin{frame}
+	\frametitle{Algorithmus}
+
+	\note<1->[item]{Kommen nun zum Algorithmus}
+	\note<1->[item]{Eingabe/Ausgabe: \begin{itemize}
+			\item Eingabe: zu komprimierender String
+			\item Ausgabe: Straight-Line-Grammatik für $s$
+		\end{itemize}
+	}
+	\note<1->[item]{Berechne Enhanced Suffix Array}
+	\note<1->[item]{
+		Generieren der Menge von LCP-Intervallen \begin{itemize}
+			\item Intervalle des Kind-Intervallbaums
+		\end{itemize}
+	}
+	\note<1->[item]{
+		Bis alle Intervalle bearbeitet wurden: (solange $Q$ nicht leer) \begin{itemize}
+			\item Als am nützlichsten eingeschätztes Intervall entnehmen
+			\item Produktionsregel erzeugen, die den Substring erzeugt, der vom LCP-Intervall beschrieben wird
+			\item Wo möglich, den Substring durch das Nichtterminal der Produktionsregel ersetzen
+		\end{itemize}
+	}
+
+	\note<1->[item]{
+		Falls keine Intervalle mehr übrig, terminiere
+	}
+
+
+	\begin{algorithm}[H]
+		\KwIn{$s:$ Eingabestring}
+		\KwOut{$G:$ Grammatik mit $L(G) = \{s\}$}
+		Berechne Enhanced Suffix Array für $s\$$\;
+		Generiere Menge $Q$ von LCP-Intervallen\;
+		%Ordne mithilfe der Flächenfunktion in Prioritätswarteschlange $Q$\;
+		\While{$Q \neq \emptyset$}{
+			Entnimm nützlichstes LCP-Intervall\;
+			Generiere neue Produktionsregel für den Substring\;
+			Ersetze den Substring, wo möglich\;
+		}
+		Gib die Grammatik zurück\;
+		\caption{AreaComp}
+	\end{algorithm}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Offene Fragen}
+
+	\note<1->[item]{Priorisierung: Am naheliegendsten ist Prioritätswarteschlange}
+	\note<2->[item]{Offene Frage: Was heißt \enquote{Nützlichkeit} und wie bestimmen wir diese?}
+	\note<3->[item]{Wir ersetzen Teile des Strings durch Produktionsregeln und Nichtterminale \begin{itemize}
+			\item Wie speichern wir \enquote{Ersetzungen}
+		\end{itemize}
+	}
+
+	\begin{itemize}
+		\item<1-> Priorisierung mithilfe von Prioritätswarteschlange
+		\item<2-> Wie bestimmen wir \enquote{Nützlichkeit}?
+		\item<3-> Brauchen Möglichkeit \enquote{Ersetzungen} zu speichern
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Flächenfunktionen}
+
+	\note[item]<1->{Zur Priorisierung von LCP-Intervallen}
+	\note[item]<1->{Ein Kernstück des Algorithmus}
+	\note[item]<2->{Flächenfunktionen}
+	\note[item]<2->{Zunächst Hilfsfunktionen definieren: \begin{itemize}
+		\item Werden zur Berechnung der Flächenfunktion benutzt 
+		\item Höhe: Minimaler Wert in dem LCP-Intervall. Ist die Länge des beschriebenen Substrings
+		\item Breite: Anzahl Vorkommen des Substrings, der durch das LCP-Intervall beschrieben wird
+	\end{itemize}}
+	\note[item]<3->{Flächenfunktion \begin{itemize}
+		\item Im Grunde einfache Definition
+		\item Nimmt die Intervallgrenzen und gibt eine natürliche Zahl zurück
+		\item Nutzt Höhe und Breite zum Bewerten des Intervalls
+		\item Idee ist, dass die Funktion bei nützlich eingeschätzten Intervallen hohe Zahl liefert
+	\end{itemize}}
+
+	\begin{block}<2->{Breite/Höhe eines LCP-Intervalls}
+		Sei $LCP[i..j]$ ein Intervall im LCP-Array mit $i \leq j$
+		\begin{itemize}
+			\item Höhe: $H(i,j) = \min \{LCP[k]\ |\ i \leq k \leq j\}$
+			\item Breite: $W(i,j) = j - i + 2$
+		\end{itemize} 
+	\end{block}
+
+	\begin{block}<3->{Flächenfunktion}
+		Eine Funktion $A: \mathbb{N}_0 \times \mathbb{N}_0 \rightarrow \mathbb{N}_0$. 
+		Die Argumente sind die Intervallgrenzen eines LCP-Intervalls. 
+		Nutzt die Höhe und Breite des LCP-Intervalls um das Intervall zu bewerten.
+	\end{block}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Beispiel}
+
+	\note[item]{Ein Beispiel}
+	\note[item]{Komprimierung von dem abgebildeten String}
+	\note[item]{Flächenfunktion: Multiplikation von Höhe und Breite \begin{itemize}
+		\item Versuch Anzahl Vorkommen und Länge gleichermaßen miteinzubeziehen
+	\end{itemize}}
+	\note[item]{Beginnen nur mit einer Startregel \begin{itemize}
+		\item Die Regeln nummerieren wir durch.
+		\item Beginnen bei $0$ (= Startregel)
+	\end{itemize}}
+
+	\begin{itemize}
+		\item String $abacaba$
+		\item Wähle als Flächenfunktion $A(i,j) = W(i,j) \cdot H(i,j)$.
+		\item Beginne mit Grammatik: $R_0 \rightarrow abacaba\$$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Beispiel}
+	
+	\note[item]{Beginnen mit dem Suffix- und LCP-Array}
+	\note[item]{Beachten, dass das $\$$ an den String angehängt ist}
+	\note[item]{Aus Einfachheitsgründen lassen wird den Kindintervallbaum hier weg}
+
+	\note<2->[item]{Nehmen das LCP-Intervall mit größtem Flächenwert}
+	\note<2->[item]{In diesem Fall $LCP[1..1]$ \begin{itemize}
+		\item Höhe $3$, weil Minimum auf dem Intervall
+		\item Breite $2$, weil das Intervall $2$ Vorkommen bedeutet
+	\end{itemize}}
+	\note<3->[item]{Entsprechendes $SA$-Intervall ist $SA[0..1]$ \begin{itemize}
+		\item Weil LCP-Wert Länge des LCP der dieser zwei Indizes im $SA$ beschreibt
+	\end{itemize}} 
+
+	\note<4->[item]{Also Vorkommen der Länge $3$ bei Indizes $0$ und $4$ \begin{itemize}
+		\item diese Beiden
+	\end{itemize}}
+
+	\begin{figure}[H]
+		\centering
+		\scalebox{0.7} {
+			\begin{tikzpicture}[ampersand replacement=\&]
+				\matrix (m) [matrix of nodes, 
+					nodes={
+						draw, 
+						rectangle, 
+						minimum width=7mm, 
+						minimum height=7mm, 
+						outer sep=0pt,
+						inner sep=0,
+						anchor=center
+					}
+				]{ 
+					0 \& 1 \& 2 \& 3 \& 4 \& 5 \& 6 \& 7 \\
+					a \& b \& a \& c \& a \& b \& a \& \$\\
+					0 \& 4 \& 2 \& 6 \& 1 \& 5 \& 3 \& 7 \\ 
+					0 \& 3 \& 1 \& 1 \& 0 \& 2 \& 0 \& 0 \\
+				};
+				
+				\node[draw=none, left=of m-1-1] (i) {\textbf{i}}; 
+				\node[draw=none, left=of m-2-1] (s) {\textbf{s\$}};
+				\node[draw=none, left=of m-3-1] (SA) {\textbf{SA}};
+				\node[draw=none, left=of m-4-1] (LCP) {\textbf{LCP}};
+
+				%\pause
+
+				\node<2, 4->[draw=red, inner sep=1.5mm, label=below:{$LCP[1..1]$}, fit=(m-4-2) (m-4-2)] {};
+				\node<3>[draw=blue, inner sep=1.5mm, fit=(m-3-1) (m-3-2)] {};
+				\node<3>[draw=none, inner sep=1.5mm, label=below:{$SA[0..1]$}, fit=(m-4-1) (m-4-2)] {};
+
+				\node<4->[draw, inner sep=1.5mm, fit=(m-2-1) (m-2-3)] {};
+				\node<4->[draw, inner sep=1.5mm, fit=(m-2-5) (m-2-7)] {};
+
+
+
+			\end{tikzpicture}
+		}
+	\end{figure}
+	
+	\begin{itemize}
+		\item<2-> $A(1,1) = W(1, 1) \cdot H(1, 1) = 2 \cdot 3 = 6$
+		\item<5-> Erzeuge Produktionsregel $R_1 \rightarrow aba$ und ersetze die Vorkommen
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Beispiel}
+
+	Neue Grammatik:
+	\begin{align*}
+		R_0 &\rightarrow R_1 c R_1\$\\
+		R_1 &\rightarrow aba
+	\end{align*}
+	
+\end{frame}
+
+\subsection{Datenstrukturen}
+
+\begin{frame}{Umsetzung}
+
+	\note<1->[item]{Wenn Substrings durch Nichtterminale ersetzt werden: \begin{itemize}
+		\item Manche späteren Ersetzungen werden unmöglich oder unnütz
+		\item Da sie sich mit vorherigen Ersetzungen überschneiden
+		\item Oder weil durch frühere Ersetzungen 
+	\end{itemize}}
+	\note<1->[item]{Beispiel von Gerade}
+	\note<2->[item]{Ersetzung von $ac$ nicht möglich \begin{itemize}
+		\item Auch wenn es in diesem Beispiel gerade keinen Sinn macht. nur hypothetisch
+		\item $aba$ ja schon substituiert. Das $ac$ darf also nicht substituiert werden
+		\item Überschneidet sich mit dem $a$ bei Index $2$
+	\end{itemize}}
+	\note<3->[item]{Nächster Fall: Ersetzung von $ba$ theoretisch möglich (Regel $R_2 \rightarrow ba$) aber unnütz \begin{itemize}
+		\item Denn $ba$ kommt nur noch einmal in der Grammatik vor
+		\item Grund: Substitution von $aba$
+	\end{itemize}}
+	\note<3->[item]{Brauchen also Datenstruktur, die Substitutionen speichert und diese Fälle erkennen kann}
+
+	\begin{columns}
+		\begin{column}{0.6\linewidth}
+			\scalebox{0.7} {
+				\begin{tikzpicture}[ampersand replacement=\&]
+					\matrix (m) [matrix of nodes, 
+						nodes={
+							draw, 
+							rectangle, 
+							minimum width=7mm, 
+							minimum height=7mm, 
+							outer sep=0pt,
+							inner sep=0,
+							anchor=center
+						}
+					]{ 
+						0 \& 1 \& 2 \& 3 \& 4 \& 5 \& 6 \& 7 \\
+						a \& \only<1, 2>{b}\only<3->{\textcolor{red}{b}} \& \only<1>{a}\only<2->{\textcolor{red}{a}} \& c \& a \& \only<1, 2>{b}\only<3->{\textcolor{red}{b}} \& \only<1, 2>{a}\only<3->{\textcolor{red}{a}} \& \$\\
+						0 \& 4 \& 2 \& 6 \& 1 \& 5 \& 3 \& 7 \\ 
+						0 \& 3 \& 1 \& 1 \& 0 \& 2 \& 0 \& 0 \\
+					};
+					
+					\node[draw=none, left=of m-1-1] (i) {\textbf{i}}; 
+					\node[draw=none, left=of m-2-1] (s) {\textbf{s\$}};
+					\node[draw=none, left=of m-3-1] (SA) {\textbf{SA}};
+					\node[draw=none, left=of m-4-1] (LCP) {\textbf{LCP}};
+
+					\node<2>[draw, inner sep=1.5mm, fit=(m-2-3) (m-2-4)] {};
+					\node<3->[draw, inner sep=1.5mm, fit=(m-2-2) (m-2-3)] {};
+					\node<3->[draw, inner sep=1.5mm, fit=(m-2-6) (m-2-7)] {};
+					\node<3->[draw=red, inner sep=1.5mm, label=below:{$LCP[5..5]$}, fit=(m-4-6) (m-4-6)] {};
+				\end{tikzpicture}
+			}
+		\end{column}
+		\begin{column}{0.3\linewidth}
+			\begin{align*}
+				R_0 &\rightarrow R_1 c R_1\\
+				R_1 &\rightarrow a \only<1,2>{b} \only<3->{\textcolor{red}{b}}   \only<1>{a} \only<2->{\textcolor{red}{a}}
+			\end{align*}
+		\end{column}
+	\end{columns}
+	\begin{columns}
+		\begin{column}{\linewidth}
+			\centering
+			\only<2>{$ac$ überschneidet sich mit schon ersetztem Intervall}
+			\only<3>{Durch vorherige Substitution: $ba$ nur noch einmal in der Grammatik}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+\begin{frame}{Ersetzungsintervall}
+	
+	\note<1->[item]{Erinnerung: Regeln werden durchnummeriert} 
+	\note<2->[item]{Zum Speichern von Substitutionen: Ersetzungsintervalle \begin{itemize}
+		\item Es wird also gespeichert, durch welche Regel ein bestimmtes Intervall ersetzt wurde 
+	\end{itemize}}
+
+	\begin{block}<2->{Ersetzungsintervall}
+		\begin{itemize}
+			\item Eingabestring $s = s_0, \dots, s_{n-1}$ und $R_k$ das Nichtterminal der Regel $k$.
+			\item Wird ein Intervall $[i..j]$ durch das Nichtterminal $R_k$ ersetzt, dann heißt $R_k$-$[i..j]$ Ersetzungsintervall der Regel $k$ bei Index $i$
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\begin{frame}{\texttt{RuleIntervalIndex}}
+
+	\note[item]{Beispiel \begin{itemize}
+		\item Folgende Grammatik
+	\end{itemize}}
+	\note[item]{Solch eine Datenstruktur wollen wir erreichen. \begin{itemize}
+		\item Ersetzungsintervalle entsprechend ihrer Verschachtelung gespeichert
+		\item sollte möglichst effizient modifizierbar und navigierbar sein
+	\end{itemize}}
+
+	\begin{columns}
+		\begin{column}{0.15\linewidth}
+			\begin{align*}
+				R_0 &\rightarrow R_1 c R_1\$\\
+				R_1 &\rightarrow a R_2\\
+				R_2 &\rightarrow ba
+			\end{align*}
+		\end{column}
+		\begin{column}{0.8\linewidth}
+			\centering
+			\begin{tikzpicture}[ampersand replacement=\&]
+				\matrix (m) [matrix of nodes, 
+					nodes={
+						draw=none, 
+						rectangle, 
+						minimum width=7mm, 
+						minimum height=7mm, 
+						outer sep=0pt,
+						inner sep=0,
+						anchor=center,
+						align=center
+					},
+					nodes in empty cells
+				]{ 
+					0 \& 1 \& 2 \& 3 \& 4 \& 5 \& 6 \& 7 \\
+					a \& b \& a \& c \& a \& b \& a \& \$\\
+					\& \& \& \& \& \& \&  \\
+					\& \& \& \& \& \& \&  \\
+					\& \& \& \& \& \& \&  \\
+				};
+				\node[draw, inner sep=0, fit=(m-3-1) (m-3-8), text height=1.25em] {$R_0$-$[0..7]$};
+
+				\node[draw, inner sep=0, fit=(m-4-1) (m-4-3), text height=1.25em] {$R_1$-$[0..2]$};
+				\node[draw, inner sep=0, fit=(m-4-5) (m-4-7), text height=1.25em] {$R_1$-$[4..6]$};
+		
+				\node[draw, inner sep=0, fit=(m-5-2) (m-5-3), text height=1.25em] {$R_2$-$[1..2]$};
+				\node[draw, inner sep=0, fit=(m-5-6) (m-5-7), text height=1.25em] {$R_2$-$[5..6]$};
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{\texttt{RuleIntervalIndex}}
+
+	\note<1->[item]{Basiert auf assoziativer Predecessor-Datenstruktur \begin{itemize}
+		\item Assoziativ: Speichern nicht nur Schlüssel. Jeder Schlüssel hat zugehörige Daten
+	\end{itemize}}
+	\note<2->[item]{Speichert für einen Index immer das am tiefsten verschachtelte Intervall, das an diesem Index beginnt \begin{itemize}
+		\item falls kein Intervall an diesem Index beginnt, ist der Eintrag leer
+	\end{itemize}}
+
+	\begin{itemize}
+		\item<1-> Basiert auf assoziativer Predecessor-Datenstruktur \begin{itemize}
+			\item Daten: Ersetzungsintervalle
+			\item Schlüssel: Startindizes der Intervalle
+		\end{itemize}
+		\item<2-> Speichert für einen Index das tiefste Intervall an diesem Startindex, falls vorhanden
+		\item<3-> Restliche Intervalle mit Pointern verbunden
+	\end{itemize}
+
+\end{frame}
+
+\begin{frame}{\texttt{RuleIntervalIndex}}
+
+	\note<1->[item]{intervalContaining: Erhält zwei Intervallgrenzen als Eingabe. Gibt das tiefste 	verschachtelte Ersetzungsintervall in der Datenstruktur zurück, das $[i..j]$ enthält.}
+	\note<2->[item]{mark: Fügt ein neues Ersetzungsintervall ein \begin{itemize}
+		\item Markiert sogesehen ein Intervall als \emph{ersetzt}
+	\end{itemize}}
+	\note<3->[item]{get: Das tiefste Intervall an diesem Startindex}
+
+	Funktionen: \begin{itemize}
+		\item<1-> \texttt{intervalContaining(i,j)}\\Das tiefste Intervall, das $[i..j]$ umschließt
+		\item<2-> \texttt{mark(id, start, end)}\\Fügt ein neues Ersetzungsintervall $R_{id}$-$[start..end]$ ein
+		\item<3-> \texttt{get(i)}\\Das tiefste Intervall zurück, das bei $i$ beginnt, falls vorhanden
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Bereinigung der Vorkommen}
+
+	\note<1-3>[item]{Problem von vorher: Vielleicht nicht alle Vorkommen ersetzbar}
+	\note<2-3>[item]{Wie feststellen, ob ein Vorkommen ersetzt werden darf?}
+	\note<3>[item]{Beispiel von vorhin}
+	\note<4>[item]{für $abac$ \begin{itemize}
+		\item Folgende Visualisierung: \begin{itemize}
+			\item Ziehe Pfeile von Unten bei den Grenzen des zu ersetzenden Substrings
+			\item Pfeile dürfen nicht durch Ersetzungsintervalle hindurch
+			\item Dürfen aber an Intervallgrenzen vorbei, die der Pfeil \emph{berührt}
+			\item Kann ein Intervall gefunden werden, das beide Pfeile berühren, ist die Ersetzung erlaubt
+			\item sonst nicht
+		\end{itemize}
+		\item Solch ein Intervall ist gefunden ($0..7$)
+		\item Also substitution erlaubt
+		\item Schaut man auf Grammatik, Substitution ist möglich
+	\end{itemize}}
+	\note<5>[item]{Wir versuchen $ac$ ersetzen \begin{itemize}
+		\item Schaue auf Grammatik: nicht möglich
+		\item hier also $ac$ nicht ersetzbar
+	\end{itemize}}
+	
+
+	\only<2>{Wie feststellen, ob ein Vorkommen ersetzt werden darf?}
+	\only<4>{z.B versuchen $abac$ zu ersetzen}
+	\only<5>{z.B versuchen $ac$ zu ersetzen}
+
+	\centering
+	\only<3-> {
+		\begin{columns}
+			\begin{column}{0.15\linewidth}
+				\centering
+				\begin{align*}
+					R_0 &\rightarrow R_1 c R_1\$\\
+					R_1 &\rightarrow a R_2\\
+					R_2 &\rightarrow ba
+				\end{align*}
+			\end{column}
+			\begin{column}{0.8\linewidth}
+				\centering
+				\begin{tikzpicture}[ampersand replacement=\&]
+					\matrix (m) [matrix of nodes, 
+						nodes={
+							draw=none, 
+							rectangle, 
+							minimum width=7mm, 
+							minimum height=7mm, 
+							outer sep=0pt,
+							inner sep=0,
+							anchor=center,
+							align=center
+						},
+						nodes in empty cells
+					]{ 
+						0 \& 1 \& 2 \& 3 \& 4 \& 5 \& 6 \& 7 \\
+						a \& b \& a \& c \& a \& b \& a \& \$\\
+						\& \& \& \& \& \& \&  \\
+						\& \& \& \& \& \& \&  \\
+						\& \& \& \& \& \& \&  \\
+					};
+					\node<3>[draw, inner sep=0, fit=(m-3-1) (m-3-8), text height=1.25em] (0-7) {$R_0$-$[0..7]$};
+			
+					\node[draw, inner sep=0, fit=(m-4-1) (m-4-3), text height=1.25em] (0-2) {$R_1$-$[0..2]$};
+					\node[draw, inner sep=0, fit=(m-4-5) (m-4-7), text height=1.25em] (4-6) {$R_1$-$[4..6]$};
+				
+					\node<3>[draw, inner sep=0, fit=(m-5-2) (m-5-3), text height=1.25em] (1-2) {$R_2$-$[1..2]$};
+					\node[draw, inner sep=0, fit=(m-5-6) (m-5-7), text height=1.25em] (5-6){$R_2$-$[5..6]$};
+					
+					\only<5-> {
+						\draw[->] ([yshift=-5mm]1-2.south) -- (1-2.south);
+						\draw[->] ([yshift=-5mm]m-1-4.east|-1-2.south) -- (m-1-4.east|-0-7.south);
+						\node[draw=red, fit=(m-2-3) (m-2-4), inner sep=0] {};
+						\node[draw=blue, inner sep=0, fit=(m-3-1) (m-3-8), text height=1.25em] (0-7) {$R_0$-$[0..7]$};
+						\node[draw=blue, inner sep=0, fit=(m-5-2) (m-5-3), text height=1.25em] (1-2) {$R_2$-$[1..2]$};
+					}
+						
+					\only<4> {
+						\draw[->] ([yshift=-5mm]0-7.west|-1-2.south) -- (0-7.west|-0-7.south);
+						\draw[->] ([yshift=-5mm]m-1-4.east|-1-2.south) -- (m-1-4.east|-0-7.south);
+						\node[draw=red, fit=(m-2-1) (m-2-4), inner sep=0] {};
+						\node[draw=blue, inner sep=0, fit=(m-3-1) (m-3-8), text height=1.25em] (0-7) {$R_0$-$[0..7]$};
+						\node[draw, inner sep=0, fit=(m-5-2) (m-5-3), text height=1.25em] (1-2) {$R_2$-$[1..2]$};
+					}
+					
+				\end{tikzpicture}
+				
+				\only<4>{Ersetzung möglich: $R_3 \rightarrow R_1 c$}
+				\only<5>{Ersetzung nicht möglich}
+			\end{column}
+		\end{columns}
+	}
+\end{frame}

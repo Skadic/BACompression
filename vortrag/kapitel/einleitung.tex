@@ -1,0 +1,65 @@
+\section{Einleitung}
+
+\begin{frame}
+	\frametitle{Textkompression}
+
+	\note<1>[item]{Textkompression: Kodierung von Text in Repräsentation mit weniger Bits als eingabe \begin{itemize}
+		\item Verlustfrei: Eingabe fehlerlos wiederherstellbar
+	\end{itemize}}
+	\note<2>[item]{Steigende Menge von Daten}
+	\note<2>[item]{Für Übertragung etc. Kompression nötig}
+	\note<3>[item] {
+		Entropie ordnet jedem Zeichen eine unterschiedliche Folge von Bits zu. beispiel Huffman-Kodierung
+	}
+	\note<4>[item] {
+		Wörterbuchkompression 
+		\begin{itemize}
+			\item im Eingabetext nach wiederholten Substrings suchen
+			\item Diese durch einen Pointer zu einem Wörterbucheintrag ersetzen
+		\end{itemize}
+	}
+	\note<5>[item] {
+		Grammatikkompression 
+		\begin{itemize}
+			\item erzeugt Kontextfreie Grammatik, die Eingabestring erzeugt
+			\item möglichst klein
+			\item gleich genauer definiert
+			\item Grammatik muss zum Abspeichern noch kodiert werden \begin{itemize}
+				\item nicht Teil dieser Arbeit
+			\end{itemize}
+			\item bsp. Sequitur \begin{itemize}
+				\item On-Line Algorithmus (liest Eingabe nach und nach) 
+				\item Baut inkrementell eine Grammatik, die bestimmte Eigenschaften erfüllt
+			\end{itemize}
+			\item bsp. RePair \begin{itemize}
+				\item Off-Line Algorithmus (von Anfang an Eingabe im Speicher)
+				\item Sucht immer am meisten wiederholtes Symbolpaar und ersetzt es durch Nichtterminal
+			\end{itemize}
+			\item beide Algorithmen $\mathcal{O}(n)$
+		\end{itemize}
+	}
+
+	\note<6>[item]{
+		Diese Arbeit: AreaComp \begin{itemize}
+			\item Grammatikkompressionsalgorithmus
+			\item arbeitet Off-Line $\Rightarrow$ Gesamte Eingabe zu Anfang im Speicher
+			\item nutzt Enhanced Suffix Array \begin{itemize}
+				\item später Erklärung
+			\end{itemize}
+		\end{itemize} 
+	}
+
+	\begin{itemize}
+		\item<1-> Textkompression: Text in weniger Bits darstellen als Eingabe
+		\item<2-> Verschiedene Ansätze für Textkompression 
+		\begin{itemize}
+			\item<3-> Entropie-Kodierer (z.B. Huffman \cite{huffman_method_1952})
+			\item<4-> Wörterbuchkompression (z.B. LZ77 \cite{ziv_universal_1977})
+			\item<5-> \textbf{Grammatikkompression} (z.B. Sequitur \cite{nevill-manning_identifying_1997} und RePair \cite{larsson_off-line_2000})
+		\end{itemize}
+		\item<6-> Grammatikkompressionsalgorithmus AreaComp \begin{itemize}
+			\item Off-Line
+			\item Nutzt Enhanced Suffix-Array
+		\end{itemize}
+	\end{itemize}
+\end{frame}

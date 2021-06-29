@@ -1,0 +1,65 @@
+% main.tex
+\include{header}
+
+\title{Grammatikkompression mit dem Enhanced Suffix Array}
+\author{Etienne Palanga}
+\date{30. Juni 2021}
+\institute{Technische Universität Dortmund}
+
+\usetheme{Ilmenau}
+
+
+
+
+%------------------------------------
+
+%\includeonly{kapitel/einleitung.tex}
+
+%------------------------------------
+
+\begin{document}
+\selectlanguage{ngerman}
+\pagenumbering{arabic}
+
+
+
+\frame{\titlepage}
+
+\note[itemize]{
+    \item Willkommen
+}
+
+\begin{frame}
+    \frametitle{Struktur}
+	\tableofcontents
+\end{frame}
+
+\include{kapitel/einleitung.tex}
+
+\AtBeginSection[]
+{
+	\begin{frame}<beamer>
+		\frametitle{Struktur}
+		\tableofcontents[currentsection]
+	\end{frame}
+}
+
+
+\include{kapitel/grundlagen.tex}
+\include{kapitel/areacomp.tex}
+\include{kapitel/evaluation.tex}
+\include{kapitel/ausblick.tex}
+
+\begin{frame}[allowframebreaks]
+	\frametitle{Literaturverzeichnis}
+    % Literaturverzeichnis
+    \printbibliography 
+\end{frame}
+
+% Anhang
+\include{kapitel/anhang.tex}
+
+
+%\addcontentsline{toc}{chapter}{\bibname}
+\end{document}
+

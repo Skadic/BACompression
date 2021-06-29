@@ -1,0 +1,36 @@
+\section{Ausblick}
+
+\begin{frame}
+	\frametitle{Ausblick}
+
+	\note<1-4>[item]{Möglicherweise bessere Flächenfunktionen \begin{itemize}
+		\item viele Möglichkeiten
+		\item muss auf Laufzeit achten
+	\end{itemize}}
+	\note<2-4>[item]{Bereinigung der Indizes der Vorkommen vor der Substitution nimmt am meisten Laufzeit ein \begin{itemize}
+		\item Problem mit Self-Time lösen: Implementierung in Systemnäherer Sprache \begin{itemize}
+			\item Verbessert möglicherweise auch Speichereffizienz
+		\end{itemize}
+	\end{itemize}}
+	\note<4-4>[item]{Speichereffizienz ausbaufähig \begin{itemize}
+		\item $100$MB Eingabe mit 8GB RAM zur Verfügung führt zu OutOfMemoryError
+		\item RuleIntervalIndex ist wahrschenlich das Problem
+		\item Möglicherweise aber auch zum Teil durch die JVM
+	\end{itemize}}
+	\note<5->[item]{Größte Frage: Kodierung der Grammatik \begin{itemize}
+		\item Möglicherweise ist die kleinste Grammatik nicht immer am effizientesten zu Kodieren
+		\item Eigenschaften der größeren Grammatiken könnten beim Kodieren nützlich sein \begin{itemize}
+			\item z.B. die flachen Grammatiken von WidthFirst
+		\end{itemize}
+	\end{itemize}} 
+
+	\begin{itemize}
+		\item<1-> Möglicherweise existieren bessere Flächenfunktionen
+		\item<2-> Laufzeit Bereinigung der Indizes der Vorkommen nimmt meiste Laufzeit ein \begin{itemize}
+			\item Implementierung in anderer Programmiersprache (Self-Time)
+		\end{itemize}
+		\item<3-> Speichereffizienz verbessern
+		\item<4-> Kodierung der Grammatik
+	\end{itemize}
+
+\end{frame}

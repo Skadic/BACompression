@@ -1,0 +1,133 @@
+% header.tex
+\documentclass[notes]{beamer}
+\usepackage{pgfpages}
+\setbeamertemplate{note page}[plain]
+\setbeameroption{show notes on second screen=right}
+%\usepackage[a4paper,left=3.5cm,right=2.5cm,bottom=3.5cm,top=3cm]{geometry}
+
+\usepackage[ngerman,english]{babel}
+
+%\usepackage[pdftex]{graphicx, color}
+\usepackage{amsmath,amssymb}
+%\usepackage{amsthm}
+
+\usepackage{hyperref}
+\usepackage{float}
+
+% Korrekte Darstellung der Umlaute
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Algorithmen
+%\usepackage[ruled,chapter]{algorithm}
+%\usepackage{algorithmicx}
+\usepackage[ngerman, ruled, algosection, linesnumbered, noend]{algorithm2e}
+
+\usepackage{enumerate}
+%\usepackage{enumitem}
+\usepackage{multicol}
+
+% table cell colors
+\usepackage{xcolor}
+%\newcommand{\cc}[1]{\cellcolor{#1}}
+
+% Bibtex deutsch
+\usepackage[backend=biber,sortlocale=de_DE,style=numeric]{biblatex}
+\addbibresource{literatur.bib}
+
+% URLs
+\usepackage{url}
+
+% subfig
+\usepackage{subfig}
+
+% TikZ
+\usepackage{tikz}
+\usetikzlibrary{shapes, positioning, calc, matrix, arrows.meta, decorations.text, fit, external}
+%\tikzexternalize
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{units}
+
+% csquotes
+\usepackage{csquotes}
+
+% Caption Packet
+\usepackage[margin=0pt,font=small,labelfont=bf]{caption}
+%\usepackage{subcaption}
+% Gliederung einstellen
+%\setcounter{secnumdepth}{5}
+%\setcounter{tocdepth}{5}
+\hfuzz=100.002pt 
+
+% Algorithmen anpassen %
+%\renewcommand{\algorithmicrequire}{\textit{Eingabe:}}
+%\renewcommand{\algorithmicensure}{\textit{Ausgabe:}}
+\floatname{algorithm}{Algorithmus}
+%\renewcommand{\listalgorithmname}{Algorithmenverzeichnis}
+%\renewcommand{\algorithmiccomment}[1]{\color{grau}{// #1}}
+\SetKw{KwNull}{null}
+\SetKw{KwTrue}{true}
+\SetKw{KwFalse}{false}
+\SetKw{And}{and}
+\SetKw{Or}{or}
+\SetKw{Not}{not}
+\SetKw{KwBreak}{break}
+\SetKw{KwContinue}{continue}
+\SetKwRepeat{Do}{do}{while}
+
+
+% Abkuerzungen richtig formatieren %
+\usepackage{xspace}
+\newcommand{\vgl}{vgl.\@\xspace} 
+\newcommand{\zB}{z.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]B.\@\xspace}
+\newcommand{\bzw}{bzw.\@\xspace}
+\newcommand{\dahe}{d.\nolinebreak[4]\hspace{0.125em}h.\nolinebreak[4]\@\xspace}
+\newcommand{\etc}{etc.\@\xspace}
+\newcommand{\evtl}{evtl.\@\xspace}
+\newcommand{\ggf}{ggf.\@\xspace}
+\newcommand{\bzgl}{bzgl.\@\xspace}
+\newcommand{\so}{s.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]o.\@\xspace}
+\newcommand{\iA}{i.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]A.\@\xspace}
+\newcommand{\sa}{s.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]a.\@\xspace}
+\newcommand{\su}{s.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]u.\@\xspace}
+\newcommand{\ua}{u.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]a.\@\xspace}
+\newcommand{\og}{o.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]g.\@\xspace}
+\newcommand{\oBdA}{o.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]B.\nolinebreak[4]\hspace{0.125em}d.\nolinebreak[4]\hspace{0.125em}A.\@\xspace}
+\newcommand{\OBdA}{O.\nolinebreak[4]\hspace{0.125em}\nolinebreak[4]B.\nolinebreak[4]\hspace{0.125em}d.\nolinebreak[4]\hspace{0.125em}A.\@\xspace}
+
+% Leere Seite ohne Seitennummer, nächste Seite rechts
+\newcommand{\blankpage}{
+ \clearpage{\pagestyle{empty}\cleardoublepage}
+}
+
+\makeatletter
+\newcommand{\xRightarrow}[2][]{\ext@arrow 0359\Rightarrowfill@{#1}{#2}}
+\makeatother
+
+\makeatletter
+\def\beamer@setupnote{%
+  \gdef\beamer@notesactions{%
+    \beamer@outsideframenote{%
+      \beamer@atbeginnote%
+      \beamer@notes%
+      \ifx\beamer@noteitems\@empty\else
+      \begin{itemize}\itemsep=0pt\parskip=0pt%
+        \beamer@noteitems%
+      \end{itemize}%
+      \fi%
+      \beamer@atendnote%
+    }%
+    \gdef\beamer@notesactions{}%
+  }
+}
+\makeatother
+
+% EOF
+
+%\usepackage{syntonly}
+% syntax check only?
+%\syntaxonly
+
+\setcounter{tocdepth}{1}

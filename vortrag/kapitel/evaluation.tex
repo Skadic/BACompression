@@ -1,0 +1,537 @@
+%\addtocontents{toc}{\newpage}
+
+\input{kapitel/evaluation_header.tex}
+
+\section{Evaluation}
+
+\subsection{Methodik}
+
+\begin{frame}
+	\frametitle{Algorithmen}
+
+	\note[item]{3 Algorithmen}
+	\note<2->[item]{Sequitur \begin{itemize}
+		\item Java-Implementierung von Professor Eibe Frank
+	\end{itemize}}
+	\note<3->[item]{RePair \begin{itemize}
+		\item Eigene Implementierung
+		\item Keine für diese Zwecke angemessene JVM-Implementierung gefunden
+	\end{itemize}}
+	\note<4->[item]{AreaComp \begin{itemize}
+		\item 4 Flächenfunktionen
+		\item betrachten wir im Folgenden
+	\end{itemize}}
+	\note<4->[item]{Alle Algorithmen in Java 16}
+
+	\begin{itemize}
+		\item<2-> Sequitur
+		\item<3-> RePair
+		\item<4-> AreaComp \begin{itemize}
+			\item 4 Flächenfunktionen 
+		\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Flächenfunktionen}
+
+	\note<1-4>[item]{Wie gesagt, 4 Flächenfunktionen für AreaComp}
+
+	\note<2-4>[item]{ChildArea \begin{itemize}
+		\item Wie im AreaComp Beispiel
+		\item Versucht durch die Multiplikation die erreichbare Kompression abzuschätzen
+		\item Heißt so, weil während der Entwicklung dies die erste Flächenfunktion war, die Kindintervalle benutzt, um Höhe zu berechnen
+	\end{itemize}}
+	\note<3-4>[item]{WidthFirstArea \begin{itemize}
+		\item Priorisiert die breitesten LCP-Intervalle
+	\end{itemize}}
+	\note<4-4>[item]{HeightFirstArea \begin{itemize}
+		\item Priorisiert die höchsten LCP-Intervalle
+		\item Also die Intervalle mit längsten Substring
+	\end{itemize}}
+	\note<5->[item]{HeightAdvantageArea \begin{itemize}
+		\item Versuch einer Verbesserung von HeightFirstArea
+		\item Da HeightFirstArea in Tests gut funktioniert hat
+		\item schaut auch zum Teil nach Breite des Intervalls 
+	\end{itemize}}
+	
+	\begin{itemize}
+		\item<2-> \texttt{ChildArea}: $A(i,j) = H(i,j) \cdot W(i,j)$
+		\item<3-> \texttt{WidthFirstArea}: $A(i,j) = W(i,j)$
+		\item<4-> \texttt{HeightFirstArea}: $A(i,j) = H(i,j)$
+		\item<5-> \texttt{HeightAdvantageArea}: $A(i,j) = 10 \cdot H(i,j) + \min\{\ln(W(i,j)), 9\}$
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Datensätze}
+	\centering
+
+	\note<1->[item]{Haben Algorithmen, brauchen also noch Testdaten}
+	\note<1->[item]{4 Datensätze aus dem Pizza\&Chili Corpus \begin{itemize}
+		\item Unterschiedliche Alphabetgröße
+		\item Präfixe der Datensätze $10$ bis $50$ Megabyte. In $10$ MB Schritten
+	\end{itemize}}
+	\note<1->[item]{Verschiedene Alphabetgrößen}
+	\note<2->[item]{DNA Datensatz \begin{itemize}
+		\item enthält DNA Sequenzen
+	\end{itemize}}
+	\note<3->[item]{English Datensatz \begin{itemize}
+		\item enthält englischen Text
+	\end{itemize}}
+	\note<4->[item]{Proteins Datensatz \begin{itemize}
+		\item enthält Proteinsequenzen
+	\end{itemize}}
+	\note<5->[item]{XML Datensatz \begin{itemize}
+		\item xml Datei mit Informationen über Informatik-Zeitschriften
+	\end{itemize}}
+
+
+	\begin{tabular}{l|c}
+		Datensatz & Alphabetgröße\\ \hline
+		\pause
+		\emph{dna} & $16$\\
+		\pause
+		\emph{english} & $239$\\
+		\pause
+		\emph{proteins} & $27$\\
+		\pause
+		\emph{xml} & $97$ 
+	\end{tabular}
+
+\end{frame}
+
+
+\subsection{Ergebnisse}
+
+\begin{frame}
+	\frametitle{Laufzeit}
+	\note<1>[item]{Ursprüngliche grobe Abschätzung: $\mathcal{O}(n^2 \cdot d)$}
+	\note[item]{Laufzeit in Sekunden}
+	\note[item]{Sequitur auf allen Datensätzen am schnellsten}
+	\note[item]{Nächstschnellster Algorithmus: RePair}
+	\note[item]{Wahl der Flächenfunktion \begin{itemize}
+		\item Keine allzu große Auswirkung
+		\item Auf XML und Proteins quasi identisch
+		\item Auf DNA, WidthFirst und Child etwas schneller, auf English nur WidthFirst etwas schneller
+	\end{itemize}}
+	\note[item]{Trotz schlechterer Abschätzung scheint Laufzeit linear zu steigen}
+
+	\only<1>{Ursprüngliche Laufzeitabschätzung: $\mathcal{O}(n^2 \cdot d)$ \begin{itemize}
+		\item $d =$ Tiefe der Grammatik wenn der Algorithmus terminiert
+	\end{itemize}}
+
+	\only<2>{
+		\begin{columns}
+			\column{\dimexpr\paperwidth-10pt}
+	
+			\begin{tikzpicture}
+				\begin{axis}[runtimeplot, title={DNA}, name=dnatime, y unit={s}, ylabel={Laufzeit}]
+				   
+					%% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+					%% FROM dna GROUP BY MULTIPLOT, datasetsize
+					\addplot coordinates { (1,47.0) (2,106.0) (3,171.0) (4,232.0) (5,314.0) };
+					\addplot coordinates { (1,51.0) (2,116.0) (3,198.0) (4,282.0) (5,380.0) };
+					\addplot coordinates { (1,50.0) (2,117.0) (3,190.0) (4,266.0) (5,368.0) };
+					\addplot coordinates { (1,44.0) (2,103.0) (3,159.0) (4,227.0) (5,306.0) };
+					\addplot coordinates { (1,15.0) (2,35.0) (3,57.0) (4,75.0) (5,102.0) };
+					\addplot coordinates { (1,4.0) (2,9.0) (3,15.0) (4,23.0) (5,31.0) };
+					
+					\addlegendentry{ChildArea};
+					\addlegendentry{HeightAdvantageArea};
+					\addlegendentry{HeightFirstArea};
+					\addlegendentry{WidthFirstArea};
+					\addlegendentry{RePair};
+					\addlegendentry{Sequitur};
+				\end{axis}
+		
+				\begin{axis}[runtimeplot, title={Proteins}, at=(dnatime.east), rightdist, name=proteinstime, sizexlabel]
+					%% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+					%% FROM proteins GROUP BY MULTIPLOT, datasetsize
+					\addplot coordinates { (1,43.0) (2,97.0) (3,135.0) (4,167.0) (5,214.0) };
+					\addplot coordinates { (1,40.0) (2,87.0) (3,125.0) (4,159.0) (5,202.0) };
+					\addplot coordinates { (1,39.0) (2,86.0) (3,131.0) (4,161.0) (5,205.0) };
+					\addplot coordinates { (1,39.0) (2,84.0) (3,118.0) (4,154.0) (5,192.0) };
+					\addplot coordinates { (1,16.0) (2,42.0) (3,79.0) (4,92.0) (5,123.0) };
+					\addplot coordinates { (1,6.0) (2,15.5) (3,27.0) (4,40.0) (5,58.0) };
+				\end{axis}
+	
+				\begin{axis}[runtimeplot, title={XML}, at=(proteinstime.east), rightdist, name=xmltime]
+					%% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+					%% FROM xml GROUP BY MULTIPLOT, datasetsize
+					\addplot coordinates { (1,41.0) (2,91.0) (3,145.0) (4,203.0) (5,269.0) };
+					\addplot coordinates { (1,35.0) (2,83.0) (3,135.0) (4,202.0) (5,265.0) };
+					\addplot coordinates { (1,35.0) (2,85.0) (3,139.0) (4,192.0) (5,250.0) };
+					\addplot coordinates { (1,35.0) (2,78.0) (3,125.0) (4,174.0) (5,232.0) };
+					\addplot coordinates { (1,11.0) (2,29.0) (3,45.0) (4,63.0) (5,80.0) };
+					\addplot coordinates { (1,4.0) (2,9.0) (3,15.0) (4,22.0) (5,29.0) };
+				\end{axis}
+		
+				\begin{axis}[runtimeplot, title={English}, at=(xmltime.east), rightdist]
+					%% MULTIPLOT(algo) SELECT SUBSTR(datasetsize, 1, 1) AS x, AVG((comptime + unifytime) / 1000) AS y, MULTIPLOT
+					%% FROM english GROUP BY MULTIPLOT, datasetsize
+					\addplot coordinates { (1,44.0) (2,113.0) (3,162.0) (4,231.0) (5,297.0) };
+					\addplot coordinates { (1,47.0) (2,114.0) (3,174.0) (4,244.0) (5,315.0) };
+					\addplot coordinates { (1,46.0) (2,114.0) (3,177.0) (4,242.0) (5,333.0) };
+					\addplot coordinates { (1,37.0) (2,89.0) (3,138.0) (4,192.0) (5,246.0) };
+					\addplot coordinates { (1,30.0) (2,77.0) (3,121.0) (4,168.0) (5,209.0) };
+					\addplot coordinates { (1,5.0) (2,13.0) (3,23.0) (4,34.0) (5,47.0) };
+				\end{axis}
+			\end{tikzpicture}
+		  \end{columns}
+	}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Größenverhältnis der Größe der Grammatik zur Eingabe}
+
+	\note<1>[item]{Betrachten hier Größenverhältnis der Größe der Grammatik zur Länge der Eingabe}
+	\note<1>[item]{RePair produziert größte Grammatiken mit in der Regel großem Abstand (insbes. Proteins und English)}
+	\note<1>[item]{Nächstkleinere: WidthFirstArea \begin{itemize}
+		\item Unterschied zu RePair variiert
+	\end{itemize}}
+	\note<2>[item]{Wiederum nächstkleinere: ChildArea \begin{itemize}
+		\item Unterschied zu WidthFirstArea variiert
+	\end{itemize}}
+	\note<2>[item]{HeightFirstArea und HeightAdvantageArea quasi identische Ergebnisse \begin{itemize}
+		\item Auf XML und English fast so klein wie Grammatiken von Sequitur
+	\end{itemize}}
+
+	\note[item]{Sequitur produziert auf jedem Datensatz die kleinste Grammatik}
+
+
+	\begin{columns}
+		\column{\dimexpr\paperwidth-10pt}
+
+		\begin{tikzpicture}
+			\begin{axis}[sizeplot, title={DNA}, name=dnatime, ylabel={Größenverhältnis}]
+			   
+                \addplot coordinates { (1,0.429266) (2,0.429114) (3,0.429129) (4,0.429873) (5,0.429092) };
+                \addplot coordinates { (1,0.216447) (2,0.205636) (3,0.201329) (4,0.197742) (5,0.194624) };
+                \addplot coordinates { (1,0.218332) (2,0.207557) (3,0.203194) (4,0.199581) (5,0.19631) };
+                \addplot coordinates { (1,0.429441) (2,0.429373) (3,0.429393) (4,0.430037) (5,0.429272) };
+                \addplot coordinates { (1,0.647652) (2,0.527011) (3,0.640813) (4,0.53727) (5,0.516707) };
+                \addplot coordinates { (1,0.146958) (2,0.139801) (3,0.138794) (4,0.137584) (5,0.135546) };
+				
+				\addlegendentry{ChildArea};
+				\addlegendentry{HeightAdvantageArea};
+				\addlegendentry{HeightFirstArea};
+				\addlegendentry{WidthFirstArea};
+				\addlegendentry{RePair};
+				\addlegendentry{Sequitur};
+			\end{axis}
+	
+			\begin{axis}[sizeplot, title={Proteins}, at=(dnatime.east), rightdist, name=proteinstime, sizexlabel]
+				\addplot coordinates { (1,0.341726) (2,0.365969) (3,0.386289) (4,0.400567) (5,0.404739) };
+                \addplot coordinates { (1,0.212851) (2,0.202009) (3,0.222857) (4,0.249495) (5,0.264087) };
+                \addplot coordinates { (1,0.21661) (2,0.20566) (3,0.227152) (4,0.254638) (5,0.269725) };
+                \addplot coordinates { (1,0.433566) (2,0.432746) (3,0.432112) (4,0.43228) (5,0.432293) };
+                \addplot coordinates { (1,0.767845) (2,0.776813) (3,0.744482) (4,0.834881) (5,0.828773) };
+                \addplot coordinates { (1,0.179865) (2,0.169194) (3,0.180369) (4,0.198115) (5,0.208265) };
+			\end{axis}
+			
+			\begin{axis}[sizeplot, title={XML}, at=(proteinstime.east), rightdist, name=xmltime]
+				\addplot coordinates { (1,0.150608) (2,0.153637) (3,0.157878) (4,0.157854) (5,0.166147) };
+                \addplot coordinates { (1,0.086619) (2,0.0805638) (3,0.078124) (4,0.0753391) (5,0.0757765) };
+                \addplot coordinates { (1,0.088598) (2,0.0824666) (3,0.0799382) (4,0.0771623) (5,0.0775188) };
+                \addplot coordinates { (1,0.29432) (2,0.29514) (3,0.298642) (4,0.30164) (5,0.366257) };
+                \addplot coordinates { (1,0.266995) (2,0.277118) (3,0.258805) (4,0.280782) (5,0.304951) };
+                \addplot coordinates { (1,0.0779639) (2,0.0725272) (3,0.0702591) (4,0.0670736) (5,0.0680445) };
+			\end{axis}
+	
+			\begin{axis}[sizeplot, title={English}, at=(xmltime.east), rightdist]
+				\addplot coordinates { (1,0.281303) (2,0.266864) (3,0.29072) (4,0.305588) (5,0.314204) };
+                \addplot coordinates { (1,0.14763) (2,0.124187) (3,0.134434) (4,0.140658) (5,0.139948) };
+                \addplot coordinates { (1,0.152299) (2,0.128113) (3,0.138901) (4,0.145343) (5,0.14459) };
+                \addplot coordinates { (1,0.372798) (2,0.374225) (3,0.382871) (4,0.388644) (5,0.389639) };
+                \addplot coordinates { (1,0.671124) (2,0.582472) (3,0.5846) (4,0.653665) (5,0.60334) };
+                \addplot coordinates { (1,0.134138) (2,0.116564) (3,0.12048) (4,0.122204) (5,0.120246) };
+			\end{axis}
+		\end{tikzpicture}
+	  \end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Tiefe der Grammatik}
+	\begin{columns}
+		\column{\dimexpr\paperwidth-10pt}
+
+		\note[item]{WidthFirst produziert auf jedem Datensatz die flachsten Grammatiken}
+		\note[item]{Nächsttiefere sind je nach Datensatz ChildArea und Sequitur}
+		\note[item]{Die dann nächsttieferen: HeightFirstArea und HeightAdvantageArea \begin{itemize}
+			\item Wieder quasi identisch
+		\end{itemize}}
+		\note[item]{Mit enormen Abstand tiefste Grammatiken von RePair}
+
+		\begin{tikzpicture}
+			\begin{axis}[depthplot, title={DNA}, name=dnatime, ylabel={Tiefe}, ymode=log]
+			   
+                \addplot coordinates { (1,7.0) (2,7.0) (3,9.0) (4,9.0) (5,9.0) };
+                \addplot coordinates { (1,48.0) (2,52.0) (3,58.0) (4,58.0) (5,58.0) };
+                \addplot coordinates { (1,49.0) (2,51.0) (3,57.0) (4,58.0) (5,57.0) };
+                \addplot coordinates { (1,3.0) (2,3.0) (3,3.0) (4,3.0) (5,3.0) };
+                \addplot coordinates { (1,335.0) (2,532.0) (3,2403.0) (4,1635.0) (5,3034.0) };
+                \addplot coordinates { (1,11.0) (2,11.0) (3,12.0) (4,12.0) (5,12.0) };
+				
+				\addlegendentry{ChildArea};
+				\addlegendentry{HeightAdvantageArea};
+				\addlegendentry{HeightFirstArea};
+				\addlegendentry{WidthFirstArea};
+				\addlegendentry{RePair};
+				\addlegendentry{Sequitur};
+			\end{axis}
+	
+			\begin{axis}[depthplot, title={Proteins}, at=(dnatime.east), rightdist, name=proteinstime, sizexlabel, ymode=log]
+				\addplot coordinates { (1,36.0) (2,43.0) (3,47.0) (4,49.0) (5,50.0) };
+                \addplot coordinates { (1,53.0) (2,59.0) (3,62.0) (4,64.0) (5,64.0) };
+                \addplot coordinates { (1,50.0) (2,52.0) (3,62.0) (4,64.0) (5,64.0) };
+                \addplot coordinates { (1,3.0) (2,4.0) (3,4.0) (4,4.0) (5,4.0) };
+                \addplot coordinates { (1,1628.0) (2,2819.0) (3,3413.0) (4,2982.0) (5,3733.0) };
+                \addplot coordinates { (1,20.0) (2,24.0) (3,24.0) (4,24.0) (5,24.0) };
+			\end{axis}
+			
+			\begin{axis}[depthplot, title={XML}, at=(proteinstime.east), rightdist, name=xmltime, ymode=log]
+				\addplot coordinates { (1,17.0) (2,16.0) (3,17.0) (4,17.0) (5,16.0) };
+                \addplot coordinates { (1,28.0) (2,33.0) (3,36.0) (4,36.0) (5,36.0) };
+                \addplot coordinates { (1,26.0) (2,31.0) (3,34.0) (4,33.0) (5,33.0) };
+                \addplot coordinates { (1,7.0) (2,8.0) (3,7.0) (4,7.0) (5,7.0) };
+                \addplot coordinates { (1,85.0) (2,116.0) (3,180.0) (4,155.0) (5,243.0) };
+                \addplot coordinates { (1,19.0) (2,19.0) (3,19.0) (4,19.0) (5,19.0) };
+			\end{axis}
+	
+			\begin{axis}[depthplot, title={English}, at=(xmltime.east), rightdist, ymode=log]
+				\addplot coordinates { (1,17.0) (2,14.0) (3,14.0) (4,14.0) (5,20.0) };
+                \addplot coordinates { (1,41.0) (2,45.0) (3,63.0) (4,63.0) (5,64.0) };
+                \addplot coordinates { (1,41.0) (2,45.0) (3,62.0) (4,63.0) (5,64.0) };
+                \addplot coordinates { (1,9.0) (2,10.0) (3,10.0) (4,11.0) (5,11.0) };
+                \addplot coordinates { (1,1679.0) (2,3907.0) (3,2516.0) (4,3216.0) (5,13648.0) };
+                \addplot coordinates { (1,17.0) (2,20.0) (3,29.0) (4,29.0) (5,29.0) };
+			\end{axis}
+		\end{tikzpicture}
+	  \end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Regelanzahl}
+	\begin{columns}
+		\column{\dimexpr\paperwidth-10pt}
+
+		\note[item]{Grammatiken mit niedrigster Regelanzahl sind ChildArea und WidthFirstArea mit enormem Abstand}
+		\note[item]{Nächstgrößere Regelanzahl: Sequitur}
+		\note[item]{Über Sequitur variieren Ergebnisse zwischen den Datensätzen}
+
+		\begin{tikzpicture}
+			\begin{axis}[countplot, title={DNA}, name=dnatime, ylabel={Regeln}, ymode=log]
+			   
+                \addplot coordinates { (1,71.0) (2,78.0) (3,154.0) (4,155.0) (5,187.0) };
+                \addplot coordinates { (1,545201.0) (2,1.0341e+06) (3,1.51782e+06) (4,1.98592e+06) (5,2.44195e+06) };
+                \addplot coordinates { (1,551990.0) (2,1.04767e+06) (3,1.53673e+06) (4,2.01088e+06) (5,2.47137e+06) };
+                \addplot coordinates { (1,63.0) (2,69.0) (3,148.0) (4,148.0) (5,178.0) };
+                \addplot coordinates { (1,113457.0) (2,319827.0) (3,303421.0) (4,619826.0) (5,666054.0) };
+                \addplot coordinates { (1,119842.0) (2,213943.0) (3,311928.0) (4,409847.0) (5,502206.0) };
+				
+				\addlegendentry{ChildArea};
+				\addlegendentry{HeightAdvantageArea};
+				\addlegendentry{HeightFirstArea};
+				\addlegendentry{WidthFirstArea};
+				\addlegendentry{RePair};
+				\addlegendentry{Sequitur};
+			\end{axis}
+	
+			\begin{axis}[countplot, title={Proteins}, at=(dnatime.east), rightdist, name=proteinstime, sizexlabel, ymode=log]
+				\addplot coordinates { (1,8497.0) (2,8319.0) (3,8036.0) (4,7568.0) (5,10243.0) };
+                \addplot coordinates { (1,462337.0) (2,876976.0) (3,1.43681e+06) (4,2.1312e+06) (5,2.80116e+06) };
+                \addplot coordinates { (1,481653.0) (2,913402.0) (3,1.50013e+06) (4,2.23379e+06) (5,2.9401e+06) };
+                \addplot coordinates { (1,4890.0) (2,4931.0) (3,5214.0) (4,5242.0) (5,6884.0) };
+                \addplot coordinates { (1,593074.0) (2,1.3128e+06) (3,2.1662e+06) (4,1.81616e+06) (5,2.02654e+06) };
+                \addplot coordinates { (1,219631.0) (2,377264.0) (3,501559.0) (4,624574.0) (5,746617.0) };
+			\end{axis}
+			
+			\begin{axis}[countplot, title={XML}, at=(proteinstime.east), rightdist, name=xmltime, ymode=log]
+				\addplot coordinates { (1,24439.0) (2,34744.0) (3,43287.0) (4,49694.0) (5,55222.0) };
+                \addplot coordinates { (1,196226.0) (2,361346.0) (3,523543.0) (4,668901.0) (5,815467.0) };
+                \addplot coordinates { (1,206883.0) (2,380826.0) (3,552165.0) (4,706238.0) (5,861838.0) };
+                \addplot coordinates { (1,19209.0) (2,26166.0) (3,31415.0) (4,34564.0) (5,38301.0) };
+                \addplot coordinates { (1,189468.0) (2,393154.0) (3,546340.0) (4,656049.0) (5,800207.0) };
+                \addplot coordinates { (1,148736.0) (2,271075.0) (3,387604.0) (4,490670.0) (5,600019.0) };
+			\end{axis}
+	
+			\begin{axis}[countplot, title={English}, at=(xmltime.east), rightdist, ymode=log]
+				\addplot coordinates { (1,17499.0) (2,22996.0) (3,29151.0) (4,31880.0) (5,36583.0) };
+                \addplot coordinates { (1,352197.0) (2,592325.0) (3,959541.0) (4,1.33699e+06) (5,1.62917e+06) };
+                \addplot coordinates { (1,375102.0) (2,630449.0) (3,1.02432e+06) (4,1.4257e+06) (5,1.73823e+06) };
+                \addplot coordinates { (1,14226.0) (2,18024.0) (3,22198.0) (4,24030.0) (5,27814.0) };
+                \addplot coordinates { (1,1.76936e+06) (2,3.96516e+06) (3,4.78321e+06) (4,5.97792e+06) (5,6.9114e+06) };
+                \addplot coordinates { (1,203426.0) (2,352571.0) (3,510494.0) (4,657091.0) (5,783690.0) };
+			\end{axis}
+		\end{tikzpicture}
+	  \end{columns}
+\end{frame}
+
+\pgfplotsset{
+  log ticks with fixed point,
+}
+
+\begin{frame}
+	\frametitle{Regel-Durchschnittslänge}
+
+	\note[item]{RePair lohnt nicht zu betrachten, da alle Regeln außer der Startregel sowieso Länge 2 besitzen}
+	\note[item]{Sehr unterschiedliche Ergebnisse für die Verschiedenen Datensätze}
+	\note[item]{Meistens alle Algorithmen mit Durchschnittslänge zwischen 2 und 4}
+	\note[item]{Ausnahmen: \begin{itemize}
+		\item ChildArea in Proteins: Durchschnittslänge von bis zu 22
+		\item WidthFirst und ChildArea in English: Jeweils 40 und 96 max Durchschnittslänge
+	\end{itemize}}
+
+
+	\begin{columns}
+		\column{\dimexpr\paperwidth-10pt}
+
+		\begin{tikzpicture}
+			\begin{axis}[lengthplot, title={DNA}, name=dnatime, ylabel={Regellänge}, ymode=log, yticklabel style={
+				/pgf/number format/precision=2,
+				/pgf/number format/fixed}]
+			   
+                \addplot coordinates { (1,2.01429) (2,2.02597) (3,2.02614) (4,2.01299) (5,2.04301) };
+                \addplot coordinates { (1,2.17989) (2,2.18967) (3,2.18764) (4,2.19015) (5,2.19205) };
+                \addplot coordinates { (1,2.19303) (2,2.20367) (3,2.20288) (4,2.20553) (5,2.20552) };
+                \addplot coordinates { (1,2.0) (2,2.0) (3,2.01361) (4,2.0) (5,2.0339) };
+                \addplot coordinates { (1,2.0) (2,2.0) (3,2.0) (4,2.0) (5,2.0) };
+                \addplot coordinates { (1,2.04732) (2,2.07584) (3,2.08106) (4,2.08939) (5,2.09551) };
+				
+				\addlegendentry{ChildArea};
+				\addlegendentry{HeightAdvantageArea};
+				\addlegendentry{HeightFirstArea};
+				\addlegendentry{WidthFirstArea};
+				\addlegendentry{RePair};
+				\addlegendentry{Sequitur};
+			\end{axis}
+	
+			\begin{axis}[lengthplot, title={Proteins}, at=(dnatime.east), rightdist, name=proteinstime, sizexlabel, ymode=log, yticklabel style={
+				/pgf/number format/precision=2,
+				/pgf/number format/fixed}]
+				\addplot coordinates { (1,13.4101) (2,15.4264) (3,21.9736) (4,21.8799) (5,22.0033) };
+                \addplot coordinates { (1,2.53079) (2,2.67598) (3,2.56286) (4,2.41029) (5,2.35682) };
+                \addplot coordinates { (1,2.52303) (2,2.66375) (3,2.55465) (4,2.40679) (5,2.35552) };
+                \addplot coordinates { (1,2.11004) (2,2.12049) (3,3.79762) (4,3.95669) (5,2.39271) };
+                \addplot coordinates { (1,2.0) (2,2.0) (3,2.0) (4,2.0) (5,2.0) };
+                \addplot coordinates { (1,2.96105) (2,3.44833) (3,3.52837) (4,3.27092) (5,3.17545) };
+			\end{axis}
+			
+			\begin{axis}[lengthplot, title={XML}, at=(proteinstime.east), rightdist, name=xmltime, ymode=log]
+				\addplot coordinates { (1,2.57026) (2,2.55804) (3,2.59017) (4,2.59298) (5,2.61899) };
+                \addplot coordinates { (1,2.19464) (2,2.18694) (3,2.18079) (4,2.18614) (5,2.19015) };
+                \addplot coordinates { (1,2.18764) (2,2.18324) (3,2.17724) (4,2.1818) (5,2.18434) };
+                \addplot coordinates { (1,2.94409) (2,2.8991) (3,2.88215) (4,2.9592) (5,2.90167) };
+                \addplot coordinates { (1,2.0) (2,2.0) (3,2.0) (4,2.0) (5,2.0) };
+                \addplot coordinates { (1,2.20564) (2,2.1848) (3,2.18534) (4,2.17352) (5,2.16774) };
+			\end{axis}
+	
+			\begin{axis}[lengthplot, title={English}, at=(xmltime.east), rightdist, ymode=log]
+				\addplot coordinates { (1,52.2857) (2,96.1143) (3,85.5238) (4,85.6127) (5,83.0841) };
+                \addplot coordinates { (1,3.19531) (2,3.61483) (3,3.21938) (4,2.98099) (5,2.96945) };
+                \addplot coordinates { (1,3.137) (2,3.53201) (3,3.15797) (4,2.93691) (5,2.92538) };
+                \addplot coordinates { (1,25.7272) (2,40.1565) (3,32.6568) (4,29.4731) (5,27.2751) };
+                \addplot coordinates { (1,2.0) (2,2.0) (3,2.0) (4,2.0) (5,2.0) };
+                \addplot coordinates { (1,3.73509) (2,4.26732) (3,3.948) (4,3.71414) (5,3.77808) };
+			\end{axis}
+		\end{tikzpicture}
+	  \end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Laufzeitanteile}
+
+	\note<1>[item]{Berechnung des Enhanced Suffix Array etwa $10\%$}
+	\note<1>[item]{Konstruieren der Prioritätswarteschlange und das Entnehmen der Elemente auch etwa $10\%$}
+	\note<1>[item]{Das Sortieren der Positionen der Vorkommen, die ersetzt werden sollen etwa $5\%$ \begin{itemize}
+		\item für das Bereinigen der Vorkommen benötigt
+	\end{itemize}}
+	\note<1>[item]{Eigentliches Substituieren der Vorkommen: $5\%$}
+	\note<2->[item]{Bereinigen der Vorkommen vor der Substitution: $57\%$ \begin{itemize}
+		\item Mit abstand der Größte Laufzeitanteil
+		\item Viele Anfragen an die RuleIntervalIndex Datenstruktur
+		\item höchste Priorität für Laufzeitverbesserungen
+		\item Wichtig: $24$\% davon stammen aus einer unbekannten Quelle \begin{itemize}
+			\item Profiling mit VisualVM
+			\item Diese $24\%$ in einem Methodenaufruf nur als Self-Time angezeigt
+			\item Self-Time: normalerweise die Zeit, die in einer Methode selbst verbraucht wird, ohne weitere Methodenaufrufe.
+			\item Diese Methode besteht aber lediglich aus einem einzigen Methodenaufruf
+			\item Bisher kein Problem gefunden. Möglicherweise eine Eigenart der JVM  
+		\end{itemize}
+	\end{itemize}}
+	\note<2->[item]{Überführen in explizite Darstellung: etwa $8\%$ \begin{itemize}
+		\item Transformiert RuleIntervalIndex und den Eingabestring in eine Repräsentation in der Regeln explizit gespeichert werden
+		\item sonst müsste immer der Originalstring im Speicher gehalten werden.
+	\end{itemize}}
+
+
+	\begin{tikzpicture}
+		\begin{axis}[
+			ybar stacked, 
+			xtick={0}, 
+			xticklabels={ },
+			width=3cm,
+			height=6cm,
+			y unit={\%},
+			ymin=0,
+			ymax=100,
+			ylabel={Laufzeitanteil},
+			xticklabel style={align=center},
+			legend style={at={(1.1,0.5)}, anchor=west},
+			cycle list name=algso
+			]
+			\addplot coordinates { (0,9.4) };
+			\addplot coordinates { (0,9.8) };
+			\addplot coordinates { (0,5.5) };
+			\addplot coordinates { (0,5) };
+			\addplot coordinates { (0,57.7) };
+			\addplot coordinates { (0,8.1) };
+			\addplot coordinates { (0,4.5) };
+
+
+			\addlegendentry{Enhanced Suffix Array};
+			\addlegendentry{Prioritätswarteschlange-Operationen};
+			\addlegendentry{Sortieren von $positions$};
+			\addlegendentry{Substituieren von Vorkommen};
+			\addlegendentry{Bereinigen von $positions$};
+			\addlegendentry{Einheitliche Repräsentation};
+			\addlegendentry{Rest};
+		\end{axis}
+	\end{tikzpicture}
+
+\end{frame}
+
+\subsection{Fazit}
+
+\begin{frame}
+	\frametitle{Fazit}
+	
+	\note<1->[item]{Flächenfunktionen mit kleinster Grammatik: \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea} \begin{itemize}
+		\item nur etwas mehr Laufzeit, aber Unterschied klein
+		\item HeightAdvantageArea etwas kleinere Grammatiken, aber der Unterschied ist sehr gering
+	\end{itemize}}
+	\note<2->[item]{In der Praxis scheinbar lineare Laufzeit trotz schlechterer Abschätzung}
+	\note<3->[item]{Sequitur und RePair schneller und Sequitur produziert die kleinsten Grammatiken}
+	\note<4->[item]{Insgesamt \begin{itemize}
+		\item viel kleinere Grammatiken, wenn Höhe eines LCP-Intervalls stärker als die Breite priorisiert wird
+	\end{itemize}}
+	\note<5->[item]{Allerdings allgemeingültiges Fazit besser \begin{itemize}
+		\item lässt sich nicht sagen \enquote{Alg. A ist \emph{besser} als Alg. B}
+		\item Kodierung muss noch erfolgen und hier könnten andere Eigenschaften als nur Größe wichtig sein
+	\end{itemize}}
+
+
+	\begin{itemize}
+		\item<1-> AreaComp Grammatiken in Größe zum Teil konkurrenzfähig mit Sequitur Grammatiken
+		\item<1-> Flächenfunktionen mit kleinster Grammatik: \texttt{HeightFirstArea} und \texttt{HeightAdvantageArea}
+		\item<2-> In der Praxis scheinbar lineare Laufzeit
+		\item<3-> Trotzdem langsamer als RePair und Sequitur \begin{itemize}
+			\item Letzterer mit kleinsten Grammatiken und bester Laufzeit
+		\end{itemize} 
+		\item<4-> Insgesamt: kleinere Grammatiken, wenn Höhe eines LCP-Intervalls priorisiert wird
+		\item<5-> Allerdings kein allgemeingültige Bewertung möglich
+	\end{itemize}
+
+\end{frame}
